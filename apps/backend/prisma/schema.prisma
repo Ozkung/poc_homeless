@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CASE_MANAGER
+  FIELD_WORKER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PatientStatus {
+  CRITICAL
+  PENDING
+  STABLE
+}
+
+enum EventPriority {
+  NORMAL
+  URGENT
+  CRITICAL
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  NOT_FOUND
+}
+
+enum ActivityType {
+  CHECK_IN
+  NOTE
+  FORM_SUBMIT
+  ASSIGN
+  STATUS_CHANGE
+  LOGIN
+  LOGOUT
+}
+
+model Organization {
+  id           String        @id @default(uuid())
+  name         String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  users        User[]
+  patients     Patient[]
+  formTemplates FormTemplate[]
+  events       Event[]
+}
+
+model User {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  email          String       @unique
+  passwordHash   String
+  role           UserRole
+  displayName    String
+  lineUserId     String?      @unique
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  assignedTasks     EventTask[]  @relation("AssignedTasks")
+  createdEvents     Event[]      @relation("CreatedEvents")
+  managedPatients   Patient[]    @relation("ManagedPatients")
+  submissions       Submission[]
+  activities        Activity[]
+  formTemplates     FormTemplate[]
+}
+
+model Patient {
+  id             String        @id @default(uuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  caseManagerId  String?
+  caseManager    User?         @relation("ManagedPatients", fields: [caseManagerId], references: [id])
+  // AES-256-GCM: "iv:authTag:ciphertext" hex string
+  nameEnc        String
+  hn             String        @unique
+  age            Int?
+  gender         Gender?
+  status         PatientStatus @default(PENDING)
+  conditions     String[]
+  locationText   String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  events      Event[]
+  submissions Submission[]
+  activities  Activity[]
+  eventTasks  EventTask[]
+}
+
+model FormTemplate {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdById    String
+  createdBy      User         @relation(fields: [createdById], references: [id])
+  title          String
+  description    String?
+  // JSON: FormField[]
+  fields         Json
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  eventTasks   EventTask[]
+  submissions  Submission[]
+}
+
+model Event {
+  id             String        @id @default(uuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  createdById    String
+  createdBy      User          @relation("CreatedEvents", fields: [createdById], references: [id])
+  title          String
+  startDate      DateTime
+  endDate        DateTime
+  priority       EventPriority @default(NORMAL)
+  note           String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  patients   Patient[]   @relation("EventPatients")
+  tasks      EventTask[]
+  activities Activity[]
+}
+
+model EventPatient {
+  eventId   String
+  patientId String
+
+  @@id([eventId, patientId])
+  @@map("_EventPatients")
+}
+
+model EventTask {
+  id               String      @id @default(uuid())
+  eventId          String
+  event            Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  patientId        String
+  patient          Patient     @relation(fields: [patientId], references: [id])
+  assigneeId       String
+  assignee         User        @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  formTemplateId   String?
+  formTemplate     FormTemplate? @relation(fields: [formTemplateId], references: [id])
+  status           TaskStatus  @default(PENDING)
+  liffToken        String?
+  tokenExp         DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  submissions Submission[]
+  activities  Activity[]
+}
+
+model Submission {
+  id             String       @id @default(uuid())
+  taskId         String
+  task           EventTask    @relation(fields: [taskId], references: [id])
+  patientId      String
+  patient        Patient      @relation(fields: [patientId], references: [id])
+  formTemplateId String
+  formTemplate   FormTemplate @relation(fields: [formTemplateId], references: [id])
+  submittedById  String
+  submittedBy    User         @relation(fields: [submittedById], references: [id])
+  // [{fieldId, value}] — PII values individually AES-256-GCM encrypted
+  answers        Json
+  submittedAt    DateTime     @default(now())
+}
+
+model Activity {
+  id         String       @id @default(uuid())
+  actorId    String
+  actor      User         @relation(fields: [actorId], references: [id])
+  patientId  String?
+  patient    Patient?     @relation(fields: [patientId], references: [id])
+  eventId    String?
+  event      Event?       @relation(fields: [eventId], references: [id])
+  taskId     String?
+  task       EventTask?   @relation(fields: [taskId], references: [id])
+  type       ActivityType
+  payload    Json?
+  createdAt  DateTime     @default(now())
+}

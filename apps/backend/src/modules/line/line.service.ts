@@ -1,0 +1,78 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createHmac, timingSafeEqual } from 'crypto';
+
+const LINE_API = 'https://api.line.me';
+
+@Injectable()
+export class LineService {
+  private readonly logger = new Logger(LineService.name);
+  private readonly channelAccessToken: string;
+  private readonly channelSecret: string;
+  private readonly liffId: string;
+
+  constructor(private config: ConfigService) {
+    this.channelAccessToken = config.get<string>('line.channelAccessToken') ?? '';
+    this.channelSecret = config.get<string>('line.channelSecret') ?? '';
+    this.liffId = config.get<string>('line.liffId') ?? '';
+  }
+
+  verifySignature(rawBody: Buffer, signature: string): boolean {
+    const expected = createHmac('sha256', this.channelSecret).update(rawBody).digest('base64');
+    try {
+      return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+    } catch {
+      return false;
+    }
+  }
+
+  async pushTaskNotification(lineUserId: string, task: {
+    id: string; title: string; patientName: string; dueAt?: Date; token: string;
+  }) {
+    const liffUrl = `https://liff.line.me/${this.liffId}?taskId=${task.id}&token=${task.token}`;
+
+    const body = {
+      to: lineUserId,
+      messages: [{
+        type: 'flex',
+        altText: `HomeMed Connect: งานใหม่ — ${task.title}`,
+        contents: {
+          type: 'bubble',
+          header: {
+            type: 'box', layout: 'vertical',
+            backgroundColor: '#7c6af7',
+            contents: [{ type: 'text', text: 'HomeMed Connect', weight: 'bold', color: '#ffffff', size: 'sm' }],
+          },
+          body: {
+            type: 'box', layout: 'vertical', spacing: 'md',
+            contents: [
+              { type: 'text', text: task.title, weight: 'bold', size: 'md', wrap: true },
+              { type: 'text', text: `ผู้ป่วย: ${task.patientName}`, size: 'sm', color: '#666666', wrap: true },
+              ...(task.dueAt ? [{ type: 'text', text: `กำหนด: ${task.dueAt.toLocaleDateString('th-TH')}`, size: 'sm', color: '#888888' }] : []),
+            ],
+          },
+          footer: {
+            type: 'box', layout: 'vertical',
+            contents: [{
+              type: 'button', style: 'primary', color: '#7c6af7',
+              action: { type: 'uri', label: 'เปิดงาน', uri: liffUrl },
+            }],
+          },
+        },
+      }],
+    };
+
+    const res = await fetch(`${LINE_API}/v2/bot/message/push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.channelAccessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      this.logger.error(`Line push failed: ${res.status} ${await res.text()}`);
+    }
+  }
+}

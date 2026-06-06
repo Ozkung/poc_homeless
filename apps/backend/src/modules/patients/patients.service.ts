@@ -1,0 +1,79 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { AesGcmService } from '../../common/crypto/aes-gcm.service';
+
+@Injectable()
+export class PatientsService {
+  constructor(private prisma: PrismaService, private crypto: AesGcmService) {}
+
+  async findAll(orgId: string) {
+    const patients = await this.prisma.patient.findMany({ where: { organizationId: orgId } });
+    return patients.map((p) => this.decrypt(p));
+  }
+
+  async findOne(id: string, orgId: string) {
+    const patient = await this.prisma.patient.findFirst({ where: { id, organizationId: orgId } });
+    if (!patient) throw new NotFoundException('Patient not found');
+    return this.decrypt(patient);
+  }
+
+  async create(orgId: string, cmId: string, data: {
+    name: string; hn: string; age?: number; gender?: string;
+    status?: string; conditions?: string[]; locationText?: string;
+  }) {
+    const patient = await this.prisma.patient.create({
+      data: {
+        organizationId: orgId,
+        caseManagerId: cmId,
+        nameEnc: this.crypto.encrypt(data.name),
+        hn: data.hn,
+        age: data.age,
+        gender: data.gender as any,
+        status: data.status as any ?? 'PENDING',
+        conditions: data.conditions ?? [],
+        locationText: data.locationText,
+      },
+    });
+    return this.decrypt(patient);
+  }
+
+  async update(id: string, orgId: string, data: Partial<{
+    name: string; age: number; gender: string; status: string; conditions: string[]; locationText: string;
+  }>) {
+    await this.findOne(id, orgId);
+    const updateData: any = { ...data };
+    if (data.name) {
+      updateData.nameEnc = this.crypto.encrypt(data.name);
+      delete updateData.name;
+    }
+    const updated = await this.prisma.patient.update({ where: { id }, data: updateData });
+    return this.decrypt(updated);
+  }
+
+  async remove(id: string, orgId: string) {
+    await this.findOne(id, orgId);
+    await this.prisma.patient.delete({ where: { id } });
+  }
+
+  async findActivities(id: string, orgId: string) {
+    await this.findOne(id, orgId);
+    return this.prisma.activity.findMany({
+      where: { patientId: id },
+      include: { actor: { select: { displayName: true, role: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findSubmissions(id: string, orgId: string) {
+    await this.findOne(id, orgId);
+    return this.prisma.submission.findMany({
+      where: { patientId: id },
+      include: { formTemplate: { select: { title: true } }, submittedBy: { select: { displayName: true } } },
+      orderBy: { submittedAt: 'desc' },
+    });
+  }
+
+  private decrypt(p: any) {
+    return { ...p, name: this.crypto.decrypt(p.nameEnc), nameEnc: undefined };
+  }
+}

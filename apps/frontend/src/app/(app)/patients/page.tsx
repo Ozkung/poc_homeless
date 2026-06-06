@@ -1,0 +1,22 @@
+import Link from 'next/link';
+
+export default function PatientsPage() {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <p className="text-xs font-mono text-purple-400 tracking-widest uppercase mb-1">Patients</p>
+          <h1 className="font-display text-2xl font-bold text-gray-900">รายชื่อผู้ป่วย</h1>
+        </div>
+        <Link href="/patients/new" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+          + เพิ่มผู้ป่วย
+        </Link>
+      </div>
+      <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-400">
+        <p className="text-4xl mb-3">🏥</p>
+        <p className="font-mono text-sm">ยังไม่มีข้อมูลผู้ป่วย</p>
+        <p className="text-xs mt-1">เชื่อมต่อ API เพื่อดูรายชื่อผู้ป่วย</p>
+      </div>
+    </div>
+  );
+}
