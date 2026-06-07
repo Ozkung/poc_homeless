@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TasksService } from '../tasks.service';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -19,8 +19,10 @@ const mockPrisma = {
 };
 
 const mockRedis = {
+  get: jest.fn(),
   setex: jest.fn(),
   getdel: jest.fn(),
+  del: jest.fn(),
 };
 
 const mockConfig = {
@@ -72,6 +74,30 @@ describe('TasksService', () => {
       mockPrisma.eventTask.findUnique.mockResolvedValue(null);
 
       await expect(service.checkin('nonexistent', 'user1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws 429 TooManyRequests when Redis rate-limit key exists', async () => {
+      const task = { id: 'task1', assigneeId: 'user1', status: 'PENDING', event: {}, patient: {}, assignee: {} };
+      mockPrisma.eventTask.findUnique.mockResolvedValue(task);
+      mockRedis.get.mockResolvedValue('1');
+
+      const err = await service.checkin('task1', 'user1').catch((e) => e);
+      expect(err).toBeInstanceOf(HttpException);
+      expect(err.getStatus()).toBe(429);
+      expect(mockPrisma.eventTask.update).not.toHaveBeenCalled();
+    });
+
+    it('sets Redis rate-limit key with 1hr TTL and updates task on successful check-in', async () => {
+      const task = { id: 'task1', assigneeId: 'user1', status: 'PENDING', event: {}, patient: {}, assignee: {} };
+      mockPrisma.eventTask.findUnique.mockResolvedValue(task);
+      mockPrisma.eventTask.update.mockResolvedValue({ id: 'task1', status: 'IN_PROGRESS' });
+      mockRedis.get.mockResolvedValue(null);
+      mockRedis.setex.mockResolvedValue('OK');
+
+      const result = await service.checkin('task1', 'user1');
+
+      expect(mockRedis.setex).toHaveBeenCalledWith('checkin:task1:user1', 3600, '1');
+      expect(result).toMatchObject({ status: 'IN_PROGRESS' });
     });
   });
 

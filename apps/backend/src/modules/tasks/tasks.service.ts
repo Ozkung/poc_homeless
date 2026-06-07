@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, GoneException } from '@nestjs/common';
+import { Injectable, NotFoundException, GoneException, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
@@ -46,6 +46,12 @@ export class TasksService {
   async checkin(taskId: string, userId: string) {
     const task = await this.findOne(taskId);
     if (task.assigneeId !== userId) throw new NotFoundException('Task not found');
+
+    const rateLimitKey = `checkin:${taskId}:${userId}`;
+    const existing = await this.redis.get(rateLimitKey);
+    if (existing) throw new HttpException('Check-in already recorded in the last hour', HttpStatus.TOO_MANY_REQUESTS);
+
+    await this.redis.setex(rateLimitKey, 3600, '1');
     return this.prisma.eventTask.update({
       where: { id: taskId },
       data: { status: 'IN_PROGRESS' },
