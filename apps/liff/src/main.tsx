@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import liff from '@line/liff';
-import { initLiff, getUrlParams } from './lib/liff';
+import { initLiff } from './lib/liff';
 import { api, setToken } from './lib/api';
 import TaskPage from './pages/TaskPage';
+import CheckinPage from './pages/CheckinPage';
+import FormPage from './pages/FormPage';
+import NotePage from './pages/NotePage';
 
 function App() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
-  const [taskId, setTaskId] = useState('');
-  const [token, setLiffToken] = useState('');
 
   useEffect(() => {
     async function init() {
@@ -19,12 +21,6 @@ function App() {
         if (!idToken) throw new Error('No ID token');
         const { accessToken } = await api.verifyLiff(idToken);
         setToken(accessToken);
-
-        const params = getUrlParams();
-        const tid = params.get('taskId') ?? '';
-        const tok = params.get('token') ?? '';
-        setTaskId(tid);
-        setLiffToken(tok);
         setReady(true);
       } catch (e: any) {
         setError(e.message ?? 'เกิดข้อผิดพลาด');
@@ -52,7 +48,16 @@ function App() {
     );
   }
 
-  return <TaskPage taskId={taskId} token={token} />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<TaskPage />} />
+        <Route path="/checkin/:taskId" element={<CheckinPage />} />
+        <Route path="/form/:taskId/:formId" element={<FormPage />} />
+        <Route path="/note/:taskId" element={<NotePage />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 createRoot(document.getElementById('root')!).render(<App />);
