@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeMed Connect — Technical Specification</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0a0a0f;
+  --ink2: #1a1a24;
+  --ink3: #2e2e3d;
+  --muted: #6b6b82;
+  --muted2: #9898aa;
+  --line: rgba(255,255,255,.08);
+  --line2: rgba(255,255,255,.04);
+  --surface: #13131c;
+  --surface2: #1c1c28;
+  --surface3: #232333;
+  --white: #f0eff8;
+  --white2: #c8c7d8;
+  --accent: #7c6af7;
+  --accent2: #9d8fff;
+  --accent3: #4a3fd4;
+  --green: #2dd4a0;
+  --green2: #1aab7c;
+  --amber: #f5a623;
+  --red: #f55c5c;
+  --blue: #4db8ff;
+  --pink: #f06aac;
+  --r: 14px;
+  --r2: 20px;
+  --r3: 28px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--ink);
+  color: var(--white);
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Background texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(124,106,247,.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(45,212,160,.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(26,26,36,.8) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== HEADER ===== */
+.hero {
+  margin-bottom: 56px;
+  position: relative;
+}
+.hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent2);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+}
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 6vw, 68px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--white) 30%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: 16px;
+  color: var(--muted);
+  margin-bottom: 28px;
+  font-weight: 300;
+}
+.hero-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.meta-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted2);
+  border: 1px solid var(--line);
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: var(--surface2);
+}
+.meta-pill .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+
+/* ===== SECTION TITLE ===== */
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.section-wrap { margin-bottom: 48px; }
+
+/* ===== BENTO GRID ===== */
+.bento {
+  display: grid;
+  gap: 14px;
+}
+.bento-2 { grid-template-columns: 1fr 1fr; }
+.bento-3 { grid-template-columns: 1fr 1fr 1fr; }
+.bento-4 { grid-template-columns: repeat(4, 1fr); }
+.bento-auto { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+/* ===== CARD BASE ===== */
+.card {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s, transform .2s;
+}
+.card:hover {
+  border-color: rgba(124,106,247,.3);
+  transform: translateY(-1px);
+}
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r2);
+  background: linear-gradient(135deg, rgba(255,255,255,.02) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.card-accent { border-color: rgba(124,106,247,.4); background: linear-gradient(135deg, rgba(124,106,247,.12) 0%, var(--surface2) 60%); }
+.card-green  { border-color: rgba(45,212,160,.3);  background: linear-gradient(135deg, rgba(45,212,160,.08) 0%, var(--surface2) 60%); }
+.card-amber  { border-color: rgba(245,166,35,.3);  background: linear-gradient(135deg, rgba(245,166,35,.08) 0%, var(--surface2) 60%); }
+.card-blue   { border-color: rgba(77,184,255,.3);  background: linear-gradient(135deg, rgba(77,184,255,.08) 0%, var(--surface2) 60%); }
+.card-red    { border-color: rgba(245,92,92,.3);   background: linear-gradient(135deg, rgba(245,92,92,.08) 0%, var(--surface2) 60%); }
+.card-dark   { background: var(--surface3); }
+
+.card-span2 { grid-column: span 2; }
+.card-span3 { grid-column: span 3; }
+.card-span4 { grid-column: span 4; }
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 4px;
+  letter-spacing: -.2px;
+}
+.card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted2);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+.card-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -3px;
+}
+
+/* ===== STACK BADGE ===== */
+.stack-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 3px;
+}
+.sb-purple { background: rgba(124,106,247,.18); color: var(--accent2); border: 1px solid rgba(124,106,247,.3); }
+.sb-green  { background: rgba(45,212,160,.15);  color: var(--green);   border: 1px solid rgba(45,212,160,.3); }
+.sb-blue   { background: rgba(77,184,255,.15);  color: var(--blue);    border: 1px solid rgba(77,184,255,.3); }
+.sb-amber  { background: rgba(245,166,35,.15);  color: var(--amber);   border: 1px solid rgba(245,166,35,.3); }
+.sb-red    { background: rgba(245,92,92,.15);   color: var(--red);     border: 1px solid rgba(245,92,92,.3); }
+.sb-pink   { background: rgba(240,106,172,.15); color: var(--pink);    border: 1px solid rgba(240,106,172,.3); }
+.sb-white  { background: rgba(240,239,248,.08); color: var(--white2);  border: 1px solid var(--line); }
+
+/* ===== CODE BLOCK ===== */
+.code-block {
+  background: var(--ink2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--white2);
+  overflow-x: auto;
+  margin-top: 12px;
+}
+.code-block .kw  { color: var(--accent2); }
+.code-block .str { color: var(--green); }
+.code-block .cmt { color: var(--muted); font-style: italic; }
+.code-block .num { color: var(--amber); }
+.code-block .typ { color: var(--blue); }
+.code-block .fn  { color: var(--pink); }
+
+/* ===== TABLE ===== */
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin-top: 12px;
+}
+.spec-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted2);
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.spec-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line2);
+  color: var(--white2);
+  vertical-align: top;
+}
+.spec-table tr:last-child td { border-bottom: none; }
+.spec-table tr:hover td { background: rgba(255,255,255,.02); }
+.spec-table td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent2); }
+
+/* ===== FLOW DIAGRAM ===== */
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 80px;
+}
+.flow-node {
+  width: 100%;
+  max-width: 110px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid;
+}
+.fn-purple { background: rgba(124,106,247,.15); border-color: rgba(124,106,247,.4); color: var(--accent2); }
+.fn-green  { background: rgba(45,212,160,.12);  border-color: rgba(45,212,160,.3);  color: var(--green); }
+.fn-blue   { background: rgba(77,184,255,.12);  border-color: rgba(77,184,255,.3);  color: var(--blue); }
+.fn-amber  { background: rgba(245,166,35,.12);  border-color: rgba(245,166,35,.3);  color: var(--amber); }
+.fn-pink   { background: rgba(240,106,172,.12); border-color: rgba(240,106,172,.3); color: var(--pink); }
+.flow-label { font-size: 10px; color: var(--muted2); font-family: 'JetBrains Mono', monospace; }
+.flow-arrow {
+  font-size: 16px;
+  color: var(--muted);
+  flex-shrink: 0;
+  padding: 0 4px;
+  align-self: flex-start;
+  margin-top: 12px;
+}
+
+/* ===== LIST ===== */
+.spec-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 12px;
+}
+.spec-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--white2);
+  line-height: 1.5;
+}
+.spec-list li::before {
+  content: '—';
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ===== MODULE PILL ===== */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.module-item {
+  background: var(--surface3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  transition: border-color .2s;
+}
+.module-item:hover { border-color: rgba(124,106,247,.4); }
+.module-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent2);
+  margin-bottom: 3px;
+}
+.module-desc { font-size: 11px; color: var(--muted2); }
+
+/* ===== OWASP BADGE ===== */
+.owasp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.owasp-item {
+  background: var(--surface3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.owasp-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(124,106,247,.15);
+  border: 1px solid rgba(124,106,247,.3);
+  border-radius: 6px;
+  padding: 3px 7px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.owasp-title { font-size: 12px; font-weight: 600; color: var(--white); margin-bottom: 3px; }
+.owasp-desc  { font-size: 11px; color: var(--muted2); line-height: 1.5; }
+
+/* ===== ARCH DIAGRAM ===== */
+.arch-wrap {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: stretch;
+  margin-top: 16px;
+}
+.arch-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.arch-node {
+  border-radius: var(--r);
+  padding: 12px 14px;
+  border: 1px solid;
+  text-align: center;
+}
+.arch-arrow-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.arch-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted2);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.arch-connector .line-v {
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+}
+
+/* ===== DB SCHEMA ===== */
+.schema-table {
+  background: var(--ink2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-top: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.schema-head {
+  background: var(--surface3);
+  padding: 8px 14px;
+  color: var(--accent2);
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.schema-head .icon { font-size: 13px; }
+.schema-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 1fr;
+  gap: 0;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--line2);
+}
+.schema-row:last-child { border-bottom: none; }
+.schema-row:hover { background: rgba(255,255,255,.02); }
+.sf-name  { color: var(--white); }
+.sf-type  { color: var(--amber); }
+.sf-note  { color: var(--muted); font-size: 10px; margin-top: 1px; }
+
+/* ===== ENDPOINT ===== */
+.endpoint-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--ink2);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  transition: border-color .15s;
+}
+.endpoint-row:hover { border-color: var(--line); }
+.method {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: center;
+}
+.m-get    { background: rgba(45,212,160,.2);  color: var(--green); }
+.m-post   { background: rgba(77,184,255,.2);  color: var(--blue); }
+.m-put    { background: rgba(245,166,35,.2);  color: var(--amber); }
+.m-patch  { background: rgba(240,106,172,.2); color: var(--pink); }
+.m-delete { background: rgba(245,92,92,.2);   color: var(--red); }
+.ep-path  { color: var(--white2); flex: 1; }
+.ep-auth  { font-size: 9px; color: var(--muted); background: var(--surface3); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .bento-2, .bento-3, .bento-4 { grid-template-columns: 1fr; }
+  .card-span2, .card-span3, .card-span4 { grid-column: span 1; }
+  .arch-wrap { grid-template-columns: 1fr; }
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card { animation: fadeUp .4s ease both; }
+.card:nth-child(1) { animation-delay: .05s; }
+.card:nth-child(2) { animation-delay: .10s; }
+.card:nth-child(3) { animation-delay: .15s; }
+.card:nth-child(4) { animation-delay: .20s; }
+.card:nth-child(5) { animation-delay: .25s; }
+.card:nth-child(6) { animation-delay: .30s; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">Technical Specification v1.0</div>
+    <div class="hero-title">HomeMed<br>Connect</div>
+    <div class="hero-sub">ระบบดูแลผู้ป่วยไร้บ้านในชุมชน — Case Manager Platform</div>
+    <div class="hero-meta">
+      <div class="meta-pill"><div class="dot" style="background:#7c6af7"></div>Next.js 16</div>
+      <div class="meta-pill"><div class="dot" style="background:#2dd4a0"></div>NestJS</div>
+      <div class="meta-pill"><div class="dot" style="background:#4db8ff"></div>PostgreSQL</div>
+      <div class="meta-pill"><div class="dot" style="background:#f06aac"></div>Line OA + LIFF</div>
+      <div class="meta-pill"><div class="dot" style="background:#f5a623"></div>OWASP Top 10</div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: OVERVIEW -->
+  <div class="section-wrap">
+    <div class="section-label">01 — Overview</div>
+    <div class="bento bento-4">
+
+      <div class="card card-accent">
+        <div class="card-label">Modules</div>
+        <div class="card-num" style="color:var(--accent2)">8</div>
+        <div style="font-size:12px;color:var(--muted2);margin-top:6px;">NestJS Backend Modules</div>
+      </div>
+
+      <div class="card card-green">
+        <div class="card-label">DB Tables</div>
+        <div class="card-num" style="color:var(--green)">9</div>
+        <div style="font-size:12px;color:var(--muted2);margin-top:6px;">PostgreSQL Relations</div>
+      </div>
+
+      <div class="card card-blue">
+        <div class="card-label">API Endpoints</div>
+        <div class="card-num" style="color:var(--blue)">32+</div>
+        <div style="font-size:12px;color:var(--muted2);margin-top:6px;">REST Endpoints</div>
+      </div>
+
+      <div class="card card-amber">
+        <div class="card-label">OWASP Coverage</div>
+        <div class="card-num" style="color:var(--amber)">10/10</div>
+        <div style="font-size:12px;color:var(--muted2);margin-top:6px;">Security Requirements</div>
+      </div>
+
+      <div class="card card-span2">
+        <div class="card-label">User Roles</div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;padding:14px;background:var(--surface3);border-radius:var(--r);border:1px solid var(--line);">
+            <div style="font-size:22px;margin-bottom:6px;">👩‍⚕️</div>
+            <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent2);">Case Manager</div>
+            <div style="font-size:11px;color:var(--muted2);margin-top:4px;">สร้าง Form, จัดการ Event, มอบหมายงาน, ดู Dashboard</div>
+          </div>
+          <div style="flex:1;min-width:120px;padding:14px;background:var(--surface3);border-radius:var(--r);border:1px solid var(--line);">
+            <div style="font-size:22px;margin-bottom:6px;">🧑‍🤝‍🧑</div>
+            <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--green);">Field Worker</div>
+            <div style="font-size:11px;color:var(--muted2);margin-top:4px;">รับงานผ่าน Line OA, Check-in, กรอก Form ผ่าน LIFF</div>
+          </div>
+          <div style="flex:1;min-width:120px;padding:14px;background:var(--surface3);border-radius:var(--r);border:1px solid var(--line);">
+            <div style="font-size:22px;margin-bottom:6px;">🏥</div>
+            <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--blue);">Admin</div>
+            <div style="font-size:11px;color:var(--muted2);margin-top:4px;">จัดการ User, Organization, ตั้งค่าระบบ</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-dark" style="grid-column:span 4;">
+        <div class="card-label">Next.js 16 Key Features ที่ใช้ในโปรเจกต์นี้</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px;">
+          <div style="padding:12px;background:var(--surface2);border-radius:var(--r);border:1px solid rgba(124,106,247,.25);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent2);margin-bottom:5px;">TURBOPACK STABLE</div>
+            <div style="font-size:12px;color:var(--white2);">Default bundler — 5-10x faster Fast Refresh, 2-5x faster builds กว่า Webpack</div>
+          </div>
+          <div style="padding:12px;background:var(--surface2);border-radius:var(--r);border:1px solid rgba(45,212,160,.25);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);margin-bottom:5px;">CACHE COMPONENTS + PPR</div>
+            <div style="font-size:12px;color:var(--white2);">Partial Pre-Rendering + use cache() สำหรับ instant navigation บน CM Dashboard</div>
+          </div>
+          <div style="padding:12px;background:var(--surface2);border-radius:var(--r);border:1px solid rgba(77,184,255,.25);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue);margin-bottom:5px;">PROXY.TS</div>
+            <div style="font-size:12px;color:var(--white2);">แทน Middleware เดิม — กำหนด network boundary ชัดเจนขึ้น สำหรับ auth redirect</div>
+          </div>
+          <div style="padding:12px;background:var(--surface2);border-radius:var(--r);border:1px solid rgba(245,166,35,.25);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--amber);margin-bottom:5px;">DEVTOOLS MCP</div>
+            <div style="font-size:12px;color:var(--white2);">Next.js DevTools MCP integration สำหรับ AI-assisted debugging ระหว่าง development</div>
+          </div>
+          <div style="padding:12px;background:var(--surface2);border-radius:var(--r);border:1px solid rgba(240,106,172,.25);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--pink);margin-bottom:5px;">BUILD ADAPTERS API</div>
+            <div style="font-size:12px;color:var(--white2);">Stable ใน 16.2 — deploy ได้ทุก platform (AWS, Cloudflare, self-hosted) ไม่ผูกกับ Vercel</div>
+          </div>
+          <div style="padding:12px;background:var(--surface2);border-radius:var(--r);border:1px solid rgba(245,92,92,.25);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--red);margin-bottom:5px;">SECURITY (16.2.6)</div>
+            <div style="font-size:12px;color:var(--white2);">Patch CVE-2025-55182 RSC deserialization RCE — ใช้ 16.2.6 ขึ้นไปเท่านั้น</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-span2">
+        <div class="card-label">Tech Stack</div>
+        <div style="margin-top:10px;">
+          <div style="margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Frontend</div>
+            <span class="stack-badge sb-purple">Next.js 16.2.6</span>
+            <span class="stack-badge sb-white">Turbopack (stable)</span>
+            <span class="stack-badge sb-white">Cache Components + PPR</span>
+            <span class="stack-badge sb-white">proxy.ts</span>
+            <span class="stack-badge sb-white">NextAuth.js</span>
+            <span class="stack-badge sb-white">Tailwind CSS</span>
+            <span class="stack-badge sb-white">React Query</span>
+          </div>
+          <div style="margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Backend</div>
+            <span class="stack-badge sb-green">NestJS</span>
+            <span class="stack-badge sb-white">Prisma ORM</span>
+            <span class="stack-badge sb-white">Passport JWT</span>
+            <span class="stack-badge sb-white">Bull Queue</span>
+          </div>
+          <div style="margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Infrastructure</div>
+            <span class="stack-badge sb-blue">PostgreSQL 15</span>
+            <span class="stack-badge sb-white">Redis</span>
+            <span class="stack-badge sb-amber">Docker</span>
+            <span class="stack-badge sb-white">Nginx</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Mobile / Notification</div>
+            <span class="stack-badge sb-pink">Line OA</span>
+            <span class="stack-badge sb-pink">Line LIFF</span>
+            <span class="stack-badge sb-white">Line Messaging API</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 2: ARCHITECTURE -->
+  <div class="section-wrap">
+    <div class="section-label">02 — System Architecture</div>
+    <div class="bento bento-2">
+
+      <div class="card card-span2">
+        <div class="card-label">System Flow</div>
+        <div class="arch-wrap">
+          <div class="arch-col">
+            <div class="arch-node" style="background:rgba(124,106,247,.12);border-color:rgba(124,106,247,.4);color:var(--accent2);">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;margin-bottom:4px;">FRONTEND</div>
+              <div style="font-size:12px;font-weight:600;">Next.js 16</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:4px;">App Router · Turbopack · Cache Components · proxy.ts</div>
+            </div>
+            <div class="arch-connector"><div class="line-v"></div><span>NextAuth Session + JWT</span><div class="line-v"></div></div>
+            <div class="arch-node" style="background:rgba(77,184,255,.1);border-color:rgba(77,184,255,.3);color:var(--blue);">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;margin-bottom:4px;">CM DASHBOARD</div>
+              <div style="font-size:11px;color:var(--muted2);">Form Builder · Calendar · Patient Profile</div>
+            </div>
+          </div>
+
+          <div class="arch-arrow-col">
+            <div style="color:var(--muted);font-size:20px;">⇄</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted2);text-align:center;">REST API<br>HTTPS/TLS</div>
+            <div style="color:var(--muted);font-size:20px;">⇄</div>
+          </div>
+
+          <div class="arch-col">
+            <div class="arch-node" style="background:rgba(45,212,160,.1);border-color:rgba(45,212,160,.3);color:var(--green);">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;margin-bottom:4px;">BACKEND</div>
+              <div style="font-size:12px;font-weight:600;">NestJS API</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:4px;">JWT Guards · Prisma · Bull Queue</div>
+            </div>
+            <div class="arch-connector"><div class="line-v"></div><span>Prisma ORM</span><div class="line-v"></div></div>
+            <div class="arch-node" style="background:rgba(77,184,255,.1);border-color:rgba(77,184,255,.3);color:var(--blue);">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;margin-bottom:4px;">DATABASE</div>
+              <div style="font-size:12px;font-weight:600;">PostgreSQL 15</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:4px;">SSL · Encrypted Fields · Redis Cache</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;">Line Integration Flow</div>
+          <div class="flow">
+            <div class="flow-step"><div class="flow-node fn-pink">Line OA<br>Notification</div><div class="flow-label">Push Message</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><div class="flow-node fn-pink">Field Worker<br>เปิด LIFF</div><div class="flow-label">Line App</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><div class="flow-node fn-amber">LIFF Token<br>Verify</div><div class="flow-label">NestJS API</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><div class="flow-node fn-blue">Check-in<br>Form Submit</div><div class="flow-label">Activities</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><div class="flow-node fn-green">CM Dashboard<br>Real-time</div><div class="flow-label">Next.js</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Next.js Structure</div>
+        <div class="code-block">
+<span class="cmt">// app/ directory structure</span>
+app/
+├── <span class="str">(auth)/login</span>          <span class="cmt">// NextAuth</span>
+├── <span class="str">dashboard/</span>            <span class="cmt">// CM Overview</span>
+├── <span class="str">patients/</span>
+│   └── <span class="str">[id]/</span>             <span class="cmt">// Profile + Timeline</span>
+├── <span class="str">planning/</span>             <span class="cmt">// Calendar + Drawer</span>
+├── <span class="str">forms/</span>
+│   ├── <span class="str">page.tsx</span>          <span class="cmt">// Form List</span>
+│   └── <span class="str">[id]/builder</span>     <span class="cmt">// Form Builder DnD</span>
+└── <span class="str">api/</span>
+    └── <span class="str">auth/[...nextauth]</span>
+
+<span class="cmt">// LIFF pages (sub-domain)</span>
+liff/
+├── <span class="str">tasks/</span>            <span class="cmt">// รายการงานวันนี้</span>
+├── <span class="str">checkin/[taskId]</span>
+├── <span class="str">form/[taskId]/[formId]</span>
+└── <span class="str">note/[taskId]</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">NestJS Modules</div>
+        <div class="module-grid">
+          <div class="module-item"><div class="module-name">auth/</div><div class="module-desc">JWT, Line LIFF, Guards, Strategies</div></div>
+          <div class="module-item"><div class="module-name">users/</div><div class="module-desc">CM + Field Worker management</div></div>
+          <div class="module-item"><div class="module-name">patients/</div><div class="module-desc">CRUD + org-scoped queries</div></div>
+          <div class="module-item"><div class="module-name">forms/</div><div class="module-desc">Template CRUD, fields JSONB</div></div>
+          <div class="module-item"><div class="module-name">events/</div><div class="module-desc">Calendar + auto task generation</div></div>
+          <div class="module-item"><div class="module-name">tasks/</div><div class="module-desc">event × patient assignment</div></div>
+          <div class="module-item"><div class="module-name">submissions/</div><div class="module-desc">Form answers JSONB</div></div>
+          <div class="module-item"><div class="module-name">activities/</div><div class="module-desc">Timeline: check-in, note, submit</div></div>
+          <div class="module-item"><div class="module-name">line/</div><div class="module-desc">Webhook, push message, LIFF verify</div></div>
+          <div class="module-item"><div class="module-name">notifications/</div><div class="module-desc">Bull Queue + Line push</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 3: DATABASE SCHEMA -->
+  <div class="section-wrap">
+    <div class="section-label">03 — Database Schema</div>
+    <div class="bento bento-3">
+
+      <div class="card">
+        <div class="card-label">users</div>
+        <div class="schema-table">
+          <div class="schema-head"><span class="icon">👤</span> users</div>
+          <div class="schema-row"><span class="sf-name">id</span><span class="sf-type">UUID PK</span><span class="sf-note">gen_random_uuid()</span></div>
+          <div class="schema-row"><span class="sf-name">email</span><span class="sf-type">TEXT</span><span class="sf-note">UNIQUE NOT NULL</span></div>
+          <div class="schema-row"><span class="sf-name">password_hash</span><span class="sf-type">TEXT</span><span class="sf-note">bcrypt cost=12</span></div>
+          <div class="schema-row"><span class="sf-name">name</span><span class="sf-type">TEXT</span><span class="sf-note">NOT NULL</span></div>
+          <div class="schema-row"><span class="sf-name">role</span><span class="sf-type">ENUM</span><span class="sf-note">cm | field_worker | admin</span></div>
+          <div class="schema-row"><span class="sf-name">org_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ organizations</span></div>
+          <div class="schema-row"><span class="sf-name">line_uid</span><span class="sf-type">TEXT</span><span class="sf-note">NULLABLE</span></div>
+          <div class="schema-row"><span class="sf-name">is_active</span><span class="sf-type">BOOL</span><span class="sf-note">DEFAULT true</span></div>
+          <div class="schema-row"><span class="sf-name">created_at</span><span class="sf-type">TIMESTAMPTZ</span><span class="sf-note">DEFAULT now()</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">patients</div>
+        <div class="schema-table">
+          <div class="schema-head"><span class="icon">🏥</span> patients</div>
+          <div class="schema-row"><span class="sf-name">id</span><span class="sf-type">UUID PK</span><span class="sf-note"></span></div>
+          <div class="schema-row"><span class="sf-name">name_enc</span><span class="sf-type">JSONB</span><span class="sf-note">AES-256-GCM encrypted</span></div>
+          <div class="schema-row"><span class="sf-name">hn</span><span class="sf-type">TEXT</span><span class="sf-note">Hospital Number</span></div>
+          <div class="schema-row"><span class="sf-name">age</span><span class="sf-type">INT</span><span class="sf-note"></span></div>
+          <div class="schema-row"><span class="sf-name">gender</span><span class="sf-type">ENUM</span><span class="sf-note">male | female | other</span></div>
+          <div class="schema-row"><span class="sf-name">status</span><span class="sf-type">ENUM</span><span class="sf-note">critical | pending | stable</span></div>
+          <div class="schema-row"><span class="sf-name">conditions</span><span class="sf-type">TEXT[]</span><span class="sf-note">Array of conditions</span></div>
+          <div class="schema-row"><span class="sf-name">location_text</span><span class="sf-type">TEXT</span><span class="sf-note">พื้นที่พักอาศัย</span></div>
+          <div class="schema-row"><span class="sf-name">org_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ organizations</span></div>
+          <div class="schema-row"><span class="sf-name">cm_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ users (CM)</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">form_templates</div>
+        <div class="schema-table">
+          <div class="schema-head"><span class="icon">📋</span> form_templates</div>
+          <div class="schema-row"><span class="sf-name">id</span><span class="sf-type">UUID PK</span><span class="sf-note"></span></div>
+          <div class="schema-row"><span class="sf-name">title</span><span class="sf-type">TEXT</span><span class="sf-note">NOT NULL</span></div>
+          <div class="schema-row"><span class="sf-name">fields</span><span class="sf-type">JSONB</span><span class="sf-note">Array of field objects</span></div>
+          <div class="schema-row"><span class="sf-name">created_by</span><span class="sf-type">UUID FK</span><span class="sf-note">→ users</span></div>
+          <div class="schema-row"><span class="sf-name">org_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ organizations</span></div>
+          <div class="schema-row"><span class="sf-name">is_active</span><span class="sf-type">BOOL</span><span class="sf-note">soft delete</span></div>
+          <div class="schema-row"><span class="sf-name">updated_at</span><span class="sf-type">TIMESTAMPTZ</span><span class="sf-note">auto update</span></div>
+        </div>
+        <div class="code-block" style="margin-top:10px;">
+<span class="cmt">// fields JSONB structure</span>
+[{
+  <span class="str">"id"</span>: <span class="str">"uuid"</span>,
+  <span class="str">"type"</span>: <span class="str">"text|number|select|radio|checkbox|scale|date|textarea"</span>,
+  <span class="str">"label"</span>: <span class="str">"string"</span>,
+  <span class="str">"placeholder"</span>: <span class="str">"string"</span>,
+  <span class="str">"options"</span>: [<span class="str">"string"</span>],
+  <span class="str">"required"</span>: <span class="kw">boolean</span>,
+  <span class="str">"order"</span>: <span class="num">number</span>
+}]
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">events</div>
+        <div class="schema-table">
+          <div class="schema-head"><span class="icon">📅</span> events</div>
+          <div class="schema-row"><span class="sf-name">id</span><span class="sf-type">UUID PK</span><span class="sf-note"></span></div>
+          <div class="schema-row"><span class="sf-name">title</span><span class="sf-type">TEXT</span><span class="sf-note">NOT NULL</span></div>
+          <div class="schema-row"><span class="sf-name">start_date</span><span class="sf-type">DATE</span><span class="sf-note">NOT NULL</span></div>
+          <div class="schema-row"><span class="sf-name">end_date</span><span class="sf-type">DATE</span><span class="sf-note">NOT NULL</span></div>
+          <div class="schema-row"><span class="sf-name">form_ids</span><span class="sf-type">UUID[]</span><span class="sf-note">Array FK → form_templates</span></div>
+          <div class="schema-row"><span class="sf-name">patient_ids</span><span class="sf-type">UUID[]</span><span class="sf-note">Array FK → patients</span></div>
+          <div class="schema-row"><span class="sf-name">assignee_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ users (field worker)</span></div>
+          <div class="schema-row"><span class="sf-name">priority</span><span class="sf-type">ENUM</span><span class="sf-note">normal | urgent | critical</span></div>
+          <div class="schema-row"><span class="sf-name">note</span><span class="sf-type">TEXT</span><span class="sf-note">คำแนะนำพิเศษ</span></div>
+          <div class="schema-row"><span class="sf-name">created_by</span><span class="sf-type">UUID FK</span><span class="sf-note">→ users (CM)</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">event_tasks</div>
+        <div class="schema-table">
+          <div class="schema-head"><span class="icon">✅</span> event_tasks</div>
+          <div class="schema-row"><span class="sf-name">id</span><span class="sf-type">UUID PK</span><span class="sf-note"></span></div>
+          <div class="schema-row"><span class="sf-name">event_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ events</span></div>
+          <div class="schema-row"><span class="sf-name">patient_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ patients</span></div>
+          <div class="schema-row"><span class="sf-name">form_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ form_templates</span></div>
+          <div class="schema-row"><span class="sf-name">assignee_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ users</span></div>
+          <div class="schema-row"><span class="sf-name">status</span><span class="sf-type">ENUM</span><span class="sf-note">pending|in_progress|done|not_found</span></div>
+          <div class="schema-row"><span class="sf-name">liff_token</span><span class="sf-type">TEXT</span><span class="sf-note">single-use, 4hr expiry</span></div>
+          <div class="schema-row"><span class="sf-name">token_exp</span><span class="sf-type">TIMESTAMPTZ</span><span class="sf-note"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">submissions + activities</div>
+        <div class="schema-table">
+          <div class="schema-head"><span class="icon">📝</span> submissions</div>
+          <div class="schema-row"><span class="sf-name">id</span><span class="sf-type">UUID PK</span><span class="sf-note"></span></div>
+          <div class="schema-row"><span class="sf-name">task_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ event_tasks</span></div>
+          <div class="schema-row"><span class="sf-name">answers</span><span class="sf-type">JSONB</span><span class="sf-note">[{fieldId, value}]</span></div>
+          <div class="schema-row"><span class="sf-name">submitted_by</span><span class="sf-type">UUID FK</span><span class="sf-note">→ users</span></div>
+          <div class="schema-row"><span class="sf-name">submitted_at</span><span class="sf-type">TIMESTAMPTZ</span><span class="sf-note"></span></div>
+        </div>
+        <div class="schema-table" style="margin-top:8px;">
+          <div class="schema-head"><span class="icon">📊</span> activities</div>
+          <div class="schema-row"><span class="sf-name">id</span><span class="sf-type">UUID PK</span><span class="sf-note"></span></div>
+          <div class="schema-row"><span class="sf-name">patient_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ patients</span></div>
+          <div class="schema-row"><span class="sf-name">type</span><span class="sf-type">ENUM</span><span class="sf-note">check_in|note|form_submit|assign</span></div>
+          <div class="schema-row"><span class="sf-name">payload</span><span class="sf-type">JSONB</span><span class="sf-note">flexible metadata</span></div>
+          <div class="schema-row"><span class="sf-name">actor_id</span><span class="sf-type">UUID FK</span><span class="sf-note">→ users</span></div>
+          <div class="schema-row"><span class="sf-name">created_at</span><span class="sf-type">TIMESTAMPTZ</span><span class="sf-note">Timeline ordering</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 4: API ENDPOINTS -->
+  <div class="section-wrap">
+    <div class="section-label">04 — API Endpoints</div>
+    <div class="bento bento-2">
+
+      <div class="card">
+        <div class="card-label">Auth + Users</div>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/auth/login</span><span class="ep-auth">Public</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/auth/refresh</span><span class="ep-auth">Refresh Token</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/auth/logout</span><span class="ep-auth">JWT</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/auth/liff/verify</span><span class="ep-auth">LIFF Token</span></div>
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/users/me</span><span class="ep-auth">JWT</span></div>
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/users</span><span class="ep-auth">JWT · Admin</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/users</span><span class="ep-auth">JWT · Admin</span></div>
+          <div class="endpoint-row"><span class="method m-patch">PATCH</span><span class="ep-path">/users/:id</span><span class="ep-auth">JWT · Admin</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Patients</div>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/patients</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/patients/:id</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/patients</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-patch">PATCH</span><span class="ep-path">/patients/:id</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-delete">DELETE</span><span class="ep-path">/patients/:id</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/patients/:id/activities</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/patients/:id/submissions</span><span class="ep-auth">JWT · CM</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Forms + Events</div>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/forms</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/forms</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-put">PUT</span><span class="ep-path">/forms/:id</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-delete">DELETE</span><span class="ep-path">/forms/:id</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/events?month=&year=</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/events</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-patch">PATCH</span><span class="ep-path">/events/:id</span><span class="ep-auth">JWT · CM</span></div>
+          <div class="endpoint-row"><span class="method m-delete">DELETE</span><span class="ep-path">/events/:id</span><span class="ep-auth">JWT · CM</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Tasks + LIFF</div>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><span class="method m-get">GET</span><span class="ep-path">/tasks/my</span><span class="ep-auth">LIFF JWT</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/tasks/:id/checkin</span><span class="ep-auth">LIFF JWT</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/tasks/:id/note</span><span class="ep-auth">LIFF JWT</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/tasks/:id/submit</span><span class="ep-auth">LIFF JWT</span></div>
+          <div class="endpoint-row"><span class="method m-patch">PATCH</span><span class="ep-path">/tasks/:id/status</span><span class="ep-auth">LIFF JWT</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/line/webhook</span><span class="ep-auth">Line Signature</span></div>
+          <div class="endpoint-row"><span class="method m-post">POST</span><span class="ep-path">/line/notify/:taskId</span><span class="ep-auth">JWT · CM</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 5: AUTH FLOW -->
+  <div class="section-wrap">
+    <div class="section-label">05 — Authentication Flow</div>
+    <div class="bento bento-2">
+
+      <div class="card">
+        <div class="card-label">CM — Web Auth (NextAuth + JWT)</div>
+        <div class="code-block">
+<span class="cmt">// next-auth config (Next.js 16.2.6)</span>
+<span class="kw">export const</span> authOptions = {
+  providers: [
+    <span class="fn">CredentialsProvider</span>({
+      <span class="kw">async</span> <span class="fn">authorize</span>(credentials) {
+        <span class="cmt">// ส่งไป NestJS /auth/login</span>
+        <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`${API}/auth/login`</span>, {
+          method: <span class="str">'POST'</span>,
+          body: <span class="typ">JSON</span>.<span class="fn">stringify</span>(credentials)
+        });
+        <span class="kw">const</span> { accessToken, user } = <span class="kw">await</span> res.<span class="fn">json</span>();
+        <span class="kw">return</span> { ...user, accessToken };
+      }
+    })
+  ],
+  callbacks: {
+    <span class="kw">async</span> <span class="fn">jwt</span>({ token, user }) {
+      <span class="kw">if</span> (user) token.accessToken = user.accessToken;
+      <span class="kw">return</span> token;
+    },
+    <span class="kw">async</span> <span class="fn">session</span>({ session, token }) {
+      session.accessToken = token.accessToken;
+      <span class="kw">return</span> session;
+    }
+  }
+};
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Field Worker — LIFF Auth</div>
+        <div class="code-block">
+<span class="cmt">// LIFF initialization + token verify</span>
+<span class="kw">await</span> liff.<span class="fn">init</span>({ liffId: <span class="typ">process</span>.env.LIFF_ID });
+
+<span class="kw">if</span> (!liff.<span class="fn">isLoggedIn</span>()) liff.<span class="fn">login</span>();
+
+<span class="kw">const</span> idToken = liff.<span class="fn">getIDToken</span>();
+
+<span class="cmt">// ส่ง idToken ไป NestJS verify</span>
+<span class="kw">const</span> { accessToken } = <span class="kw">await</span> <span class="fn">fetch</span>(
+  <span class="str">`${API}/auth/liff/verify`</span>,
+  { method: <span class="str">'POST'</span>, body: <span class="typ">JSON</span>.<span class="fn">stringify</span>({ idToken }) }
+).<span class="fn">then</span>(r => r.<span class="fn">json</span>());
+
+<span class="cmt">// NestJS side — verify กับ Line API</span>
+<span class="kw">async</span> <span class="fn">verifyLiffToken</span>(idToken: <span class="typ">string</span>) {
+  <span class="kw">const</span> profile = <span class="kw">await</span> <span class="fn">fetch</span>(
+    <span class="str">'https://api.line.me/oauth2/v2.1/verify'</span>,
+    { method: <span class="str">'POST'</span>, body: <span class="str">`id_token=${idToken}&client_id=${CHANNEL_ID}`</span> }
+  );
+  <span class="cmt">// map line_uid → user → issue JWT</span>
+  <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">generateJwt</span>(user);
+}
+        </div>
+      </div>
+
+      <div class="card card-dark">
+        <div class="card-label">JWT Token Strategy</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+          <div style="padding:14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--line);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);margin-bottom:8px;">ACCESS TOKEN</div>
+            <ul class="spec-list">
+              <li>Expiry: 15 นาที</li>
+              <li>Algorithm: HS256</li>
+              <li>Payload: sub, role, orgId</li>
+              <li>Transport: Authorization Header</li>
+            </ul>
+          </div>
+          <div style="padding:14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--line);">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);margin-bottom:8px;">REFRESH TOKEN</div>
+            <ul class="spec-list">
+              <li>Expiry: 7 วัน</li>
+              <li>Rotation: ทุกครั้งที่ใช้</li>
+              <li>Storage: Redis + HttpOnly Cookie</li>
+              <li>Revoke: logout / reuse detected</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-dark">
+        <div class="card-label">Task LIFF Token (Single-use)</div>
+        <div class="code-block">
+<span class="cmt">// สร้าง token ก่อนส่ง Line notification</span>
+<span class="kw">const</span> token = <span class="fn">randomBytes</span>(<span class="num">32</span>).<span class="fn">toString</span>(<span class="str">'hex'</span>);
+
+<span class="kw">await</span> redis.<span class="fn">setex</span>(
+  <span class="str">`liff:token:${token}`</span>,
+  <span class="num">60 * 60 * 4</span>, <span class="cmt">// 4 ชม.</span>
+  <span class="typ">JSON</span>.<span class="fn">stringify</span>({ taskId, userId })
+);
+
+<span class="cmt">// Line message URL</span>
+<span class="kw">const</span> url = <span class="str">`https://liff.line.me/${LIFF_ID}?token=${token}`</span>;
+
+<span class="cmt">// ใช้แล้วลบทันที (single-use)</span>
+<span class="kw">await</span> redis.<span class="fn">del</span>(<span class="str">`liff:token:${token}`</span>);
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 6: OWASP TOP 10 -->
+  <div class="section-wrap">
+    <div class="section-label">06 — OWASP Top 10 Implementation</div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="owasp-grid">
+        <div class="owasp-item">
+          <div class="owasp-num">A01</div>
+          <div><div class="owasp-title">Broken Access Control</div><div class="owasp-desc">NestJS Guard + org-scoped queries ทุก endpoint · PatientOwnerGuard · Role-based decorator</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A02</div>
+          <div><div class="owasp-title">Cryptographic Failures</div><div class="owasp-desc">AES-256-GCM เข้ารหัส PII · bcrypt cost=12 · HTTPS/HSTS · PostgreSQL SSL required</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A03</div>
+          <div><div class="owasp-title">Injection</div><div class="owasp-desc">Prisma ORM parameterized query · class-validator whitelist · ห้าม $queryRawUnsafe</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A04</div>
+          <div><div class="owasp-title">Insecure Design</div><div class="owasp-desc">Single-use LIFF token · Redis TTL 4hr · Check-in rate limit 1/hr · Threat model documented</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A05</div>
+          <div><div class="owasp-title">Security Misconfiguration</div><div class="owasp-desc">Helmet.js headers · CORS whitelist · Error masking production · .env never commit</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A06</div>
+          <div><div class="owasp-title">Outdated Components</div><div class="owasp-desc">npm audit CI gate · Dependabot weekly · Docker Scout image scan · Lock file committed</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A07</div>
+          <div><div class="owasp-title">Auth Failures</div><div class="owasp-desc">JWT rotation · LIFF server-side verify · Login rate limit 5/15min · Redis token revoke</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A08</div>
+          <div><div class="owasp-title">Data Integrity Failures</div><div class="owasp-desc">Line webhook HMAC-SHA256 verify · timingSafeEqual · cosign Docker image · Pin GitHub Actions SHA</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A09</div>
+          <div><div class="owasp-title">Logging & Monitoring</div><div class="owasp-desc">AuditInterceptor ทุก request · Threshold alert ผ่าน Line OA · Structured JSON logs</div></div>
+        </div>
+        <div class="owasp-item">
+          <div class="owasp-num">A10</div>
+          <div><div class="owasp-title">SSRF</div><div class="owasp-desc">Private IP blocklist · Hostname whitelist (api.line.me เท่านั้น) · Request timeout 5s</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7: DEPLOYMENT -->
+  <div class="section-wrap">
+    <div class="section-label">07 — Deployment & Infrastructure</div>
+    <div class="bento bento-3">
+
+      <div class="card card-green">
+        <div class="card-label">CI/CD Pipeline</div>
+        <ul class="spec-list">
+          <li>GitHub Actions — test, lint, audit, build</li>
+          <li>npm audit --audit-level=high (block on fail)</li>
+          <li>Docker build + Scout scan</li>
+          <li>cosign image signing</li>
+          <li>Deploy ผ่าน pipeline เท่านั้น</li>
+          <li>Dependabot auto PR weekly</li>
+        </ul>
+      </div>
+
+      <div class="card card-blue">
+        <div class="card-label">Services</div>
+        <table class="spec-table">
+          <tr><td>Frontend</td><td style="color:var(--white2);">Vercel / Nginx</td></tr>
+          <tr><td>Backend</td><td style="color:var(--white2);">Docker · Railway</td></tr>
+          <tr><td>Database</td><td style="color:var(--white2);">PostgreSQL 15 SSL</td></tr>
+          <tr><td>Cache</td><td style="color:var(--white2);">Redis 7</td></tr>
+          <tr><td>Queue</td><td style="color:var(--white2);">Bull + Redis</td></tr>
+          <tr><td>LIFF</td><td style="color:var(--white2);">Sub-domain HTTPS</td></tr>
+        </table>
+      </div>
+
+      <div class="card card-amber">
+        <div class="card-label">Environment Variables</div>
+        <div class="code-block">
+<span class="cmt"># Backend (.env)</span>
+<span class="kw">DATABASE_URL</span>=postgresql://...?sslmode=require
+<span class="kw">JWT_SECRET</span>=<span class="str"># 256-bit random</span>
+<span class="kw">ENCRYPTION_KEY</span>=<span class="str"># 32-byte hex</span>
+<span class="kw">REDIS_URL</span>=redis://...
+<span class="kw">LINE_CHANNEL_SECRET</span>=...
+<span class="kw">LINE_CHANNEL_ACCESS</span>=...
+<span class="kw">LIFF_ID</span>=...
+<span class="kw">FRONTEND_URL</span>=https://...
+
+<span class="cmt"># Never commit — use Vault / cloud secrets</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="border-top:1px solid var(--line);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2);">HomeMed Connect · Technical Spec v1.0 · Next.js 16.2.6 · 2569</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <span class="stack-badge sb-purple">Next.js 16</span>
+      <span class="stack-badge sb-green">NestJS</span>
+      <span class="stack-badge sb-blue">PostgreSQL</span>
+      <span class="stack-badge sb-pink">Line OA + LIFF</span>
+      <span class="stack-badge sb-amber">OWASP 10/10</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
