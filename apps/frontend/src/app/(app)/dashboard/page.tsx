@@ -25,7 +25,7 @@ async function fetchPatients(token: string): Promise<Patient[]> {
       cache: 'no-store',
     });
     if (!res.ok) return [];
-    return res.json();
+    return res.json() as Promise<Patient[]>;
   } catch {
     return [];
   }
@@ -62,7 +62,7 @@ const STATUS_BADGE: Record<PatientStatus, string> = {
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  const token = (session as any)?.accessToken ?? '';
+  const token = session?.accessToken ?? '';
 
   const [patients, eventCount] = await Promise.all([
     fetchPatients(token),
