@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth.config';
 import { Card, Statistic, Tag, Progress } from 'antd';
 import SeverityChart from '@/components/charts/SeverityChart';
 import AgeClusterChart, { type AgeBand } from '@/components/charts/AgeClusterChart';
+import AlertSection from '@/components/dashboard/AlertSection';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -17,6 +18,15 @@ interface Patient {
 async function fetchPatients(token: string): Promise<Patient[]> {
   try {
     const res = await fetch(`${API_URL}/patients`, {
+      headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
+    });
+    return res.ok ? res.json() : [];
+  } catch { return []; }
+}
+
+async function fetchAlerts(token: string) {
+  try {
+    const res = await fetch(`${API_URL}/alerts`, {
       headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
     });
     return res.ok ? res.json() : [];
@@ -65,7 +75,11 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   const token = session?.accessToken ?? '';
 
-  const [patients, eventCount] = await Promise.all([fetchPatients(token), fetchEventCount(token)]);
+  const [patients, eventCount, alerts] = await Promise.all([
+    fetchPatients(token),
+    fetchEventCount(token),
+    fetchAlerts(token),
+  ]);
 
   const critical = patients.filter((p) => p.status === 'CRITICAL').length;
   const pending  = patients.filter((p) => p.status === 'PENDING').length;
@@ -85,6 +99,8 @@ export default async function DashboardPage() {
           Dashboard
         </h2>
       </div>
+
+      <AlertSection alerts={alerts} />
 
       {/* Bento grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
