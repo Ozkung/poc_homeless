@@ -27,6 +27,7 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string) {
+    if (!refreshToken) throw new UnauthorizedException('Invalid refresh token');
     const key = `refresh:${refreshToken}`;
     const raw = await this.redis.get(key);
     if (!raw) throw new UnauthorizedException('Invalid refresh token');
@@ -41,6 +42,7 @@ export class AuthService {
   }
 
   async logout(refreshToken: string) {
+    if (!refreshToken) return;
     await this.redis.del(`refresh:${refreshToken}`);
   }
 

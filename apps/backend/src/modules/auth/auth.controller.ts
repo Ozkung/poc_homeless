@@ -1,5 +1,5 @@
 import {
-  Controller, Post, Body, Res, Req, HttpCode, HttpStatus,
+  Controller, Post, Body, Res, Req, HttpCode, HttpStatus, BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
@@ -30,6 +30,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token: string = req.cookies?.[COOKIE_NAME] ?? '';
     const { accessToken, refreshToken, role } = await this.auth.refresh(token);
@@ -39,6 +40,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async logout(@Res({ passthrough: true }) res: Response, @Body('refreshToken') bodyToken?: string) {
     const token: string = bodyToken ?? '';
     await this.auth.logout(token);
@@ -47,7 +49,9 @@ export class AuthController {
 
   @Post('liff/verify')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   liffVerify(@Body('idToken') idToken: string) {
+    if (!idToken) throw new BadRequestException('idToken is required');
     return this.auth.verifyLiffToken(idToken);
   }
 }
