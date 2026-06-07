@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Home } from 'lucide-react';
 import { Alert, Button, Card, Form, Input, Typography } from 'antd';
 
 const { Title } = Typography;
@@ -67,9 +68,9 @@ export default function SetupPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <div style={{
             width: 40, height: 40, borderRadius: 10, background: '#1677ff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            🏥
+            <Home size={20} color="white" strokeWidth={2.5} />
           </div>
           <div>
             <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 9, color: '#1677ff', textTransform: 'uppercase', letterSpacing: '2.5px', lineHeight: 1, marginBottom: 2 }}>

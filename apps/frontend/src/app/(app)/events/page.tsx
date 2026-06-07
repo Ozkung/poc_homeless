@@ -9,6 +9,7 @@ import {
 import { th } from 'date-fns/locale';
 import { Button, Card, Drawer, Tag, Typography, message } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { User } from 'lucide-react';
 
 const { Text, Title } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -280,7 +281,7 @@ export default function EventsPage() {
                 </Text>
                 {uniqueAssignees.length > 0 && (
                   <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
-                    👤 {uniqueAssignees.slice(0, 2).join(', ')}{uniqueAssignees.length > 2 && ` +${uniqueAssignees.length - 2}`}
+                    <User size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />{uniqueAssignees.slice(0, 2).join(', ')}{uniqueAssignees.length > 2 && ` +${uniqueAssignees.length - 2}`}
                   </Text>
                 )}
                 {uniquePatients.length > 0 && (

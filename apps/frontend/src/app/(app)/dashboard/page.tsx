@@ -2,10 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
-import { Card, Statistic, Tag, Progress, Typography } from 'antd';
+import { Card, Statistic, Tag, Progress } from 'antd';
 
-const { Title, Text } = Typography;
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 interface Patient {
   id: string; name: string; hn: string;
@@ -51,9 +50,9 @@ export default async function DashboardPage() {
   const [patients, eventCount] = await Promise.all([fetchPatients(token), fetchEventCount(token)]);
 
   const critical = patients.filter((p) => p.status === 'CRITICAL').length;
-  const pending = patients.filter((p) => p.status === 'PENDING').length;
-  const stable = patients.filter((p) => p.status === 'STABLE').length;
-  const tracked = stable + pending;
+  const pending  = patients.filter((p) => p.status === 'PENDING').length;
+  const stable   = patients.filter((p) => p.status === 'STABLE').length;
+  const tracked  = stable + pending;
   const pct = patients.length > 0 ? Math.round((tracked / patients.length) * 100) : 0;
   const recent = patients.slice(-5).reverse();
 
@@ -61,12 +60,12 @@ export default async function DashboardPage() {
     <div>
       {/* Page header */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
+        <div style={{ fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
           Overview
         </div>
-        <Title level={2} style={{ margin: 0, fontFamily: "'Sarabun',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
+        <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: -1, color: '#111' }}>
           Dashboard
-        </Title>
+        </h2>
       </div>
 
       {/* Bento grid */}
@@ -77,15 +76,15 @@ export default async function DashboardPage() {
           style={{ gridColumn: 'span 2', gridRow: 'span 2', borderTop: '3px solid #1677ff' }}
           styles={{ body: { padding: 24 } }}
         >
-          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
             ภาพรวมผู้ป่วย
-          </Text>
+          </span>
           <div style={{ marginTop: 8 }}>
             <Statistic
               value={patients.length}
-              valueStyle={{ fontFamily: "'Sarabun',sans-serif", fontSize: 52, fontWeight: 800, lineHeight: 1 }}
+              valueStyle={{ fontSize: 52, fontWeight: 800, lineHeight: 1 }}
             />
-            <Text type="secondary" style={{ fontSize: 12 }}>ผู้ป่วยทั้งหมดในระบบ</Text>
+            <span style={{ fontSize: 12, color: '#888' }}>ผู้ป่วยทั้งหมดในระบบ</span>
           </div>
           <Progress
             percent={pct}
@@ -94,9 +93,9 @@ export default async function DashboardPage() {
             trailColor="#f0f0f0"
             style={{ margin: '16px 0 4px' }}
           />
-          <Text type="secondary" style={{ fontSize: 11, fontFamily: "'Sarabun',sans-serif" }}>
+          <span style={{ fontSize: 11, color: '#888' }}>
             ติดตามแล้ว {tracked} ราย · {pct}%
-          </Text>
+          </span>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
             <Tag color="error">● {critical} วิกฤต</Tag>
             <Tag color="warning">● {pending} รอดำเนินการ</Tag>
@@ -105,11 +104,11 @@ export default async function DashboardPage() {
 
           <div style={{ height: 1, background: '#f5f5f5', margin: '20px -24px' }} />
 
-          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>
             ผู้ป่วยล่าสุด
-          </Text>
+          </div>
           {recent.length === 0 ? (
-            <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีข้อมูลผู้ป่วย</Text>
+            <span style={{ fontSize: 12, color: '#888' }}>ยังไม่มีข้อมูลผู้ป่วย</span>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {recent.map((p, i) => (
@@ -133,7 +132,7 @@ export default async function DashboardPage() {
                     <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {p.name}
                     </div>
-                    <div style={{ fontSize: 11, color: '#aaa', fontFamily: "'Sarabun',sans-serif" }}>
+                    <div style={{ fontSize: 11, color: '#aaa' }}>
                       HN {p.hn}{p.locationText ? ` · ${p.locationText}` : ''}
                     </div>
                   </div>
@@ -146,45 +145,45 @@ export default async function DashboardPage() {
 
         {/* Critical — 1×1 */}
         <Card style={{ borderTop: '3px solid #ff4d4f' }} styles={{ body: { padding: 24 } }}>
-          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
             ผู้ป่วยวิกฤต
-          </Text>
+          </span>
           <div style={{ marginTop: 8 }}>
             <Statistic
               value={critical}
-              valueStyle={{ fontFamily: "'Sarabun',sans-serif", fontSize: 44, fontWeight: 800, color: '#ff4d4f', lineHeight: 1 }}
+              valueStyle={{ fontSize: 44, fontWeight: 800, color: '#ff4d4f', lineHeight: 1 }}
             />
-            <Text type="secondary" style={{ fontSize: 12 }}>ต้องการความช่วยเหลือเร่งด่วน</Text>
+            <span style={{ fontSize: 12, color: '#888' }}>ต้องการความช่วยเหลือเร่งด่วน</span>
           </div>
         </Card>
 
         {/* Events — 1×1 */}
         <Card style={{ borderTop: '3px solid #faad14' }} styles={{ body: { padding: 24 } }}>
-          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
             กิจกรรมเดือนนี้
-          </Text>
+          </span>
           <div style={{ marginTop: 8 }}>
             <Statistic
               value={eventCount}
-              valueStyle={{ fontFamily: "'Sarabun',sans-serif", fontSize: 44, fontWeight: 800, color: '#faad14', lineHeight: 1 }}
+              valueStyle={{ fontSize: 44, fontWeight: 800, color: '#faad14', lineHeight: 1 }}
             />
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <span style={{ fontSize: 12, color: '#888' }}>
               {new Date().toLocaleString('th-TH', { month: 'long', year: 'numeric' })}
-            </Text>
+            </span>
           </div>
         </Card>
 
         {/* Stable — 1×1 */}
         <Card style={{ borderTop: '3px solid #52c41a' }} styles={{ body: { padding: 24 } }}>
-          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
             ผู้ป่วยปกติ
-          </Text>
+          </span>
           <div style={{ marginTop: 8 }}>
             <Statistic
               value={stable}
-              valueStyle={{ fontFamily: "'Sarabun',sans-serif", fontSize: 44, fontWeight: 800, color: '#52c41a', lineHeight: 1 }}
+              valueStyle={{ fontSize: 44, fontWeight: 800, color: '#52c41a', lineHeight: 1 }}
             />
-            <Text type="secondary" style={{ fontSize: 12 }}>สถานะเสถียร</Text>
+            <span style={{ fontSize: 12, color: '#888' }}>สถานะเสถียร</span>
           </div>
         </Card>
 

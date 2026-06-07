@@ -2,15 +2,18 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
+import { LayoutDashboard, Users, CalendarDays, FileText, LogOut } from 'lucide-react';
 import type { MenuProps } from 'antd';
 
 const { Text } = Typography;
 
+const ICON_SIZE = 15;
+
 const items: MenuProps['items'] = [
-  { key: '/dashboard', label: 'Dashboard', icon: <span>◈</span> },
-  { key: '/patients', label: 'ผู้ป่วย', icon: <span>⊕</span> },
-  { key: '/events', label: 'แผนการเยี่ยม', icon: <span>▦</span> },
-  { key: '/forms', label: 'แบบฟอร์ม', icon: <span>▤</span> },
+  { key: '/dashboard', label: 'Dashboard',      icon: <LayoutDashboard size={ICON_SIZE} /> },
+  { key: '/patients',  label: 'ผู้ป่วย',        icon: <Users size={ICON_SIZE} /> },
+  { key: '/events',    label: 'แผนการเยี่ยม',   icon: <CalendarDays size={ICON_SIZE} /> },
+  { key: '/forms',     label: 'แบบฟอร์ม',       icon: <FileText size={ICON_SIZE} /> },
 ];
 
 export default function Sidebar() {
@@ -18,7 +21,12 @@ export default function Sidebar() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const selectedKey = (items ?? []).find((item) => item != null && pathname.startsWith((item as { key: string }).key))?.key as string ?? '/dashboard';
+  const selectedKey = (items ?? []).find(
+    (item) => item != null && pathname.startsWith((item as { key: string }).key),
+  )?.key as string ?? '/dashboard';
+
+  const userName: string = (session as any)?.user?.name ?? 'Case Manager';
+  const initials = userName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <aside
@@ -28,12 +36,23 @@ export default function Sidebar() {
       }}
     >
       {/* Logo */}
-      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #f5f5f5' }}>
-        <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 9, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 2 }}>
-          HomeMed
+      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #f5f5f5', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8, background: '#1677ff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
         </div>
-        <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 18, fontWeight: 800, color: '#111' }}>
-          Connect
+        <div>
+          <div style={{ fontSize: 9, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', lineHeight: 1, marginBottom: 2 }}>
+            HomeMed
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#111', lineHeight: 1 }}>
+            Connect
+          </div>
         </div>
       </div>
 
@@ -50,13 +69,13 @@ export default function Sidebar() {
       <div style={{ padding: 12, borderTop: '1px solid #f5f5f5' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#fafafa', borderRadius: 8, marginBottom: 8 }}>
           <Avatar size={28} style={{ background: '#1677ff', fontSize: 11, fontWeight: 700 }}>
-            CM
+            {initials}
           </Avatar>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <Text style={{ fontSize: 12, fontWeight: 600, display: 'block' }} ellipsis>
-              {(session as any)?.user?.name ?? 'Case Manager'}
+              {userName}
             </Text>
-            <Text style={{ fontSize: 10, color: '#bbb', fontFamily: "'Sarabun',sans-serif" }}>
+            <Text style={{ fontSize: 10, color: '#bbb' }}>
               CASE_MANAGER
             </Text>
           </div>
@@ -64,6 +83,7 @@ export default function Sidebar() {
         <Button
           block
           size="small"
+          icon={<LogOut size={12} />}
           onClick={() => signOut({ callbackUrl: '/login' })}
           style={{ fontSize: 12 }}
         >

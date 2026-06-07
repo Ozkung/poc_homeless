@@ -2,6 +2,7 @@
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Home } from 'lucide-react';
 import { Alert, Button, Card, Input, Tag, Typography } from 'antd';
 
 export default function LoginPage() {
@@ -62,7 +63,7 @@ export default function LoginPage() {
               flexShrink: 0,
             }}
           >
-            🏥
+            <Home size={18} color="white" strokeWidth={2.5} />
           </div>
           <div>
             <div

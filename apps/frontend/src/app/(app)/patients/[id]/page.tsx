@@ -3,10 +3,9 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
-import { Card, Descriptions, Tag, Timeline, List, Typography } from 'antd';
+import { Card, Descriptions, Tag, Timeline, List } from 'antd';
 
-const { Title, Text } = Typography;
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 interface Patient {
   id: string; name: string; hn: string;
@@ -54,7 +53,7 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
   if (!patient) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <Text type="secondary">ไม่พบข้อมูลผู้ป่วย</Text>
+        <span style={{ color: '#888' }}>ไม่พบข้อมูลผู้ป่วย</span>
         <div style={{ marginTop: 12 }}>
           <Link href="/patients">← กลับรายชื่อผู้ป่วย</Link>
         </div>
@@ -72,12 +71,12 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
+          <div style={{ fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
             Patient Profile
           </div>
-          <Title level={2} style={{ margin: 0, fontFamily: "'Sarabun',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
+          <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: -1, color: '#111' }}>
             {patient.name}
-          </Title>
+          </h2>
         </div>
         <Tag color={STATUS_COLOR[patient.status]} style={{ fontSize: 13, padding: '4px 14px' }}>
           {STATUS_LABEL[patient.status]}
@@ -92,7 +91,7 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
           <Descriptions
             column={3}
             size="small"
-            labelStyle={{ color: '#aaa', fontSize: 11, fontFamily: "'Sarabun',sans-serif" }}
+            labelStyle={{ color: '#aaa', fontSize: 11 }}
           >
             <Descriptions.Item label="HN">{patient.hn}</Descriptions.Item>
             <Descriptions.Item label="อายุ">{patient.age ? `${patient.age} ปี` : '—'}</Descriptions.Item>
@@ -111,25 +110,21 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
 
         {/* Activity timeline — span 2 */}
         <Card
-          title={
-            <Text style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
-              กิจกรรม
-            </Text>
-          }
+          title={<span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>กิจกรรม</span>}
           style={{ gridColumn: 'span 2' }}
           styles={{ body: { padding: '16px 24px' } }}
         >
           {!activities?.length ? (
-            <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีกิจกรรม</Text>
+            <span style={{ fontSize: 12, color: '#888' }}>ยังไม่มีกิจกรรม</span>
           ) : (
             <Timeline
               items={activities.slice(0, 10).map((a) => ({
                 color: ACTIVITY_COLOR[a.type] ?? '#d9d9d9',
                 children: (
                   <div>
-                    <Text style={{ fontSize: 13 }}>{a.actor.displayName}</Text>
+                    <span style={{ fontSize: 13 }}>{a.actor.displayName}</span>
                     <Tag style={{ marginLeft: 8, fontSize: 10 }}>{a.type}</Tag>
-                    <div style={{ fontSize: 11, color: '#aaa', fontFamily: "'Sarabun',sans-serif", marginTop: 2 }}>
+                    <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
                       {new Date(a.createdAt).toLocaleString('th-TH')}
                     </div>
                     {a.payload?.note && (
@@ -144,15 +139,11 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
 
         {/* Submissions — span 1 */}
         <Card
-          title={
-            <Text style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
-              แบบฟอร์มที่ส่ง
-            </Text>
-          }
+          title={<span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>แบบฟอร์มที่ส่ง</span>}
           styles={{ body: { padding: '16px 24px' } }}
         >
           {!submissions?.length ? (
-            <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีการส่งแบบฟอร์ม</Text>
+            <span style={{ fontSize: 12, color: '#888' }}>ยังไม่มีการส่งแบบฟอร์ม</span>
           ) : (
             <List
               size="small"
@@ -160,11 +151,11 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
               renderItem={(s) => (
                 <List.Item style={{ padding: '8px 0' }}>
                   <List.Item.Meta
-                    title={<Text style={{ fontSize: 13, fontWeight: 600 }}>{s.formTemplate.title}</Text>}
+                    title={<span style={{ fontSize: 13, fontWeight: 600 }}>{s.formTemplate.title}</span>}
                     description={
                       <div>
                         <div style={{ fontSize: 11, color: '#aaa' }}>{s.submittedBy.displayName}</div>
-                        <div style={{ fontSize: 10, color: '#ccc', fontFamily: "'Sarabun',sans-serif" }}>
+                        <div style={{ fontSize: 10, color: '#ccc' }}>
                           {new Date(s.submittedAt).toLocaleDateString('th-TH')}
                         </div>
                       </div>

@@ -9,21 +9,26 @@ import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Card, Checkbox, Input, Spin, Tag, Typography, message } from 'antd';
+import { Button, Card, Checkbox, Input, InputNumber, Spin, Tag, Typography, message } from 'antd';
 import { HolderOutlined, CloseOutlined } from '@ant-design/icons';
+import {
+  Type, Hash, ChevronDown, Circle, BarChart2, Calendar, AlignLeft, ClipboardList,
+} from 'lucide-react';
 import type { FormField, FieldType } from '@homemed/shared-types';
 
 const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-const FIELD_TYPES: { type: FieldType; label: string; icon: string }[] = [
-  { type: 'text',     label: 'ข้อความ',     icon: '📝' },
-  { type: 'number',   label: 'ตัวเลข',      icon: '🔢' },
-  { type: 'select',   label: 'ตัวเลือก',    icon: '📌' },
-  { type: 'radio',    label: 'Radio',        icon: '🔘' },
-  { type: 'scale',    label: 'สเกล',        icon: '📊' },
-  { type: 'date',     label: 'วันที่',      icon: '📅' },
-  { type: 'textarea', label: 'ข้อความยาว',  icon: '📄' },
+const HAS_OPTIONS: FieldType[] = ['radio', 'select', 'multiselect', 'checkbox'];
+
+const FIELD_TYPES: { type: FieldType; label: string; icon: React.ReactNode }[] = [
+  { type: 'text',     label: 'ข้อความ',    icon: <Type size={14} /> },
+  { type: 'number',   label: 'ตัวเลข',     icon: <Hash size={14} /> },
+  { type: 'select',   label: 'ตัวเลือก',   icon: <ChevronDown size={14} /> },
+  { type: 'radio',    label: 'Radio',       icon: <Circle size={14} /> },
+  { type: 'scale',    label: 'สเกล',       icon: <BarChart2 size={14} /> },
+  { type: 'date',     label: 'วันที่',     icon: <Calendar size={14} /> },
+  { type: 'textarea', label: 'ข้อความยาว', icon: <AlignLeft size={14} /> },
 ];
 
 function SortableField({ field, onUpdate, onRemove }: {
@@ -31,7 +36,19 @@ function SortableField({ field, onUpdate, onRemove }: {
   onUpdate: (f: FormField) => void;
   onRemove: (id: string) => void;
 }) {
+  const [optInput, setOptInput] = useState('');
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.id });
+
+  function addOption() {
+    const val = optInput.trim();
+    if (!val) return;
+    onUpdate({ ...field, options: [...(field.options ?? []), val] });
+    setOptInput('');
+  }
+
+  function removeOption(opt: string) {
+    onUpdate({ ...field, options: (field.options ?? []).filter((o) => o !== opt) });
+  }
 
   return (
     <Card
@@ -43,7 +60,7 @@ function SortableField({ field, onUpdate, onRemove }: {
       <button
         {...attributes}
         {...listeners}
-        style={{ color: '#ccc', cursor: 'grab', background: 'none', border: 'none', padding: '2px 0', marginTop: 2 }}
+        style={{ color: '#ccc', cursor: 'grab', background: 'none', border: 'none', padding: '2px 0', marginTop: 2, flexShrink: 0 }}
       >
         <HolderOutlined />
       </button>
@@ -56,7 +73,7 @@ function SortableField({ field, onUpdate, onRemove }: {
           size="small"
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Tag style={{ margin: 0, fontFamily: "'Sarabun',sans-serif", fontSize: 10 }}>{field.type}</Tag>
+          <Tag style={{ margin: 0, fontSize: 10 }}>{field.type}</Tag>
           <Checkbox
             checked={field.required}
             onChange={(e) => onUpdate({ ...field, required: e.target.checked })}
@@ -65,11 +82,67 @@ function SortableField({ field, onUpdate, onRemove }: {
             จำเป็น
           </Checkbox>
         </div>
+
+        {/* Options editor — radio / select / checkbox */}
+        {HAS_OPTIONS.includes(field.type) && (
+          <div style={{ borderTop: '1px solid #f5f5f5', paddingTop: 8 }}>
+            <div style={{ fontSize: 10, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+              ตัวเลือก {field.options?.length ? `(${field.options.length})` : ''}
+            </div>
+            {(field.options ?? []).length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {(field.options ?? []).map((opt) => (
+                  <Tag
+                    key={opt}
+                    closable
+                    onClose={() => removeOption(opt)}
+                    style={{ fontSize: 12, margin: 0 }}
+                  >
+                    {opt}
+                  </Tag>
+                ))}
+              </div>
+            )}
+            <Input.Search
+              value={optInput}
+              size="small"
+              placeholder="พิมพ์ตัวเลือก แล้วกด Enter หรือ +"
+              enterButton="+"
+              onChange={(e) => setOptInput(e.target.value)}
+              onSearch={addOption}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addOption(); } }}
+            />
+          </div>
+        )}
+
+        {/* Scale min / max */}
+        {field.type === 'scale' && (
+          <div style={{ borderTop: '1px solid #f5f5f5', paddingTop: 8, display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 10, color: '#aaa', marginBottom: 4 }}>ค่าต่ำสุด</div>
+              <InputNumber
+                size="small"
+                value={field.min ?? 0}
+                onChange={(v) => onUpdate({ ...field, min: v ?? 0 })}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 10, color: '#aaa', marginBottom: 4 }}>ค่าสูงสุด</div>
+              <InputNumber
+                size="small"
+                value={field.max ?? 10}
+                onChange={(v) => onUpdate({ ...field, max: v ?? 10 })}
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <button
         onClick={() => onRemove(field.id)}
-        style={{ color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', transition: 'color 0.15s' }}
+        style={{ color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', flexShrink: 0, transition: 'color 0.15s' }}
         onMouseEnter={(e) => (e.currentTarget.style.color = '#ff4d4f')}
         onMouseLeave={(e) => (e.currentTarget.style.color = '#ccc')}
       >
@@ -168,7 +241,7 @@ export default function FormEditPage() {
         <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
           Form Builder
         </div>
-        <Title level={2} style={{ margin: 0, fontFamily: "'Sarabun',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
+        <Title level={2} style={{ margin: 0, fontWeight: 800, letterSpacing: -1 }}>
           แก้ไขแบบฟอร์ม
         </Title>
       </div>
@@ -192,7 +265,7 @@ export default function FormEditPage() {
                 <Button
                   key={ft.type}
                   block
-                  icon={<span>{ft.icon}</span>}
+                  icon={ft.icon}
                   onClick={() => addField(ft.type)}
                   style={{ textAlign: 'left', justifyContent: 'flex-start' }}
                 >
@@ -217,7 +290,7 @@ export default function FormEditPage() {
                 border: '2px dashed #f0f0f0', borderRadius: 12, padding: 48,
                 textAlign: 'center', color: '#bbb',
               }}>
-                <p style={{ fontSize: 28, marginBottom: 8 }}>📋</p>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><ClipboardList size={32} strokeWidth={1.5} /></div>
                 <p style={{ fontSize: 13 }}>คลิกประเภทฟิลด์ทางซ้ายเพื่อเพิ่ม</p>
               </div>
             ) : (
