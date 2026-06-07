@@ -23,6 +23,7 @@ enum PatientStatus {
   CRITICAL
   PENDING
   STABLE
+  MISSING
 }
 
 enum EventPriority {
@@ -46,6 +47,7 @@ enum ActivityType {
   STATUS_CHANGE
   LOGIN
   LOGOUT
+  SOS
 }
 
 model Organization {
@@ -101,6 +103,7 @@ model Patient {
   activities  Activity[]
   eventTasks  EventTask[]
   carePlanItems CarePlanItem[]
+  alerts      Alert[]
 }
 
 model FormTemplate {
@@ -187,6 +190,25 @@ model Activity {
   type       ActivityType
   payload    Json?
   createdAt  DateTime     @default(now())
+}
+
+enum AlertType {
+  OVERDUE
+  MISSING
+  SOS
+}
+
+model Alert {
+  id          String    @id @default(uuid())
+  patientId   String
+  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type        AlertType
+  daysMissed  Int?
+  lat         Float?
+  lng         Float?
+  sentAt      DateTime  @default(now())
+  resolvedAt  DateTime?
+  resolvedBy  String?
 }
 
 model CarePlanItem {
