@@ -14,6 +14,7 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { SubmissionsModule } from './modules/submissions/submissions.module';
 import { LineModule } from './modules/line/line.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AlertsModule } from './modules/alerts/alerts.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     SubmissionsModule,
     LineModule,
     NotificationsModule,
+    AlertsModule,
   ],
 })
 export class AppModule {}
