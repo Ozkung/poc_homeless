@@ -35,6 +35,10 @@ services:
       dockerfile: apps/backend/Dockerfile
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Override localhost URLs to use Docker service names
+      DATABASE_URL: postgresql://homemed:homemed_dev@postgres:5432/homemed
+      REDIS_URL: redis://redis:6379
     ports:
       - '3001:3001'
     depends_on:
@@ -42,7 +46,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: npm run start
+    command: node dist/main
 
   frontend:
     build:
@@ -50,6 +54,9 @@ services:
       dockerfile: apps/frontend/Dockerfile
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Backend is reachable by service name inside Docker network
+      NEXT_PUBLIC_API_URL: http://backend:3001
     ports:
       - '3000:3000'
     depends_on:
