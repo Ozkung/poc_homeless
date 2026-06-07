@@ -1,49 +1,74 @@
 'use client';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
-import { clsx } from 'clsx';
+import { usePathname, useRouter } from 'next/navigation';
+import { Menu, Button, Avatar, Typography } from 'antd';
+import { signOut, useSession } from 'next-auth/react';
+import type { MenuProps } from 'antd';
 
-const nav = [
-  { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/patients', label: 'ผู้ป่วย', icon: '🏥' },
-  { href: '/events', label: 'แผนการเยี่ยม', icon: '📅' },
-  { href: '/forms', label: 'แบบฟอร์ม', icon: '📋' },
+const { Text } = Typography;
+
+const items: MenuProps['items'] = [
+  { key: '/dashboard', label: 'Dashboard', icon: <span>◈</span> },
+  { key: '/patients', label: 'ผู้ป่วย', icon: <span>⊕</span> },
+  { key: '/events', label: 'แผนการเยี่ยม', icon: <span>▦</span> },
+  { key: '/forms', label: 'แบบฟอร์ม', icon: <span>▤</span> },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  const selectedKey = items.find((item) => pathname.startsWith(item!.key as string))?.key as string ?? '/dashboard';
 
   return (
-    <aside className="w-56 bg-gray-900 flex flex-col border-r border-gray-800">
-      <div className="p-5 border-b border-gray-800">
-        <p className="text-xs font-mono text-purple-400 tracking-widest uppercase">HomeMed</p>
-        <p className="font-display text-lg font-bold text-white mt-0.5">Connect</p>
+    <aside
+      style={{
+        width: 220, background: '#fff', borderRight: '1px solid #f0f0f0',
+        display: 'flex', flexDirection: 'column', height: '100vh', flexShrink: 0,
+      }}
+    >
+      {/* Logo */}
+      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #f5f5f5' }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 2 }}>
+          HomeMed
+        </div>
+        <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800, color: '#111' }}>
+          Connect
+        </div>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
-        {nav.map((item) => (
-          <Link
-            key={item.href} href={item.href}
-            className={clsx(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-              pathname.startsWith(item.href)
-                ? 'bg-purple-600/20 text-purple-300 border border-purple-600/30'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800',
-            )}
-          >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
-          </Link>
-        ))}
-      </nav>
-      <div className="p-3 border-t border-gray-800">
-        <button
+
+      {/* Navigation */}
+      <Menu
+        mode="inline"
+        selectedKeys={[selectedKey]}
+        items={items}
+        onClick={({ key }) => router.push(key)}
+        style={{ flex: 1, border: 'none', paddingTop: 8 }}
+      />
+
+      {/* User footer */}
+      <div style={{ padding: 12, borderTop: '1px solid #f5f5f5' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#fafafa', borderRadius: 8, marginBottom: 8 }}>
+          <Avatar size={28} style={{ background: '#1677ff', fontSize: 11, fontWeight: 700 }}>
+            CM
+          </Avatar>
+          <div style={{ minWidth: 0 }}>
+            <Text style={{ fontSize: 12, fontWeight: 600, display: 'block' }} ellipsis>
+              {(session as any)?.user?.name ?? 'Case Manager'}
+            </Text>
+            <Text style={{ fontSize: 10, color: '#bbb', fontFamily: "'JetBrains Mono', monospace" }}>
+              CASE_MANAGER
+            </Text>
+          </div>
+        </div>
+        <Button
+          block
+          size="small"
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+          style={{ fontSize: 12 }}
         >
-          <span>🚪</span>
-          <span>ออกจากระบบ</span>
-        </button>
+          ออกจากระบบ
+        </Button>
       </div>
     </aside>
   );
