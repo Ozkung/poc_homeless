@@ -4,10 +4,15 @@ import { LineService } from './line.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 import { TasksService } from '../tasks/tasks.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Controller('line')
 export class LineController {
-  constructor(private line: LineService, private tasks: TasksService) {}
+  constructor(
+    private line: LineService,
+    private tasks: TasksService,
+    private notifications: NotificationsService,
+  ) {}
 
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
@@ -31,8 +36,9 @@ export class LineController {
     const task = await this.tasks.findOne(taskId);
     const token = await this.tasks.generateLiffToken(taskId);
     if (task.assignee?.lineUserId) {
-      await this.line.pushTaskNotification(task.assignee.lineUserId, {
-        id: task.id,
+      await this.notifications.enqueueTaskNotification({
+        lineUserId: task.assignee.lineUserId,
+        taskId: task.id,
         title: (task.event as any)?.title ?? 'งานใหม่',
         patientName: 'ผู้ป่วย',
         token,

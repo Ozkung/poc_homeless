@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { BullModule } from '@nestjs/bull';
 import configuration, { validationSchema } from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -12,6 +13,7 @@ import { EventsModule } from './modules/events/events.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { SubmissionsModule } from './modules/submissions/submissions.module';
 import { LineModule } from './modules/line/line.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -27,6 +29,11 @@ import { LineModule } from './modules/line/line.module';
         url: process.env.REDIS_URL,
       }),
     }),
+    BullModule.forRootAsync({
+      useFactory: () => ({
+        redis: process.env.REDIS_URL ?? 'redis://localhost:6379',
+      }),
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -36,6 +43,7 @@ import { LineModule } from './modules/line/line.module';
     TasksModule,
     SubmissionsModule,
     LineModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
