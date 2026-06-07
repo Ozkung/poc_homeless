@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
+import { SubmissionsService } from '../submissions/submissions.service';
+import { SubmitTaskDto } from './dto/submit-task.dto';
 
 @Controller('tasks')
 @UseGuards(JwtAuthGuard)
 export class TasksController {
-  constructor(private tasks: TasksService) {}
+  constructor(private tasks: TasksService, private submissions: SubmissionsService) {}
 
   @Get('my')
   myTasks(@CurrentUser() user: JwtPayload) {
@@ -26,5 +28,15 @@ export class TasksController {
   @Patch(':id/status')
   status(@Param('id') id: string, @Body('status') status: string, @CurrentUser() user: JwtPayload) {
     return this.tasks.updateStatus(id, user.sub, status);
+  }
+
+  @Post(':id/submit')
+  @HttpCode(HttpStatus.CREATED)
+  submit(
+    @Param('id') id: string,
+    @Body() dto: SubmitTaskDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.submissions.create(user.sub, { taskId: id, token: dto.token, answers: dto.answers });
   }
 }
