@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { Card, Statistic, Tag, Progress } from 'antd';
+import SeverityChart from '@/components/charts/SeverityChart';
+import AgeClusterChart, { type AgeBand } from '@/components/charts/AgeClusterChart';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -33,15 +35,31 @@ async function fetchEventCount(token: string): Promise<number> {
   } catch { return 0; }
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  CRITICAL: '#ff4d4f', PENDING: '#faad14', STABLE: '#52c41a',
-};
-const STATUS_LABEL: Record<string, string> = {
-  CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ',
-};
-const TAG_PRESET: Record<string, string> = {
-  CRITICAL: 'error', PENDING: 'warning', STABLE: 'success',
-};
+function computeAgeBands(patients: Patient[]): AgeBand[] {
+  const bands: Record<string, { critical: number; pending: number; stable: number }> = {
+    '<20':    { critical: 0, pending: 0, stable: 0 },
+    '20–40':  { critical: 0, pending: 0, stable: 0 },
+    '40–60':  { critical: 0, pending: 0, stable: 0 },
+    '60+':    { critical: 0, pending: 0, stable: 0 },
+    'ไม่ระบุ': { critical: 0, pending: 0, stable: 0 },
+  };
+
+  for (const p of patients) {
+    const key =
+      p.age == null ? 'ไม่ระบุ'
+      : p.age < 20  ? '<20'
+      : p.age < 40  ? '20–40'
+      : p.age < 60  ? '40–60'
+      : '60+';
+
+    const field = p.status === 'CRITICAL' ? 'critical' : p.status === 'PENDING' ? 'pending' : 'stable';
+    bands[key][field]++;
+  }
+
+  return Object.entries(bands)
+    .filter(([, v]) => v.critical + v.pending + v.stable > 0)
+    .map(([label, v]) => ({ label, ...v }));
+}
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -54,7 +72,7 @@ export default async function DashboardPage() {
   const stable   = patients.filter((p) => p.status === 'STABLE').length;
   const tracked  = stable + pending;
   const pct = patients.length > 0 ? Math.round((tracked / patients.length) * 100) : 0;
-  const recent = patients.slice(-5).reverse();
+  const ageBands = computeAgeBands(patients);
 
   return (
     <div>
@@ -102,45 +120,13 @@ export default async function DashboardPage() {
             <Tag color="success">● {stable} ปกติ</Tag>
           </div>
 
-          <div style={{ height: 1, background: '#f5f5f5', margin: '20px -24px' }} />
-
-          <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>
-            ผู้ป่วยล่าสุด
-          </div>
-          {recent.length === 0 ? (
-            <span style={{ fontSize: 12, color: '#888' }}>ยังไม่มีข้อมูลผู้ป่วย</span>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {recent.map((p, i) => (
-                <div
-                  key={p.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '10px 0',
-                    borderBottom: i < recent.length - 1 ? '1px solid #fafafa' : 'none',
-                  }}
-                >
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                    background: `${STATUS_COLOR[p.status]}18`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700, color: STATUS_COLOR[p.status],
-                  }}>
-                    {p.name?.[0] ?? '?'}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {p.name}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#aaa' }}>
-                      HN {p.hn}{p.locationText ? ` · ${p.locationText}` : ''}
-                    </div>
-                  </div>
-                  <Tag color={TAG_PRESET[p.status]}>{STATUS_LABEL[p.status]}</Tag>
-                </div>
-              ))}
+          {/* Severity chart — replaces "recent patients" section */}
+          <div style={{ borderTop: '1px solid #f5f5f5', margin: '20px -24px 0', padding: '16px 24px 0' }}>
+            <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>
+              วิเคราะห์ตามความร้ายแรง
             </div>
-          )}
+            <SeverityChart critical={critical} pending={pending} stable={stable} />
+          </div>
         </Card>
 
         {/* Critical — 1×1 */}
@@ -185,6 +171,21 @@ export default async function DashboardPage() {
             />
             <span style={{ fontSize: 12, color: '#888' }}>สถานะเสถียร</span>
           </div>
+        </Card>
+
+        {/* Age Cluster chart — full 3-col span */}
+        <Card
+          style={{ gridColumn: 'span 3', borderTop: '3px solid #722ed1' }}
+          styles={{ body: { padding: 24 } }}
+        >
+          <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>
+            Cluster ผู้ป่วยตามช่วงอายุ
+          </div>
+          {ageBands.length === 0 ? (
+            <span style={{ fontSize: 12, color: '#bbb' }}>ยังไม่มีข้อมูลผู้ป่วย</span>
+          ) : (
+            <AgeClusterChart bands={ageBands} />
+          )}
         </Card>
 
       </div>
