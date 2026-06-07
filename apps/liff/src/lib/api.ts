@@ -29,6 +29,10 @@ export const api = {
       body: JSON.stringify({ idToken }),
     }),
   getMyTasks: () => request<any[]>('/tasks/my'),
+  getTask: (taskId: string) =>
+    request<any[]>('/tasks/my').then((tasks: any[]) =>
+      tasks.find((t: any) => t.id === taskId) ?? null,
+    ),
   checkin: (taskId: string) =>
     request(`/tasks/${taskId}/checkin`, { method: 'POST' }),
   addNote: (taskId: string, note: string) =>

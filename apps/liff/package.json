@@ -9,10 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@homemed/shared-types": "*",
+    "@line/liff": "^2.25.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@line/liff": "^2.25.0",
-    "@homemed/shared-types": "*"
+    "react-router-dom": "^7.17.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
