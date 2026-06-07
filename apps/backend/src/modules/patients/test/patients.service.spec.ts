@@ -131,6 +131,76 @@ describe('PatientsService', () => {
     });
   });
 
+  describe('update()', () => {
+    it('encrypts name when name is provided', async () => {
+      const existing = {
+        id: 'p1',
+        organizationId: 'org1',
+        nameEnc: 'enc:John Doe',
+        hn: 'HN001',
+      };
+      const updated = {
+        id: 'p1',
+        organizationId: 'org1',
+        nameEnc: 'enc:Jane Doe',
+        hn: 'HN001',
+      };
+      mockPrisma.patient.findFirst.mockResolvedValue(existing);
+      mockPrisma.patient.update.mockResolvedValue(updated);
+
+      const result = await service.update('p1', 'org1', { name: 'Jane Doe', age: 30 });
+
+      // name should be encrypted and stored as nameEnc; plain name key removed
+      expect(mockCrypto.encrypt).toHaveBeenCalledWith('Jane Doe');
+      expect(mockPrisma.patient.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'p1' },
+          data: expect.objectContaining({ nameEnc: 'enc:Jane Doe', age: 30 }),
+        }),
+      );
+      // The returned object must NOT contain `name` as a raw Prisma field
+      expect(mockPrisma.patient.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.not.objectContaining({ name: expect.anything() }),
+        }),
+      );
+      expect(result.name).toBe('Jane Doe');
+      expect(result.nameEnc).toBeUndefined();
+    });
+
+    it('updates without encrypting when name is absent', async () => {
+      const existing = {
+        id: 'p1',
+        organizationId: 'org1',
+        nameEnc: 'enc:John Doe',
+        hn: 'HN001',
+        age: 40,
+      };
+      const updated = { ...existing, age: 50 };
+      mockPrisma.patient.findFirst.mockResolvedValue(existing);
+      mockPrisma.patient.update.mockResolvedValue(updated);
+
+      const result = await service.update('p1', 'org1', { age: 50 });
+
+      expect(mockCrypto.encrypt).not.toHaveBeenCalled();
+      expect(mockPrisma.patient.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'p1' },
+          data: expect.objectContaining({ age: 50 }),
+        }),
+      );
+      expect(result.name).toBe('John Doe');
+    });
+
+    it('throws NotFoundException for wrong org', async () => {
+      // findOne returns null when org doesn't match, triggering NotFoundException
+      mockPrisma.patient.findFirst.mockResolvedValue(null);
+
+      await expect(service.update('p1', 'wrong-org', { age: 50 })).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.patient.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe('findAll()', () => {
     it('decrypts nameEnc for every patient in the list', async () => {
       const rawPatients = [

@@ -21,6 +21,7 @@ export class SubmissionsService {
         patientId: task.patientId,
         formTemplateId: task.formTemplateId,
         submittedById: userId,
+        // Prisma's Json type doesn't accept `unknown` values — structurally correct at runtime
         answers: data.answers as any,
       },
     });

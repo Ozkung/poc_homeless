@@ -111,6 +111,31 @@ describe('TasksService', () => {
     });
   });
 
+  describe('updateStatus()', () => {
+    it('updates status for assignee', async () => {
+      const task = { id: 'task1', assigneeId: 'user1', status: 'IN_PROGRESS' };
+      const updatedTask = { ...task, status: 'DONE' };
+      mockPrisma.eventTask.findUnique.mockResolvedValue(task);
+      mockPrisma.eventTask.update.mockResolvedValue(updatedTask);
+
+      const result = await service.updateStatus('task1', 'user1', 'DONE');
+
+      expect(mockPrisma.eventTask.update).toHaveBeenCalledWith({
+        where: { id: 'task1' },
+        data: { status: 'DONE' },
+      });
+      expect(result.status).toBe('DONE');
+    });
+
+    it('throws NotFoundException for non-assignee', async () => {
+      const task = { id: 'task1', assigneeId: 'user1', status: 'PENDING' };
+      mockPrisma.eventTask.findUnique.mockResolvedValue(task);
+
+      await expect(service.updateStatus('task1', 'wrong-user', 'DONE')).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.eventTask.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe('generateLiffToken()', () => {
     it('stores the token in Redis with the configured TTL and persists it to the task row', async () => {
       const ttl = 3600;
