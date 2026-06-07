@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TasksService } from '../tasks/tasks.service';
 
 @Injectable()
 export class EventsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tasks: TasksService,
+  ) {}
 
   findAll(orgId: string, month?: number, year?: number) {
     const where: any = { organizationId: orgId };
@@ -30,12 +34,13 @@ export class EventsService {
     return event;
   }
 
-  create(orgId: string, userId: string, data: {
+  async create(orgId: string, userId: string, data: {
     title: string; startDate: string; endDate: string;
     priority?: string; note?: string; patientIds?: string[];
     assigneeId?: string; formIds?: string[];
   }) {
-    return this.prisma.event.create({
+    // Create the Event record first
+    const event = await this.prisma.event.create({
       data: {
         organizationId: orgId,
         createdById: userId,
@@ -44,6 +49,35 @@ export class EventsService {
         endDate: new Date(data.endDate),
         priority: data.priority as any ?? 'NORMAL',
         note: data.note,
+      },
+    });
+
+    // Auto-generate one EventTask per patient if patientIds and assigneeId are provided
+    if (data.patientIds?.length && data.assigneeId) {
+      const formTemplateId = data.formIds?.[0] ?? undefined;
+      for (const patientId of data.patientIds) {
+        const task = await this.prisma.eventTask.create({
+          data: {
+            eventId: event.id,
+            patientId,
+            assigneeId: data.assigneeId,
+            formTemplateId: formTemplateId ?? null,
+          },
+        });
+        await this.tasks.generateLiffToken(task.id);
+      }
+    }
+
+    // Return event with tasks included
+    return this.prisma.event.findUnique({
+      where: { id: event.id },
+      include: {
+        tasks: {
+          include: {
+            assignee: { select: { displayName: true, email: true } },
+            patient: { select: { hn: true, nameEnc: true } },
+          },
+        },
       },
     });
   }
