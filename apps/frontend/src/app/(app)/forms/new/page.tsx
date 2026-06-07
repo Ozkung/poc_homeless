@@ -1,5 +1,7 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
 } from '@dnd-kit/core';
@@ -8,7 +10,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { FormField, FieldType } from '@homemed/shared-types';
-import { randomUUID } from 'crypto';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 const FIELD_TYPES: { type: FieldType; label: string; icon: string }[] = [
   { type: 'text', label: 'ข้อความ', icon: '📝' },
@@ -47,8 +50,11 @@ function SortableField({ field, onUpdate, onRemove }: { field: FormField; onUpda
 }
 
 export default function FormBuilderPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
   const [title, setTitle] = useState('');
   const [fields, setFields] = useState<FormField[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -67,6 +73,27 @@ export default function FormBuilderPage() {
   const removeField = useCallback((id: string) => {
     setFields((prev) => prev.filter((f) => f.id !== id));
   }, []);
+
+  async function handleSave() {
+    if (!title.trim()) return alert('กรุณาใส่ชื่อแบบฟอร์ม');
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/forms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.accessToken}`,
+        },
+        body: JSON.stringify({ title, fields }),
+      });
+      if (res.ok) router.push('/forms');
+      else alert('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -127,12 +154,18 @@ export default function FormBuilderPage() {
             </DndContext>
           )}
           <div className="mt-4 flex justify-end gap-3">
-            <button className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">ยกเลิก</button>
             <button
-              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors"
-              onClick={() => console.log({ title, fields })}
+              onClick={() => router.push('/forms')}
+              className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
             >
-              บันทึกแบบฟอร์ม
+              ยกเลิก
+            </button>
+            <button
+              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? 'กำลังบันทึก...' : 'บันทึกแบบฟอร์ม'}
             </button>
           </div>
         </div>
