@@ -75,4 +75,65 @@ export class LineService {
       this.logger.error(`Line push failed: ${res.status} ${await res.text()}`);
     }
   }
+
+  async pushOverdueAlert(lineUserId: string, data: {
+    patientName: string; hn: string; status: string; daysMissed: number;
+  }) {
+    const statusLabel: Record<string, string> = {
+      CRITICAL: '🔴 วิกฤต', PENDING: '🟡 รอดำเนินการ', STABLE: '🟢 ปกติ', MISSING: '⛔ สูญหาย',
+    };
+    const text = [
+      '⚠️ แจ้งเตือน: เกินกำหนดเยี่ยม',
+      `ผู้ป่วย: ${data.patientName} (HN ${data.hn})`,
+      `ระดับ: ${statusLabel[data.status] ?? data.status}`,
+      `เกินกำหนด: ${data.daysMissed} วัน`,
+      'กรุณาติดตามหรือส่ง Caregiver โดยด่วน',
+    ].join('\n');
+    await this.pushText(lineUserId, text);
+  }
+
+  async pushSosAlert(lineUserId: string, data: {
+    patientName: string; hn: string; caregiverName: string; lat?: number; lng?: number;
+  }) {
+    const location = data.lat != null && data.lng != null
+      ? `📍 ${data.lat.toFixed(4)}°N, ${data.lng.toFixed(4)}°E`
+      : '📍 ไม่ทราบตำแหน่ง';
+    const text = [
+      '🚨 SOS — เหตุฉุกเฉิน',
+      `อาสา: ${data.caregiverName}`,
+      `ผู้ป่วย: ${data.patientName} (HN ${data.hn})`,
+      location,
+    ].join('\n');
+    await this.pushText(lineUserId, text);
+  }
+
+  async pushMorningBriefing(lineUserId: string, patients: {
+    name: string; hn: string; status: string; locationText?: string;
+  }[]) {
+    const statusLabel: Record<string, string> = {
+      CRITICAL: '🔴 วิกฤต', PENDING: '🟡 เฝ้าระวัง', STABLE: '🟢 ปกติ',
+    };
+    const lines = [
+      '☀️ ผู้ป่วยที่ต้องเยี่ยมวันนี้',
+      ...patients.map((p) =>
+        `• ${p.name} (HN ${p.hn}) ${statusLabel[p.status] ?? p.status}${p.locationText ? ` — ${p.locationText}` : ''}`,
+      ),
+      `\nเปิด LIFF: https://liff.line.me/${this.liffId}`,
+    ];
+    await this.pushText(lineUserId, lines.join('\n'));
+  }
+
+  private async pushText(lineUserId: string, text: string) {
+    const res = await fetch(`${LINE_API}/v2/bot/message/push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.channelAccessToken}`,
+      },
+      body: JSON.stringify({ to: lineUserId, messages: [{ type: 'text', text }] }),
+    });
+    if (!res.ok) {
+      this.logger.error(`Line push failed: ${res.status} ${await res.text()}`);
+    }
+  }
 }
