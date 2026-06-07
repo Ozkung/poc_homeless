@@ -13,6 +13,8 @@ import {
   subMonths,
 } from 'date-fns';
 import { th } from 'date-fns/locale';
+import { Drawer, Card, Tag, Button, Typography } from 'antd';
+const { Text } = Typography;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -56,6 +58,12 @@ const PRIORITY_LABEL: Record<Priority, string> = {
   CRITICAL: 'วิกฤต',
   URGENT: 'เร่งด่วน',
   NORMAL: 'ปกติ',
+};
+
+const PRIORITY_COLOR: Record<Priority, string> = {
+  CRITICAL: 'error',
+  URGENT: 'warning',
+  NORMAL: 'processing',
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -159,22 +167,18 @@ export default function EventsPage() {
   const monthTitle = format(currentMonth, 'MMMM yyyy', { locale: th });
 
   return (
-    <div className="flex gap-4 h-full min-h-0">
+    <div>
       {/* ── Left: Calendar ─────────────────────────────────────────────────── */}
-      <div className="flex-[2] flex flex-col min-w-0">
+      <div>
         {/* Header row */}
-        <div className="flex items-center justify-between mb-4">
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
-            <p className="text-xs font-mono text-primary tracking-widest uppercase mb-0.5">
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
               Planning
-            </p>
-            <h1 className="font-display text-2xl font-bold text-gray-900">แผนการเยี่ยม</h1>
+            </div>
+            <h1 style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: -1 }}>แผนการเยี่ยม</h1>
           </div>
-          <div className="flex items-center gap-2">
-            {loading && (
-              <span className="text-xs font-mono text-gray-400 animate-pulse">กำลังโหลด...</span>
-            )}
-          </div>
+          {loading && <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace", color: '#aaa' }}>กำลังโหลด...</span>}
         </div>
 
         {/* Month navigation */}
@@ -285,212 +289,78 @@ export default function EventsPage() {
         </div>
       </div>
 
-      {/* ── Right: Side panel ──────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Panel header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-xs font-mono text-gray-400 tracking-widest uppercase mb-0.5">
-              Detail
-            </p>
-            <h2 className="font-display text-lg font-bold text-gray-900">
-              {selectedDate
-                ? format(selectedDate, 'd MMM yyyy', { locale: th })
-                : 'กิจกรรม'}
-            </h2>
-          </div>
-          <button
-            className="bg-primary hover:bg-primary/80 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
-            onClick={() => {
-              /* TODO: navigate to /events/new with date prefilled */
-            }}
-          >
-            + เพิ่มกิจกรรม
-          </button>
-        </div>
+      <Drawer
+        title={
+          selectedDate
+            ? <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12 }}>
+                {format(selectedDate, 'd MMMM yyyy', { locale: th })}
+              </span>
+            : 'กิจกรรม'
+        }
+        placement="right"
+        width={400}
+        open={selectedDate !== null}
+        onClose={() => { setSelectedDate(null); setExpandedEventId(null); }}
+        extra={<Button type="primary" size="small">+ เพิ่มกิจกรรม</Button>}
+      >
+        {loading && (
+          <div style={{ textAlign: 'center', color: '#aaa', padding: 24 }}>กำลังโหลด...</div>
+        )}
+        {!loading && selectedDayEvents.length === 0 && (
+          <div style={{ textAlign: 'center', color: '#aaa', padding: 24 }}>ไม่มีกิจกรรม</div>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {selectedDayEvents.map((ev) => {
+            const uniqueAssignees = ev.tasks
+              .map((t) => t.assignee.displayName)
+              .filter((v, i, a) => a.indexOf(v) === i);
+            const uniquePatients = ev.tasks
+              .map((t) => t.patient.hn)
+              .filter((v, i, a) => a.indexOf(v) === i);
 
-        {/* Panel body */}
-        <div className="flex-1 overflow-y-auto">
-          {!selectedDate ? (
-            /* No date selected */
-            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-400 h-full flex flex-col items-center justify-center">
-              <p className="text-3xl mb-3">📅</p>
-              <p className="font-mono text-sm">เลือกวันเพื่อดูกิจกรรม</p>
-            </div>
-          ) : loading ? (
-            /* Loading skeleton */
-            <div className="space-y-3">
-              {[1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="bg-white border border-gray-100 rounded-xl p-4 animate-pulse"
-                >
-                  <div className="h-4 bg-gray-100 rounded w-3/4 mb-2" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+            return (
+              <Card
+                key={ev.id}
+                size="small"
+                style={{
+                  borderLeft: `3px solid ${
+                    ev.priority === 'CRITICAL' ? '#ff4d4f'
+                    : ev.priority === 'URGENT' ? '#faad14'
+                    : '#1677ff'
+                  }`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                  <Text style={{ fontWeight: 600, fontSize: 13 }}>{ev.title}</Text>
+                  <Tag color={PRIORITY_COLOR[ev.priority]} style={{ fontSize: 10, flexShrink: 0 }}>
+                    {PRIORITY_LABEL[ev.priority]}
+                  </Tag>
                 </div>
-              ))}
-            </div>
-          ) : selectedDayEvents.length === 0 ? (
-            /* Empty day */
-            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-400">
-              <p className="text-3xl mb-3">✅</p>
-              <p className="font-mono text-sm">ไม่มีกิจกรรม</p>
-              <p className="text-xs mt-1">
-                {format(selectedDate, 'd MMM yyyy', { locale: th })}
-              </p>
-            </div>
-          ) : (
-            /* Event list */
-            <div className="space-y-3">
-              <p className="text-xs font-mono text-gray-400 mb-1">
-                {selectedDate
-                  ? `${format(selectedDate, 'd MMMM yyyy', { locale: th })} — กิจกรรม`
-                  : ''}
-              </p>
-              {selectedDayEvents.map((ev) => {
-                const isExpanded = expandedEventId === ev.id;
-                const uniqueAssignees = ev.tasks
-                  .map((t) => t.assignee.displayName)
-                  .filter((v, i, a) => a.indexOf(v) === i);
-                const uniquePatients = ev.tasks
-                  .map((t) => t.patient.hn)
-                  .filter((v, i, a) => a.indexOf(v) === i);
-
-                return (
-                  <div
-                    key={ev.id}
-                    className={[
-                      'bg-white border rounded-xl overflow-hidden transition-shadow',
-                      isExpanded
-                        ? 'border-primary/30 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300',
-                    ].join(' ')}
-                  >
-                    {/* Card header — always visible */}
-                    <button
-                      className="w-full text-left p-4"
-                      onClick={() =>
-                        setExpandedEventId((prev) =>
-                          prev === ev.id ? null : ev.id,
-                        )
-                      }
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 text-sm truncate">
-                            {ev.title}
-                          </p>
-                          <p className="text-xs font-mono text-gray-400 mt-0.5">
-                            {format(new Date(ev.startDate), 'd MMM', { locale: th })}
-                            {ev.startDate !== ev.endDate &&
-                              ` – ${format(new Date(ev.endDate), 'd MMM', { locale: th })}`}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-medium ${PRIORITY_BADGE[ev.priority]}`}
-                          >
-                            {PRIORITY_LABEL[ev.priority]}
-                          </span>
-                          <span className="text-gray-300 text-xs">{isExpanded ? '▲' : '▼'}</span>
-                        </div>
-                      </div>
-
-                      {/* Summary row */}
-                      <div className="flex gap-3 mt-2">
-                        <span className="text-[10px] font-mono text-gray-400">
-                          {ev.tasks.length} งาน
-                        </span>
-                        {uniqueAssignees.length > 0 && (
-                          <span className="text-[10px] font-mono text-gray-400 truncate">
-                            👤 {uniqueAssignees.slice(0, 2).join(', ')}
-                            {uniqueAssignees.length > 2 && ` +${uniqueAssignees.length - 2}`}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-
-                    {/* Expanded detail */}
-                    {isExpanded && (
-                      <div className="border-t border-gray-100 px-4 pb-4 pt-3 space-y-3">
-                        {/* Note */}
-                        {ev.note && (
-                          <div>
-                            <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider mb-1">
-                              หมายเหตุ
-                            </p>
-                            <p className="text-xs text-gray-700 leading-relaxed">{ev.note}</p>
-                          </div>
-                        )}
-
-                        {/* Assignees */}
-                        {uniqueAssignees.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider mb-1">
-                              ผู้รับผิดชอบ
-                            </p>
-                            <div className="flex flex-wrap gap-1">
-                              {uniqueAssignees.map((name) => (
-                                <span
-                                  key={name}
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-gray-100 text-gray-600 font-mono"
-                                >
-                                  {name}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Patients */}
-                        {uniquePatients.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider mb-1">
-                              ผู้ป่วย (HN)
-                            </p>
-                            <div className="flex flex-wrap gap-1">
-                              {uniquePatients.map((hn) => (
-                                <span
-                                  key={hn}
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-primary/10 text-primary font-mono border border-primary/20"
-                                >
-                                  {hn}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Task list */}
-                        {ev.tasks.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider mb-1">
-                              รายการงาน ({ev.tasks.length})
-                            </p>
-                            <div className="space-y-1">
-                              {ev.tasks.map((task) => (
-                                <div
-                                  key={task.id}
-                                  className="flex items-center justify-between text-[10px] font-mono bg-gray-50 rounded-lg px-2 py-1.5"
-                                >
-                                  <span className="text-gray-600">
-                                    👤 {task.assignee.displayName}
-                                  </span>
-                                  <span className="text-primary">HN {task.patient.hn}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                <Text type="secondary" style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace", display: 'block', marginBottom: 6 }}>
+                  {format(new Date(ev.startDate), 'd MMM', { locale: th })}
+                  {ev.startDate !== ev.endDate && ` – ${format(new Date(ev.endDate), 'd MMM', { locale: th })}`}
+                  {' · '}{ev.tasks.length} งาน
+                </Text>
+                {uniqueAssignees.length > 0 && (
+                  <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
+                    👤 {uniqueAssignees.slice(0, 2).join(', ')}{uniqueAssignees.length > 2 && ` +${uniqueAssignees.length - 2}`}
+                  </Text>
+                )}
+                {uniquePatients.length > 0 && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                    {uniquePatients.map((hn) => (
+                      <Tag key={hn} color="blue" style={{ fontSize: 10, fontFamily: "'JetBrains Mono',monospace" }}>HN {hn}</Tag>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          )}
+                )}
+                {ev.note && (
+                  <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 6, fontStyle: 'italic' }}>{ev.note}</Text>
+                )}
+              </Card>
+            );
+          })}
         </div>
-      </div>
+      </Drawer>
     </div>
   );
 }
