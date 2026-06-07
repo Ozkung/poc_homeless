@@ -41,4 +41,9 @@ export const api = {
     request('/submissions', { method: 'POST', body: JSON.stringify({ taskId, token, answers }) }),
   updateStatus: (taskId: string, status: string) =>
     request(`/tasks/${taskId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  sos: (taskId: string, coords: { lat?: number; lng?: number }) =>
+    request(`/patients/sos-by-task/${taskId}`, {
+      method: 'POST',
+      body: JSON.stringify(coords),
+    }),
 };
