@@ -40,10 +40,10 @@ async function get<T>(url: string, token: string): Promise<T | null> {
   } catch { return null; }
 }
 
-export default async function PatientProfilePage({ params }: { params: { id: string } }) {
+export default async function PatientProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   const token = session?.accessToken ?? '';
-  const { id } = params;
+  const { id } = await params;
 
   const [patient, activities, submissions] = await Promise.all([
     get<Patient>(`${API_URL}/patients/${id}`, token),

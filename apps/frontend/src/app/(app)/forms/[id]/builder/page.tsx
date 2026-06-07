@@ -9,7 +9,7 @@ import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Card } from 'antd';
+import { Card, Button } from 'antd';
 import type { FormField, FieldType } from '@homemed/shared-types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -179,20 +179,11 @@ export default function FormEditPage() {
                 </SortableContext>
               </DndContext>
             )}
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={() => router.push('/forms')}
-                className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
-              >
-                ยกเลิก
-              </button>
-              <button
-                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? 'กำลังบันทึก...' : 'บันทึกแบบฟอร์ม'}
-              </button>
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <Button onClick={() => router.push('/forms')}>ยกเลิก</Button>
+              <Button type="primary" onClick={handleSave} loading={saving}>
+                บันทึกแบบฟอร์ม
+              </Button>
             </div>
           </div>
         </div>

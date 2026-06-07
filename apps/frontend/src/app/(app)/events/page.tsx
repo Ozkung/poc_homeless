@@ -48,11 +48,6 @@ const PRIORITY_DOT: Record<Priority, string> = {
   NORMAL: 'bg-primary',
 };
 
-const PRIORITY_BADGE: Record<Priority, string> = {
-  CRITICAL: 'bg-danger/10 text-danger border border-danger/30',
-  URGENT: 'bg-amber-50 text-warning border border-amber-200',
-  NORMAL: 'bg-primary/10 text-primary border border-primary/30',
-};
 
 const PRIORITY_LABEL: Record<Priority, string> = {
   CRITICAL: 'วิกฤต',
