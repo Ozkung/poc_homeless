@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Theme Direction</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f13; font-family: 'Inter', system-ui, sans-serif; color: #e8e6f0; min-height: 100vh; padding: 32px 24px; }
+
+  h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #fff; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 28px; font-family: monospace; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+  .card {
+    border-radius: 16px; overflow: hidden; cursor: pointer;
+    border: 2px solid transparent; transition: border-color .2s, transform .15s;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card.selected { border-color: #7c6af7 !important; }
+
+  .preview { height: 220px; padding: 16px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+  .card-label { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; font-family: monospace; }
+  .card-title { font-size: 18px; font-weight: 700; }
+  .card-desc { font-size: 12px; line-height: 1.5; opacity: .7; }
+
+  /* ── Dark antd ── */
+  .dark-preview {
+    background: #141414;
+    border: 1px solid #1f1f1f;
+  }
+  .dark-preview .mini-bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .dark-preview .mini-card { background: #1d1d1d; border: 1px solid #2a2a2a; border-radius: 10px; padding: 10px 12px; }
+  .dark-preview .mini-stat { font-size: 22px; font-weight: 800; color: #7c6af7; font-family: monospace; }
+  .dark-preview .mini-lbl { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .dark-preview .mini-card.wide { grid-column: span 2; background: #1d1d1d; height: 36px; border-radius: 8px; }
+  .dark-preview .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+  .dark-preview .badge-red { background: rgba(245,92,92,.15); color: #f55c5c; }
+  .dark-preview .badge-green { background: rgba(45,212,160,.15); color: #2dd4a0; }
+  .dark-text { color: #e0dff0; }
+
+  /* ── Light antd ── */
+  .light-preview {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+  }
+  .light-preview .mini-bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .light-preview .mini-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .light-preview .mini-stat { font-size: 22px; font-weight: 800; color: #5b4fcf; font-family: monospace; }
+  .light-preview .mini-lbl { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .light-preview .mini-card.wide { grid-column: span 2; background: #fff; height: 36px; border-radius: 8px; }
+  .light-text { color: #1a1a2e; }
+
+  /* ── Dark Purple ── */
+  .purple-preview {
+    background: #0d0c1a;
+    border: 1px solid #1e1b33;
+  }
+  .purple-preview .mini-bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .purple-preview .mini-card { background: linear-gradient(135deg, rgba(124,106,247,.12), rgba(124,106,247,.04)); border: 1px solid rgba(124,106,247,.25); border-radius: 10px; padding: 10px 12px; }
+  .purple-preview .mini-stat { font-size: 22px; font-weight: 800; color: #9d8fff; font-family: monospace; }
+  .purple-preview .mini-lbl { font-size: 10px; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .purple-preview .mini-card.wide { grid-column: span 2; background: rgba(124,106,247,.08); border: 1px solid rgba(124,106,247,.2); height: 36px; border-radius: 8px; }
+  .purple-text { color: #c8c4f0; }
+
+  .card-meta { padding: 14px 16px; }
+  .card-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .card-hint { font-size: 11px; opacity: .55; line-height: 1.4; }
+
+  .dark-meta { background: #1a1a1a; border-top: 1px solid #252525; }
+  .light-meta { background: #fff; border-top: 1px solid #ebebeb; color: #111; }
+  .purple-meta { background: #110f22; border-top: 1px solid rgba(124,106,247,.2); }
+
+  .selected-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: #7c6af7; color: #fff; font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 99px; opacity: 0; transition: opacity .2s;
+    font-family: monospace; letter-spacing: 1px;
+  }
+  .card.selected .selected-badge { opacity: 1; }
+</style>
+</head>
+<body>
+<h2>Pick a visual direction</h2>
+<p class="subtitle">Ant Design theme — sets the mood for the entire app</p>
+
+<div class="cards">
+
+  <!-- A: Ant Design Dark -->
+  <div class="card" id="card-a" onclick="pick('a')">
+    <div class="preview dark-preview">
+      <span class="selected-badge">✓ SELECTED</span>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <div style="width:6px;height:6px;border-radius:50%;background:#7c6af7"></div>
+        <span style="font-size:10px;font-family:monospace;color:#444;letter-spacing:2px">HOMEMED CONNECT</span>
+      </div>
+      <div class="mini-bento">
+        <div class="mini-card">
+          <div class="mini-stat">24</div>
+          <div class="mini-lbl">ผู้ป่วย</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-stat" style="color:#f55c5c">3</div>
+          <div class="mini-lbl">วิกฤต</div>
+        </div>
+        <div class="mini-card wide" style="display:flex;align-items:center;gap:8px;padding:0 12px">
+          <span class="badge badge-red" style="font-size:10px">CRITICAL</span>
+          <span style="font-size:11px;color:#666">นายสมชาย — HN 00124</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-meta dark-meta">
+      <div class="card-name dark-text">A — antd Dark</div>
+      <div class="card-hint" style="color:#555">antd dark algorithm · neutral grays · #141414 base</div>
+    </div>
+  </div>
+
+  <!-- B: Ant Design Light -->
+  <div class="card" id="card-b" onclick="pick('b')">
+    <div class="preview light-preview">
+      <span class="selected-badge">✓ SELECTED</span>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <div style="width:6px;height:6px;border-radius:50%;background:#5b4fcf"></div>
+        <span style="font-size:10px;font-family:monospace;color:#bbb;letter-spacing:2px">HOMEMED CONNECT</span>
+      </div>
+      <div class="mini-bento">
+        <div class="mini-card">
+          <div class="mini-stat">24</div>
+          <div class="mini-lbl">ผู้ป่วย</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-stat" style="color:#e03e3e">3</div>
+          <div class="mini-lbl">วิกฤต</div>
+        </div>
+        <div class="mini-card wide" style="display:flex;align-items:center;gap:8px;padding:0 12px">
+          <span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;background:#fff1f0;color:#e03e3e">CRITICAL</span>
+          <span style="font-size:11px;color:#666">นายสมชาย — HN 00124</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-meta light-meta">
+      <div class="card-name">B — antd Light</div>
+      <div class="card-hint">antd default · white cards · clean clinical feel</div>
+    </div>
+  </div>
+
+  <!-- C: Dark Purple Custom -->
+  <div class="card" id="card-c" onclick="pick('c')">
+    <div class="preview purple-preview">
+      <span class="selected-badge">✓ SELECTED</span>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <div style="width:6px;height:6px;border-radius:50%;background:#9d8fff"></div>
+        <span style="font-size:10px;font-family:monospace;color:rgba(255,255,255,.25);letter-spacing:2px">HOMEMED CONNECT</span>
+      </div>
+      <div class="mini-bento">
+        <div class="mini-card">
+          <div class="mini-stat">24</div>
+          <div class="mini-lbl">ผู้ป่วย</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-stat" style="color:#f55c5c">3</div>
+          <div class="mini-lbl">วิกฤต</div>
+        </div>
+        <div class="mini-card wide" style="display:flex;align-items:center;gap:8px;padding:0 12px">
+          <span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;background:rgba(245,92,92,.15);color:#f55c5c">CRITICAL</span>
+          <span style="font-size:11px;color:rgba(255,255,255,.35)">นายสมชาย — HN 00124</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-meta purple-meta">
+      <div class="card-name purple-text">C — Dark Purple (Brand)</div>
+      <div class="card-hint" style="color:rgba(200,196,240,.4)">antd dark + #7c6af7 primary · matches the original spec HTML</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let selected = null;
+  function pick(id) {
+    if (selected) document.getElementById('card-' + selected).classList.remove('selected');
+    selected = id;
+    document.getElementById('card-' + id).classList.add('selected');
+    if (window.recordChoice) window.recordChoice(id, document.getElementById('card-' + id).querySelector('.card-name').textContent.trim());
+  }
+</script>
+</body>
+</html>

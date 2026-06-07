@@ -29,10 +29,10 @@ export default function Sidebar() {
     >
       {/* Logo */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #f5f5f5' }}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 2 }}>
+        <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 9, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 2 }}>
           HomeMed
         </div>
-        <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 800, color: '#111' }}>
+        <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 18, fontWeight: 800, color: '#111' }}>
           Connect
         </div>
       </div>
@@ -56,7 +56,7 @@ export default function Sidebar() {
             <Text style={{ fontSize: 12, fontWeight: 600, display: 'block' }} ellipsis>
               {(session as any)?.user?.name ?? 'Case Manager'}
             </Text>
-            <Text style={{ fontSize: 10, color: '#bbb', fontFamily: "'JetBrains Mono', monospace" }}>
+            <Text style={{ fontSize: 10, color: '#bbb', fontFamily: "'Sarabun',sans-serif" }}>
               CASE_MANAGER
             </Text>
           </div>

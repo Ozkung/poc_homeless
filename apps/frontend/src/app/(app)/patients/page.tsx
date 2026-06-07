@@ -26,7 +26,7 @@ const columns: ColumnsType<Patient> = [
     render: (name, r) => (
       <div>
         <div style={{ fontWeight: 600 }}>{name}</div>
-        <Text type="secondary" style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace" }}>HN {r.hn}</Text>
+        <Text type="secondary" style={{ fontSize: 11, fontFamily: "'Sarabun',sans-serif" }}>HN {r.hn}</Text>
       </div>
     ),
   },
@@ -92,10 +92,10 @@ export default function PatientsPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
+          <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
             Patients
           </div>
-          <Title level={2} style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
+          <Title level={2} style={{ margin: 0, fontFamily: "'Sarabun',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
             รายชื่อผู้ป่วย
           </Title>
         </div>

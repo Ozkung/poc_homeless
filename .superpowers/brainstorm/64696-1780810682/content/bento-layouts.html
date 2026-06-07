@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bento Layout Options</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f0f2f5; font-family: system-ui, sans-serif; color: #111; padding: 28px 24px; }
+
+h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.subtitle { font-size: 12px; color: #888; font-family: monospace; margin-bottom: 24px; letter-spacing: .5px; }
+
+.options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+.option {
+  border: 2px solid #e8e8e8; border-radius: 16px; overflow: hidden;
+  cursor: pointer; background: #fff; transition: border-color .2s, transform .15s, box-shadow .2s;
+}
+.option:hover { border-color: #1677ff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(22,119,255,.12); }
+.option.selected { border-color: #1677ff; box-shadow: 0 0 0 3px rgba(22,119,255,.15); }
+
+.preview { padding: 14px; background: #f5f7fa; border-bottom: 1px solid #f0f0f0; }
+
+/* ── Layout A: Classic 4+table ── */
+.a-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.a-stat { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 12px; }
+.a-stat-num { font-size: 22px; font-weight: 800; color: #1677ff; font-family: monospace; line-height: 1; }
+.a-stat-lbl { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+.a-table { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 12px; margin-top: 7px; }
+.a-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #f5f5f5; }
+.a-row:last-child { border-bottom: none; }
+.a-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.a-name { font-size: 10px; color: #333; flex: 1; }
+.a-badge { font-size: 9px; padding: 1px 6px; border-radius: 99px; font-weight: 600; }
+
+/* ── Layout B: Asymmetric bento ── */
+.b-grid { display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: auto auto; gap: 7px; }
+.b-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 10px 12px; }
+.b-card.tall { grid-row: span 2; display: flex; flex-direction: column; justify-content: space-between; }
+.b-card.wide { grid-column: span 2; }
+.b-num { font-size: 28px; font-weight: 900; color: #1677ff; font-family: monospace; line-height: 1; }
+.b-num.red { color: #ff4d4f; }
+.b-num.green { color: #52c41a; }
+.b-lbl { font-size: 9px; color: #bbb; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.b-bar { height: 5px; border-radius: 99px; background: #f0f0f0; margin-top: 8px; overflow: hidden; }
+.b-fill { height: 100%; border-radius: 99px; }
+.b-tag { display: inline-block; padding: 2px 7px; border-radius: 99px; font-size: 9px; font-weight: 700; margin-top: 6px; }
+.b-mini-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.b-mini-row { display: flex; align-items: center; gap: 6px; font-size: 9px; color: #666; }
+.b-avatar { width: 16px; height: 16px; border-radius: 50%; background: #e6f7ff; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #1677ff; font-weight: 700; flex-shrink: 0; }
+
+/* ── Layout C: Full bento ── */
+.c-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto; gap: 6px; }
+.c-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 9px; padding: 9px 10px; }
+.c-card.span2 { grid-column: span 2; }
+.c-card.span3 { grid-column: span 3; }
+.c-card.row2 { grid-row: span 2; }
+.c-num { font-size: 20px; font-weight: 900; color: #1677ff; font-family: monospace; line-height: 1; }
+.c-lbl { font-size: 8px; color: #ccc; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.c-spark { height: 28px; display: flex; align-items: flex-end; gap: 2px; margin-top: 6px; }
+.c-bar-spark { flex: 1; border-radius: 2px; background: #e6f7ff; }
+.c-tag { font-size: 8px; padding: 1px 5px; border-radius: 99px; font-weight: 700; display: inline-block; margin-top: 3px; }
+.c-list { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+.c-list-row { display: flex; gap: 5px; font-size: 8px; color: #666; align-items: center; }
+.c-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.c-map-placeholder { background: #e8f4fd; border-radius: 7px; height: 48px; display: flex; align-items: center; justify-content: center; margin-top: 5px; }
+
+.badge-red { background: #fff1f0; color: #f5222d; }
+.badge-amber { background: #fffbe6; color: #d48806; }
+.badge-green { background: #f6ffed; color: #389e0d; }
+
+/* card meta */
+.meta { padding: 12px 14px; }
+.meta-title { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 3px; }
+.meta-desc { font-size: 11px; color: #999; line-height: 1.4; }
+.selected-pill { display: none; background: #1677ff; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 99px; font-family: monospace; letter-spacing: 1px; float: right; margin-top: -2px; }
+.option.selected .selected-pill { display: inline-block; }
+</style>
+</head>
+<body>
+<h2>Choose a bento grid density</h2>
+<p class="subtitle">antd Light · all three use antd Card + Grid components</p>
+
+<div class="options">
+
+  <!-- A: Classic -->
+  <div class="option" id="opt-a" onclick="pick('a')">
+    <div class="preview">
+      <!-- 4 stat cards -->
+      <div class="a-grid">
+        <div class="a-stat">
+          <div class="a-stat-num">24</div>
+          <div class="a-stat-lbl">ผู้ป่วยทั้งหมด</div>
+        </div>
+        <div class="a-stat">
+          <div class="a-stat-num" style="color:#ff4d4f">3</div>
+          <div class="a-stat-lbl">วิกฤต</div>
+        </div>
+        <div class="a-stat">
+          <div class="a-stat-num" style="color:#52c41a">18</div>
+          <div class="a-stat-lbl">ปกติ</div>
+        </div>
+        <div class="a-stat">
+          <div class="a-stat-num" style="color:#faad14">5</div>
+          <div class="a-stat-lbl">กิจกรรม</div>
+        </div>
+      </div>
+      <!-- table -->
+      <div class="a-table">
+        <div style="font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">ผู้ป่วยล่าสุด</div>
+        <div class="a-row"><div class="a-dot" style="background:#ff4d4f"></div><span class="a-name">นายสมชาย ใจดี</span><span class="a-badge badge-red">วิกฤต</span></div>
+        <div class="a-row"><div class="a-dot" style="background:#faad14"></div><span class="a-name">นางมาลี สุขใจ</span><span class="a-badge badge-amber">รอ</span></div>
+        <div class="a-row"><div class="a-dot" style="background:#52c41a"></div><span class="a-name">เด็กชายก้อง ดีงาม</span><span class="a-badge badge-green">ปกติ</span></div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="meta-title">A — Simple grid <span class="selected-pill">SELECTED</span></div>
+      <div class="meta-desc">4 stat cards + table. Clean, easy to scan. Closest to current layout.</div>
+    </div>
+  </div>
+
+  <!-- B: Asymmetric -->
+  <div class="option" id="opt-b" onclick="pick('b')">
+    <div class="preview">
+      <div class="b-grid">
+        <!-- tall hero card -->
+        <div class="b-card tall">
+          <div>
+            <div style="font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">สถานะวันนี้</div>
+            <div class="b-num">24</div>
+            <div class="b-lbl">ผู้ป่วยทั้งหมด</div>
+            <div class="b-bar" style="margin-top:10px"><div class="b-fill" style="width:75%;background:#1677ff"></div></div>
+            <div style="font-size:9px;color:#bbb;margin-top:4px">75% ติดตามแล้ว</div>
+          </div>
+          <div>
+            <div class="b-tag badge-red">3 วิกฤต</div>
+            <div class="b-tag badge-amber" style="margin-left:4px">3 รอ</div>
+          </div>
+        </div>
+        <!-- right col -->
+        <div class="b-card">
+          <div class="b-num red" style="font-size:22px">3</div>
+          <div class="b-lbl">วิกฤต</div>
+        </div>
+        <div class="b-card">
+          <div class="b-num green" style="font-size:22px">5</div>
+          <div class="b-lbl">กิจกรรม</div>
+        </div>
+        <!-- wide bottom -->
+        <div class="b-card wide">
+          <div style="font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">ผู้ป่วยล่าสุด</div>
+          <div class="b-mini-list">
+            <div class="b-mini-row"><div class="b-avatar">ส</div>นายสมชาย ใจดี · HN 00124<span class="b-tag badge-red" style="margin-left:auto">วิกฤต</span></div>
+            <div class="b-mini-row"><div class="b-avatar">ม</div>นางมาลี สุขใจ · HN 00098<span class="b-tag badge-amber" style="margin-left:auto">รอ</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="meta-title">B — Asymmetric bento <span class="selected-pill">SELECTED</span></div>
+      <div class="meta-desc">Hero stat card + small cards + wide row. True bento feel with hierarchy.</div>
+    </div>
+  </div>
+
+  <!-- C: Full bento -->
+  <div class="option" id="opt-c" onclick="pick('c')">
+    <div class="preview">
+      <div class="c-grid">
+        <!-- row 1 -->
+        <div class="c-card span2 row2">
+          <div style="font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:1px">ภาพรวมผู้ป่วย</div>
+          <div class="c-num" style="font-size:26px;margin-top:4px">24</div>
+          <div style="font-size:9px;color:#bbb;margin-top:2px">ผู้ป่วยทั้งหมด</div>
+          <div class="c-spark" style="margin-top:8px">
+            <div class="c-bar-spark" style="height:40%;background:#e6f7ff"></div>
+            <div class="c-bar-spark" style="height:55%;background:#bae7ff"></div>
+            <div class="c-bar-spark" style="height:70%;background:#91d5ff"></div>
+            <div class="c-bar-spark" style="height:50%;background:#69c0ff"></div>
+            <div class="c-bar-spark" style="height:85%;background:#40a9ff"></div>
+            <div class="c-bar-spark" style="height:100%;background:#1677ff"></div>
+          </div>
+          <div style="display:flex;gap:5px;margin-top:8px">
+            <span class="c-tag badge-red">3 วิกฤต</span>
+            <span class="c-tag badge-amber">3 รอ</span>
+            <span class="c-tag badge-green">18 ปกติ</span>
+          </div>
+        </div>
+        <div class="c-card">
+          <div class="c-num" style="color:#ff4d4f">3</div>
+          <div class="c-lbl">วิกฤต</div>
+        </div>
+        <!-- row 2 (right) -->
+        <div class="c-card">
+          <div class="c-num" style="color:#faad14">5</div>
+          <div class="c-lbl">กิจกรรม</div>
+        </div>
+        <!-- row 3 full -->
+        <div class="c-card span3">
+          <div style="font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">ผู้ป่วยล่าสุด</div>
+          <div class="c-list">
+            <div class="c-list-row"><div class="c-dot" style="background:#ff4d4f"></div>นายสมชาย ใจดี · HN 00124<span class="c-tag badge-red" style="margin-left:auto">วิกฤต</span></div>
+            <div class="c-list-row"><div class="c-dot" style="background:#faad14"></div>นางมาลี สุขใจ · HN 00098<span class="c-tag badge-amber" style="margin-left:auto">รอ</span></div>
+            <div class="c-list-row"><div class="c-dot" style="background:#52c41a"></div>เด็กชายก้อง ดีงาม · HN 00076<span class="c-tag badge-green" style="margin-left:auto">ปกติ</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="meta-title">C — Full bento <span class="selected-pill">SELECTED</span></div>
+      <div class="meta-desc">3-column grid, mixed sizes, sparkline chart. Maximum data density.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let sel = null;
+  function pick(id) {
+    if (sel) document.getElementById('opt-' + sel).classList.remove('selected');
+    sel = id;
+    document.getElementById('opt-' + id).classList.add('selected');
+    if (window.recordChoice) window.recordChoice(id, document.getElementById('opt-' + id).querySelector('.meta-title').textContent.trim());
+  }
+</script>
+</body>
+</html>

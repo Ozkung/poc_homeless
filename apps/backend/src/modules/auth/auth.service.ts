@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -64,6 +64,24 @@ export class AuthService {
       { expiresIn: this.config.get('jwt.expiresIn') },
     );
     return { accessToken };
+  }
+
+  async setup(orgName: string, adminName: string, adminEmail: string, adminPassword: string) {
+    const existingAdmin = await this.prisma.user.findFirst({ where: { role: 'ADMIN' } });
+    if (existingAdmin) throw new ConflictException('System already set up');
+
+    const org = await this.prisma.organization.create({ data: { name: orgName } });
+    const passwordHash = await bcrypt.hash(adminPassword, 12);
+    await this.prisma.user.create({
+      data: {
+        organizationId: org.id,
+        email: adminEmail,
+        passwordHash,
+        role: 'ADMIN',
+        displayName: adminName,
+      },
+    });
+    return { message: 'Setup complete' };
   }
 
   private async issueTokens(userId: string, email: string, role: string, orgId: string) {

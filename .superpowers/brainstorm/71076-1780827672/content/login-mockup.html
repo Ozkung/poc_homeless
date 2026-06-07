@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Page Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Sarabun', system-ui, sans-serif;
+  background: #0f0f13;
+  padding: 32px 24px;
+  color: #111;
+}
+
+h2 { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.sub { font-size: 11px; color: #555; font-family: 'JetBrains Mono', monospace; margin-bottom: 24px; }
+
+/* Page preview frame */
+.preview-frame {
+  background: #f0f2f5;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #222;
+  min-height: 580px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Subtle dot grid on bg */
+.preview-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #d0d0d0 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: .4;
+}
+
+/* The login card */
+.login-card {
+  position: relative; z-index: 1;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  padding: 36px 40px 32px;
+  width: 400px;
+  box-shadow: 0 8px 40px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
+}
+
+/* Brand mark */
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.brand-icon {
+  width: 40px; height: 40px;
+  background: #1677ff;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.brand-text {}
+.brand-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #1677ff;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  margin-bottom: 1px;
+}
+.brand-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #111;
+  letter-spacing: -.5px;
+  line-height: 1;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: #f5f5f5;
+  margin: 0 -40px 24px;
+}
+
+/* Form heading */
+.form-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 4px;
+}
+.form-sub {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 20px;
+}
+
+/* Field */
+.field { margin-bottom: 16px; }
+.field-label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+}
+.field-input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-family: 'Sarabun', sans-serif;
+  color: #111;
+  background: #fafafa;
+  transition: border-color .15s, box-shadow .15s;
+  outline: none;
+}
+.field-input:focus {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22,119,255,.1);
+  background: #fff;
+}
+.field-input.error { border-color: #ff4d4f; background: #fff2f0; }
+.field-input::placeholder { color: #c0c0c0; font-size: 12px; }
+
+/* Password row */
+.pwd-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.forgot-link {
+  font-size: 11px;
+  color: #1677ff;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .5px;
+}
+
+/* Error message */
+.error-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #cf1322;
+  margin-bottom: 16px;
+}
+.error-dot { width: 6px; height: 6px; border-radius: 50%; background: #ff4d4f; flex-shrink: 0; }
+
+/* Submit button */
+.submit-btn {
+  width: 100%;
+  height: 40px;
+  background: #1677ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background .15s;
+  letter-spacing: .3px;
+}
+.submit-btn:hover { background: #0958d9; }
+
+/* Footer */
+.card-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f5f5f5;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.footer-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #ccc;
+  letter-spacing: .5px;
+}
+.footer-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #1677ff;
+  background: #e6f4ff;
+  border: 1px solid #91caff;
+  padding: 1px 8px;
+  border-radius: 99px;
+  letter-spacing: .5px;
+}
+
+/* Tabs for error/loading state toggle */
+.state-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  justify-content: center;
+}
+.state-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  transition: all .15s;
+}
+.state-tab.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+</style>
+</head>
+<body>
+
+<h2>Login Page Mockup — Centered Card</h2>
+<p class="sub">antd Light · consistent with dashboard theme · click tabs to preview states</p>
+
+<div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
+  <button class="state-tab active" onclick="showState('default',this)">Default</button>
+  <button class="state-tab" onclick="showState('error',this)">Error state</button>
+  <button class="state-tab" onclick="showState('loading',this)">Loading</button>
+</div>
+
+<div class="preview-frame">
+  <div class="login-card">
+
+    <!-- Brand -->
+    <div class="brand-row">
+      <div class="brand-icon">🏥</div>
+      <div class="brand-text">
+        <div class="brand-eyebrow">HomeMed</div>
+        <div class="brand-name">Connect</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-heading">เข้าสู่ระบบ</div>
+    <div class="form-sub">ระบบดูแลผู้ป่วยไร้บ้านในชุมชน</div>
+
+    <!-- Error state -->
+    <div class="error-msg" id="error-msg" style="display:none">
+      <div class="error-dot"></div>
+      อีเมลหรือรหัสผ่านไม่ถูกต้อง
+    </div>
+
+    <!-- Email -->
+    <div class="field">
+      <label class="field-label">Email</label>
+      <input class="field-input" id="email-input" type="email" placeholder="cm@hospital.th" value="">
+    </div>
+
+    <!-- Password -->
+    <div class="field">
+      <div class="pwd-label-row">
+        <span class="field-label" style="margin-bottom:0">Password</span>
+        <span class="forgot-link">ลืมรหัสผ่าน?</span>
+      </div>
+      <input class="field-input" id="pwd-input" type="password" placeholder="••••••••" value="">
+    </div>
+
+    <!-- Submit -->
+    <button class="submit-btn" id="submit-btn">เข้าสู่ระบบ</button>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <span class="footer-text">v1.0 ·</span>
+      <span class="footer-badge">CASE_MANAGER</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showState(state, tab) {
+  document.querySelectorAll('.state-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+
+  const errorMsg = document.getElementById('error-msg');
+  const emailInput = document.getElementById('email-input');
+  const pwdInput = document.getElementById('pwd-input');
+  const btn = document.getElementById('submit-btn');
+
+  errorMsg.style.display = 'none';
+  emailInput.classList.remove('error');
+  pwdInput.classList.remove('error');
+  btn.textContent = 'เข้าสู่ระบบ';
+  btn.style.opacity = '1';
+  btn.style.background = '#1677ff';
+  emailInput.value = '';
+  pwdInput.value = '';
+
+  if (state === 'error') {
+    errorMsg.style.display = 'flex';
+    emailInput.classList.add('error');
+    pwdInput.classList.add('error');
+    emailInput.value = 'cm@hospital.th';
+    pwdInput.value = '••••••••';
+  } else if (state === 'loading') {
+    btn.textContent = 'กำลังเข้าสู่ระบบ...';
+    btn.style.opacity = '.7';
+    btn.style.background = '#4096ff';
+    emailInput.value = 'cm@hospital.th';
+    pwdInput.value = '••••••••';
+  }
+}
+</script>
+</body>
+</html>

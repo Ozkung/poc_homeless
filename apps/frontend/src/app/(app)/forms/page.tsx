@@ -79,10 +79,10 @@ export default function FormsPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
+          <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
             Forms
           </div>
-          <Title level={2} style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
+          <Title level={2} style={{ margin: 0, fontFamily: "'Sarabun',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
             แบบฟอร์ม
           </Title>
         </div>

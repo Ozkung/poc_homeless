@@ -61,10 +61,10 @@ export default async function DashboardPage() {
     <div>
       {/* Page header */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
+        <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
           Overview
         </div>
-        <Title level={2} style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
+        <Title level={2} style={{ margin: 0, fontFamily: "'Sarabun',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
           Dashboard
         </Title>
       </div>
@@ -77,13 +77,13 @@ export default async function DashboardPage() {
           style={{ gridColumn: 'span 2', gridRow: 'span 2', borderTop: '3px solid #1677ff' }}
           styles={{ body: { padding: 24 } }}
         >
-          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
             ภาพรวมผู้ป่วย
           </Text>
           <div style={{ marginTop: 8 }}>
             <Statistic
               value={patients.length}
-              valueStyle={{ fontFamily: "'Syne',sans-serif", fontSize: 52, fontWeight: 800, lineHeight: 1 }}
+              valueStyle={{ fontFamily: "'Sarabun',sans-serif", fontSize: 52, fontWeight: 800, lineHeight: 1 }}
             />
             <Text type="secondary" style={{ fontSize: 12 }}>ผู้ป่วยทั้งหมดในระบบ</Text>
           </div>
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
             trailColor="#f0f0f0"
             style={{ margin: '16px 0 4px' }}
           />
-          <Text type="secondary" style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace" }}>
+          <Text type="secondary" style={{ fontSize: 11, fontFamily: "'Sarabun',sans-serif" }}>
             ติดตามแล้ว {tracked} ราย · {pct}%
           </Text>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
 
           <div style={{ height: 1, background: '#f5f5f5', margin: '20px -24px' }} />
 
-          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>
+          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>
             ผู้ป่วยล่าสุด
           </Text>
           {recent.length === 0 ? (
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
                     <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {p.name}
                     </div>
-                    <div style={{ fontSize: 11, color: '#aaa', fontFamily: "'JetBrains Mono',monospace" }}>
+                    <div style={{ fontSize: 11, color: '#aaa', fontFamily: "'Sarabun',sans-serif" }}>
                       HN {p.hn}{p.locationText ? ` · ${p.locationText}` : ''}
                     </div>
                   </div>
@@ -146,13 +146,13 @@ export default async function DashboardPage() {
 
         {/* Critical — 1×1 */}
         <Card style={{ borderTop: '3px solid #ff4d4f' }} styles={{ body: { padding: 24 } }}>
-          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
             ผู้ป่วยวิกฤต
           </Text>
           <div style={{ marginTop: 8 }}>
             <Statistic
               value={critical}
-              valueStyle={{ fontFamily: "'Syne',sans-serif", fontSize: 44, fontWeight: 800, color: '#ff4d4f', lineHeight: 1 }}
+              valueStyle={{ fontFamily: "'Sarabun',sans-serif", fontSize: 44, fontWeight: 800, color: '#ff4d4f', lineHeight: 1 }}
             />
             <Text type="secondary" style={{ fontSize: 12 }}>ต้องการความช่วยเหลือเร่งด่วน</Text>
           </div>
@@ -160,13 +160,13 @@ export default async function DashboardPage() {
 
         {/* Events — 1×1 */}
         <Card style={{ borderTop: '3px solid #faad14' }} styles={{ body: { padding: 24 } }}>
-          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
             กิจกรรมเดือนนี้
           </Text>
           <div style={{ marginTop: 8 }}>
             <Statistic
               value={eventCount}
-              valueStyle={{ fontFamily: "'Syne',sans-serif", fontSize: 44, fontWeight: 800, color: '#faad14', lineHeight: 1 }}
+              valueStyle={{ fontFamily: "'Sarabun',sans-serif", fontSize: 44, fontWeight: 800, color: '#faad14', lineHeight: 1 }}
             />
             <Text type="secondary" style={{ fontSize: 12 }}>
               {new Date().toLocaleString('th-TH', { month: 'long', year: 'numeric' })}
@@ -176,13 +176,13 @@ export default async function DashboardPage() {
 
         {/* Stable — 1×1 */}
         <Card style={{ borderTop: '3px solid #52c41a' }} styles={{ body: { padding: 24 } }}>
-          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <Text type="secondary" style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
             ผู้ป่วยปกติ
           </Text>
           <div style={{ marginTop: 8 }}>
             <Statistic
               value={stable}
-              valueStyle={{ fontFamily: "'Syne',sans-serif", fontSize: 44, fontWeight: 800, color: '#52c41a', lineHeight: 1 }}
+              valueStyle={{ fontFamily: "'Sarabun',sans-serif", fontSize: 44, fontWeight: 800, color: '#52c41a', lineHeight: 1 }}
             />
             <Text type="secondary" style={{ fontSize: 12 }}>สถานะเสถียร</Text>
           </div>

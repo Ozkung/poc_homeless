@@ -12,8 +12,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['Sarabun', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-        display: ['Syne', 'sans-serif'],
+        mono: ['Sarabun', 'sans-serif'],
+        display: ['Sarabun', 'sans-serif'],
       },
     },
   },

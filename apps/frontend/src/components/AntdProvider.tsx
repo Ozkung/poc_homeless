@@ -11,7 +11,7 @@ export default function AntdProvider({ children }: { children: ReactNode }) {
         token: {
           colorPrimary: '#1677ff',
           borderRadius: 10,
-          fontFamily: "'Sarabun', system-ui, sans-serif",
+          fontFamily: "'Sarabun', sans-serif",
           colorBgContainer: '#ffffff',
           colorBgLayout: '#f0f2f5',
         },

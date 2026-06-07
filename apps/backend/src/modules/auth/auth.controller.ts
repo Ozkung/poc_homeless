@@ -5,6 +5,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { SetupDto } from './dto/setup.dto';
 
 const COOKIE_NAME = 'refresh_token';
 const COOKIE_OPTS = {
@@ -45,6 +46,12 @@ export class AuthController {
     const token: string = bodyToken ?? '';
     await this.auth.logout(token);
     res.clearCookie(COOKIE_NAME);
+  }
+
+  @Post('setup')
+  @HttpCode(HttpStatus.CREATED)
+  setup(@Body() dto: SetupDto) {
+    return this.auth.setup(dto.orgName, dto.adminName, dto.adminEmail, dto.adminPassword);
   }
 
   @Post('liff/verify')
