@@ -100,6 +100,7 @@ model Patient {
   submissions Submission[]
   activities  Activity[]
   eventTasks  EventTask[]
+  carePlanItems CarePlanItem[]
 }
 
 model FormTemplate {
@@ -186,4 +187,17 @@ model Activity {
   type       ActivityType
   payload    Json?
   createdAt  DateTime     @default(now())
+}
+
+model CarePlanItem {
+  id           String   @id @default(uuid())
+  patientId    String
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title        String
+  frequency    String
+  priority     String   @default("MED")
+  assigneeName String?
+  isDone       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
