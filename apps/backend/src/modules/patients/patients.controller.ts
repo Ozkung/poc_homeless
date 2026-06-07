@@ -47,4 +47,39 @@ export class PatientsController {
   findSubmissions(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.patients.findSubmissions(id, user.orgId);
   }
+
+  @Get(':id/care-plan')
+  getCarePlan(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.patients.getCarePlan(id, user.orgId);
+  }
+
+  @Post(':id/care-plan')
+  @HttpCode(HttpStatus.CREATED)
+  addCarePlanItem(
+    @Param('id') id: string,
+    @Body() body: { title: string; frequency: string; priority: string; assigneeName?: string },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.addCarePlanItem(id, user.orgId, body);
+  }
+
+  @Patch(':id/care-plan/:itemId')
+  updateCarePlanItem(
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+    @Body() body: Partial<{ title: string; frequency: string; priority: string; assigneeName: string; isDone: boolean }>,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.updateCarePlanItem(id, itemId, user.orgId, body);
+  }
+
+  @Delete(':id/care-plan/:itemId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteCarePlanItem(
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.deleteCarePlanItem(id, itemId, user.orgId);
+  }
 }

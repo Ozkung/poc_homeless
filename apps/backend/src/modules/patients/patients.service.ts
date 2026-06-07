@@ -73,6 +73,45 @@ export class PatientsService {
     });
   }
 
+  async getCarePlan(patientId: string, orgId: string) {
+    await this.findOne(patientId, orgId);
+    return this.prisma.carePlanItem.findMany({
+      where: { patientId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async addCarePlanItem(
+    patientId: string,
+    orgId: string,
+    data: { title: string; frequency: string; priority: string; assigneeName?: string },
+  ) {
+    await this.findOne(patientId, orgId);
+    return this.prisma.carePlanItem.create({
+      data: { patientId, ...data },
+    });
+  }
+
+  async updateCarePlanItem(
+    patientId: string,
+    itemId: string,
+    orgId: string,
+    data: Partial<{ title: string; frequency: string; priority: string; assigneeName: string; isDone: boolean }>,
+  ) {
+    await this.findOne(patientId, orgId);
+    return this.prisma.carePlanItem.update({
+      where: { id: itemId, patientId },
+      data,
+    });
+  }
+
+  async deleteCarePlanItem(patientId: string, itemId: string, orgId: string) {
+    await this.findOne(patientId, orgId);
+    return this.prisma.carePlanItem.delete({
+      where: { id: itemId, patientId },
+    });
+  }
+
   private decrypt(p: any) {
     return { ...p, name: this.crypto.decrypt(p.nameEnc), nameEnc: undefined };
   }
