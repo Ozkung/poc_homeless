@@ -9,6 +9,7 @@ import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Card } from 'antd';
 import type { FormField, FieldType } from '@homemed/shared-types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -28,7 +29,7 @@ function SortableField({ field, onUpdate, onRemove }: { field: FormField; onUpda
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   return (
-    <div ref={setNodeRef} style={style} className="bg-white border border-gray-200 rounded-lg p-4 flex items-start gap-3">
+    <Card ref={setNodeRef as any} style={{ ...style, marginBottom: 0 }} styles={{ body: { padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 12 } }} size="small">
       <button {...attributes} {...listeners} className="text-gray-300 hover:text-gray-500 cursor-grab mt-1">⠿</button>
       <div className="flex-1 space-y-2">
         <input
@@ -45,7 +46,7 @@ function SortableField({ field, onUpdate, onRemove }: { field: FormField; onUpda
         </div>
       </div>
       <button onClick={() => onRemove(field.id)} className="text-gray-300 hover:text-red-400 transition-colors text-sm">✕</button>
-    </div>
+    </Card>
   );
 }
 
