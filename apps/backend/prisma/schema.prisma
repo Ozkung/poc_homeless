@@ -97,7 +97,6 @@ model Patient {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  events      Event[]
   submissions Submission[]
   activities  Activity[]
   eventTasks  EventTask[]
@@ -135,17 +134,8 @@ model Event {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  patients   Patient[]   @relation("EventPatients")
   tasks      EventTask[]
   activities Activity[]
-}
-
-model EventPatient {
-  eventId   String
-  patientId String
-
-  @@id([eventId, patientId])
-  @@map("_EventPatients")
 }
 
 model EventTask {
