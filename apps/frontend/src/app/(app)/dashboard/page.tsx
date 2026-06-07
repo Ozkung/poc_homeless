@@ -2,164 +2,192 @@ export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
+import { Card, Statistic, Tag, Progress, Typography } from 'antd';
 
+const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-type PatientStatus = 'CRITICAL' | 'PENDING' | 'STABLE';
-
 interface Patient {
-  id: string;
-  name: string;
-  status: PatientStatus;
-  hn: string;
-  age: number;
-  gender: string;
-  conditions: string[];
-  locationText: string;
+  id: string; name: string; hn: string;
+  status: 'CRITICAL' | 'PENDING' | 'STABLE';
+  locationText?: string; age?: number;
 }
 
 async function fetchPatients(token: string): Promise<Patient[]> {
   try {
     const res = await fetch(`${API_URL}/patients`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
+      headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
     });
-    if (!res.ok) return [];
-    return res.json() as Promise<Patient[]>;
-  } catch {
-    return [];
-  }
+    return res.ok ? res.json() : [];
+  } catch { return []; }
 }
 
 async function fetchEventCount(token: string): Promise<number> {
   try {
     const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    const res = await fetch(`${API_URL}/events?month=${month}&year=${year}`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
+    const res = await fetch(`${API_URL}/events?month=${now.getMonth() + 1}&year=${now.getFullYear()}`, {
+      headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
     });
     if (!res.ok) return 0;
     const data = await res.json();
     return Array.isArray(data) ? data.length : 0;
-  } catch {
-    return 0;
-  }
+  } catch { return 0; }
 }
 
-const STATUS_LABELS: Record<PatientStatus, string> = {
-  CRITICAL: 'วิกฤต',
-  PENDING: 'รอดำเนินการ',
-  STABLE: 'ปกติ',
+const STATUS_COLOR: Record<string, string> = {
+  CRITICAL: '#ff4d4f', PENDING: '#faad14', STABLE: '#52c41a',
 };
-
-const STATUS_BADGE: Record<PatientStatus, string> = {
-  CRITICAL: 'bg-red-100 text-red-700 border border-red-200',
-  PENDING: 'bg-amber-100 text-amber-700 border border-amber-200',
-  STABLE: 'bg-green-100 text-green-700 border border-green-200',
+const STATUS_LABEL: Record<string, string> = {
+  CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ',
+};
+const TAG_PRESET: Record<string, string> = {
+  CRITICAL: 'error', PENDING: 'warning', STABLE: 'success',
 };
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   const token = session?.accessToken ?? '';
 
-  const [patients, eventCount] = await Promise.all([
-    fetchPatients(token),
-    fetchEventCount(token),
-  ]);
+  const [patients, eventCount] = await Promise.all([fetchPatients(token), fetchEventCount(token)]);
 
-  const totalPatients = patients.length;
-  const criticalCount = patients.filter((p) => p.status === 'CRITICAL').length;
-  const stableCount = patients.filter((p) => p.status === 'STABLE').length;
-  const recentPatients = patients.slice(-5).reverse();
-
-  const stats = [
-    {
-      label: 'ผู้ป่วยทั้งหมด',
-      value: totalPatients > 0 ? String(totalPatients) : '—',
-      color: 'text-primary',
-      bg: 'bg-primary/10 border-primary/20',
-    },
-    {
-      label: 'วิกฤต',
-      value: totalPatients > 0 ? String(criticalCount) : '—',
-      color: 'text-danger',
-      bg: 'bg-red-50 border-red-200',
-    },
-    {
-      label: 'ปกติ',
-      value: totalPatients > 0 ? String(stableCount) : '—',
-      color: 'text-success',
-      bg: 'bg-green-50 border-green-200',
-    },
-    {
-      label: 'กิจกรรมเดือนนี้',
-      value: eventCount > 0 ? String(eventCount) : '—',
-      color: 'text-warning',
-      bg: 'bg-amber-50 border-amber-200',
-    },
-  ];
+  const critical = patients.filter((p) => p.status === 'CRITICAL').length;
+  const pending = patients.filter((p) => p.status === 'PENDING').length;
+  const stable = patients.filter((p) => p.status === 'STABLE').length;
+  const tracked = stable + pending;
+  const pct = patients.length > 0 ? Math.round((tracked / patients.length) * 100) : 0;
+  const recent = patients.slice(-5).reverse();
 
   return (
     <div>
-      {/* Header */}
-      <div className="mb-6">
-        <p className="text-xs font-mono text-primary tracking-widest uppercase mb-1">Overview</p>
-        <h1 className="font-display text-2xl font-bold text-gray-900">Dashboard</h1>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        {stats.map((card) => (
-          <div key={card.label} className={`border rounded-xl p-5 ${card.bg}`}>
-            <p className="text-xs font-mono text-gray-500 uppercase tracking-wider mb-2">
-              {card.label}
-            </p>
-            <p className={`text-4xl font-display font-bold ${card.color}`}>{card.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Recent patients table */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="font-display font-semibold text-gray-900 text-base">ผู้ป่วยล่าสุด</h2>
+      {/* Page header */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
+          Overview
         </div>
-        {recentPatients.length === 0 ? (
-          <div className="px-5 py-8 text-center">
-            <p className="text-gray-400 text-sm font-mono">ไม่มีข้อมูลผู้ป่วย</p>
+        <Title level={2} style={{ margin: 0, fontFamily: "'Syne',sans-serif", fontWeight: 800, letterSpacing: -1 }}>
+          Dashboard
+        </Title>
+      </div>
+
+      {/* Bento grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+
+        {/* Hero card — 2 cols × 2 rows */}
+        <Card
+          style={{ gridColumn: 'span 2', gridRow: 'span 2', borderTop: '3px solid #1677ff' }}
+          styles={{ body: { padding: 24 } }}
+        >
+          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+            ภาพรวมผู้ป่วย
+          </Text>
+          <div style={{ marginTop: 8 }}>
+            <Statistic
+              value={patients.length}
+              valueStyle={{ fontFamily: "'Syne',sans-serif", fontSize: 52, fontWeight: 800, lineHeight: 1 }}
+            />
+            <Text type="secondary" style={{ fontSize: 12 }}>ผู้ป่วยทั้งหมดในระบบ</Text>
           </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs font-mono text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                <th className="px-5 py-3 font-medium">ชื่อ</th>
-                <th className="px-5 py-3 font-medium">HN</th>
-                <th className="px-5 py-3 font-medium">สถานะ</th>
-                <th className="px-5 py-3 font-medium">สถานที่</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {recentPatients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3 font-sans text-gray-900">{patient.name}</td>
-                  <td className="px-5 py-3 font-mono text-gray-500 text-xs">{patient.hn}</td>
-                  <td className="px-5 py-3">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-medium ${STATUS_BADGE[patient.status]}`}
-                    >
-                      {STATUS_LABELS[patient.status]}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 font-sans text-gray-500 text-xs">
-                    {patient.locationText}
-                  </td>
-                </tr>
+          <Progress
+            percent={pct}
+            showInfo={false}
+            strokeColor="#1677ff"
+            trailColor="#f0f0f0"
+            style={{ margin: '16px 0 4px' }}
+          />
+          <Text type="secondary" style={{ fontSize: 11, fontFamily: "'JetBrains Mono',monospace" }}>
+            ติดตามแล้ว {tracked} ราย · {pct}%
+          </Text>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
+            <Tag color="error">● {critical} วิกฤต</Tag>
+            <Tag color="warning">● {pending} รอดำเนินการ</Tag>
+            <Tag color="success">● {stable} ปกติ</Tag>
+          </div>
+
+          <div style={{ height: 1, background: '#f5f5f5', margin: '20px -24px' }} />
+
+          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>
+            ผู้ป่วยล่าสุด
+          </Text>
+          {recent.length === 0 ? (
+            <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีข้อมูลผู้ป่วย</Text>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {recent.map((p, i) => (
+                <div
+                  key={p.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '10px 0',
+                    borderBottom: i < recent.length - 1 ? '1px solid #fafafa' : 'none',
+                  }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: `${STATUS_COLOR[p.status]}18`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700, color: STATUS_COLOR[p.status],
+                  }}>
+                    {p.name?.[0] ?? '?'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {p.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#aaa', fontFamily: "'JetBrains Mono',monospace" }}>
+                      HN {p.hn}{p.locationText ? ` · ${p.locationText}` : ''}
+                    </div>
+                  </div>
+                  <Tag color={TAG_PRESET[p.status]}>{STATUS_LABEL[p.status]}</Tag>
+                </div>
               ))}
-            </tbody>
-          </table>
-        )}
+            </div>
+          )}
+        </Card>
+
+        {/* Critical — 1×1 */}
+        <Card style={{ borderTop: '3px solid #ff4d4f' }} styles={{ body: { padding: 24 } }}>
+          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+            ผู้ป่วยวิกฤต
+          </Text>
+          <div style={{ marginTop: 8 }}>
+            <Statistic
+              value={critical}
+              valueStyle={{ fontFamily: "'Syne',sans-serif", fontSize: 44, fontWeight: 800, color: '#ff4d4f', lineHeight: 1 }}
+            />
+            <Text type="secondary" style={{ fontSize: 12 }}>ต้องการความช่วยเหลือเร่งด่วน</Text>
+          </div>
+        </Card>
+
+        {/* Events — 1×1 */}
+        <Card style={{ borderTop: '3px solid #faad14' }} styles={{ body: { padding: 24 } }}>
+          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+            กิจกรรมเดือนนี้
+          </Text>
+          <div style={{ marginTop: 8 }}>
+            <Statistic
+              value={eventCount}
+              valueStyle={{ fontFamily: "'Syne',sans-serif", fontSize: 44, fontWeight: 800, color: '#faad14', lineHeight: 1 }}
+            />
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {new Date().toLocaleString('th-TH', { month: 'long', year: 'numeric' })}
+            </Text>
+          </div>
+        </Card>
+
+        {/* Stable — 1×1 */}
+        <Card style={{ borderTop: '3px solid #52c41a' }} styles={{ body: { padding: 24 } }}>
+          <Text type="secondary" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>
+            ผู้ป่วยปกติ
+          </Text>
+          <div style={{ marginTop: 8 }}>
+            <Statistic
+              value={stable}
+              valueStyle={{ fontFamily: "'Syne',sans-serif", fontSize: 44, fontWeight: 800, color: '#52c41a', lineHeight: 1 }}
+            />
+            <Text type="secondary" style={{ fontSize: 12 }}>สถานะเสถียร</Text>
+          </div>
+        </Card>
+
       </div>
     </div>
   );
