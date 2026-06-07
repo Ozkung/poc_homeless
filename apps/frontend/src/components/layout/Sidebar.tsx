@@ -18,7 +18,7 @@ export default function Sidebar() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const selectedKey = items.find((item) => pathname.startsWith(item!.key as string))?.key as string ?? '/dashboard';
+  const selectedKey = (items ?? []).find((item) => item != null && pathname.startsWith((item as { key: string }).key))?.key as string ?? '/dashboard';
 
   return (
     <aside
