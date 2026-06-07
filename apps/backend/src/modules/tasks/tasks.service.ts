@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, GoneException, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
@@ -52,10 +53,22 @@ export class TasksService {
     if (existing) throw new HttpException('Check-in already recorded in the last hour', HttpStatus.TOO_MANY_REQUESTS);
 
     await this.redis.setex(rateLimitKey, 3600, '1');
-    return this.prisma.eventTask.update({
-      where: { id: taskId },
-      data: { status: 'IN_PROGRESS' },
-    });
+    const [updated] = await Promise.all([
+      this.prisma.eventTask.update({
+        where: { id: taskId },
+        data: { status: 'IN_PROGRESS' },
+      }),
+      this.prisma.activity.create({
+        data: {
+          actorId: userId,
+          patientId: task.patientId,
+          taskId,
+          type: 'CHECK_IN',
+          payload: Prisma.DbNull,
+        },
+      }),
+    ]);
+    return updated;
   }
 
   async addNote(taskId: string, userId: string, note: string) {

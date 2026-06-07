@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { NotFoundException, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import { TasksService } from '../tasks.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 
@@ -98,6 +99,24 @@ describe('TasksService', () => {
 
       expect(mockRedis.setex).toHaveBeenCalledWith('checkin:task1:user1', 3600, '1');
       expect(result).toMatchObject({ status: 'IN_PROGRESS' });
+    });
+
+    it('checkin creates a CHECK_IN Activity for the patient', async () => {
+      mockPrisma.eventTask.findUnique.mockResolvedValue({
+        id: 't1', assigneeId: 'u1', patientId: 'p1', event: {}, patient: {}, assignee: {},
+      });
+      mockPrisma.eventTask.update.mockResolvedValue({ id: 't1', status: 'IN_PROGRESS' });
+      mockRedis.get.mockResolvedValue(null);
+      mockRedis.setex.mockResolvedValue('OK');
+      // Ensure activity mock exists
+      if (!mockPrisma.activity) mockPrisma.activity = { create: jest.fn().mockResolvedValue({ id: 'act1' }) };
+      else mockPrisma.activity.create = jest.fn().mockResolvedValue({ id: 'act1' });
+
+      await service.checkin('t1', 'u1');
+
+      expect(mockPrisma.activity.create).toHaveBeenCalledWith({
+        data: { actorId: 'u1', patientId: 'p1', taskId: 't1', type: 'CHECK_IN', payload: Prisma.DbNull },
+      });
     });
   });
 
