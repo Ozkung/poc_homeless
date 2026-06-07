@@ -21,7 +21,7 @@ export class SubmissionsService {
         patientId: task.patientId,
         formTemplateId: task.formTemplateId,
         submittedById: userId,
-        answers: data.answers,
+        answers: data.answers as any,
       },
     });
   }
