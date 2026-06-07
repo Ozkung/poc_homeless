@@ -3,7 +3,8 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
-import { Card, Descriptions, Tag, Timeline, List } from 'antd';
+import { Card, Collapse, Descriptions, Tag, Tabs, Timeline } from 'antd';
+import CarePlanTab from './care-plan-tab';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -19,7 +20,7 @@ interface Activity {
   actor: { displayName: string };
 }
 interface Submission {
-  id: string; submittedAt: string;
+  id: string; submittedAt: string; answers?: any[];
   formTemplate: { title: string };
   submittedBy: { displayName: string };
 }
@@ -61,6 +62,19 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     );
   }
 
+  const checkInCount = activities?.filter((a) => a.type === 'CHECK_IN').length ?? 0;
+  const thisMonth = new Date().getMonth();
+  const formsThisMonth = submissions?.filter((s) => new Date(s.submittedAt).getMonth() === thisMonth).length ?? 0;
+  const totalActivities = activities?.length ?? 0;
+  const totalForms = submissions?.length ?? 0;
+
+  const heroStats = [
+    { label: 'Check-in ทั้งหมด', value: checkInCount, color: '#1677ff' },
+    { label: 'Form เดือนนี้', value: formsThisMonth, color: '#52c41a' },
+    { label: 'กิจกรรมทั้งหมด', value: totalActivities, color: '#faad14' },
+    { label: 'Form ส่งแล้ว', value: totalForms, color: '#722ed1' },
+  ];
+
   return (
     <div>
       {/* Breadcrumb */}
@@ -83,42 +97,46 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
         </Tag>
       </div>
 
-      {/* Bento grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+      {/* Hero stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 20 }}>
+        {heroStats.map((stat) => (
+          <Card key={stat.label} styles={{ body: { padding: '14px 16px', textAlign: 'center' } }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: stat.color, fontFamily: 'monospace' }}>{stat.value}</div>
+            <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{stat.label}</div>
+          </Card>
+        ))}
+      </div>
 
-        {/* Demographics — span 3 */}
-        <Card style={{ gridColumn: 'span 3' }} styles={{ body: { padding: 24 } }}>
-          <Descriptions
-            column={3}
-            size="small"
-            labelStyle={{ color: '#aaa', fontSize: 11 }}
-          >
-            <Descriptions.Item label="HN">{patient.hn}</Descriptions.Item>
-            <Descriptions.Item label="อายุ">{patient.age ? `${patient.age} ปี` : '—'}</Descriptions.Item>
-            <Descriptions.Item label="เพศ">{patient.gender ? GENDER_LABEL[patient.gender] : '—'}</Descriptions.Item>
-            <Descriptions.Item label="สถานที่" span={2}>{patient.locationText ?? '—'}</Descriptions.Item>
-            <Descriptions.Item label="สถานะ">
-              <Tag color={STATUS_COLOR[patient.status]}>{STATUS_LABEL[patient.status]}</Tag>
-            </Descriptions.Item>
-            {patient.conditions.length > 0 && (
-              <Descriptions.Item label="โรคประจำตัว" span={3}>
-                {patient.conditions.map((c) => <Tag key={c} style={{ marginRight: 4 }}>{c}</Tag>)}
-              </Descriptions.Item>
-            )}
-          </Descriptions>
-        </Card>
-
-        {/* Activity timeline — span 2 */}
-        <Card
-          title={<span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>กิจกรรม</span>}
-          style={{ gridColumn: 'span 2' }}
-          styles={{ body: { padding: '16px 24px' } }}
-        >
-          {!activities?.length ? (
-            <span style={{ fontSize: 12, color: '#888' }}>ยังไม่มีกิจกรรม</span>
-          ) : (
-            <Timeline
-              items={activities.slice(0, 10).map((a) => ({
+      {/* 4-tab layout */}
+      <Card>
+        <Tabs defaultActiveKey="info" items={[
+          {
+            key: 'info',
+            label: 'ข้อมูล',
+            children: (
+              <Descriptions column={3} size="small" labelStyle={{ color: '#aaa', fontSize: 11 }}>
+                <Descriptions.Item label="HN">{patient.hn}</Descriptions.Item>
+                <Descriptions.Item label="อายุ">{patient.age ? `${patient.age} ปี` : '—'}</Descriptions.Item>
+                <Descriptions.Item label="เพศ">{patient.gender ? GENDER_LABEL[patient.gender] : '—'}</Descriptions.Item>
+                <Descriptions.Item label="สถานที่" span={2}>{patient.locationText ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="สถานะ">
+                  <Tag color={STATUS_COLOR[patient.status]}>{STATUS_LABEL[patient.status]}</Tag>
+                </Descriptions.Item>
+                {patient.conditions.length > 0 && (
+                  <Descriptions.Item label="โรคประจำตัว" span={3}>
+                    {patient.conditions.map((c) => <Tag key={c} style={{ marginRight: 4 }}>{c}</Tag>)}
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
+            ),
+          },
+          {
+            key: 'timeline',
+            label: 'Timeline',
+            children: !activities?.length ? (
+              <span style={{ color: '#888', fontSize: 12 }}>ยังไม่มีกิจกรรม</span>
+            ) : (
+              <Timeline items={activities.slice(0, 20).map((a) => ({
                 color: ACTIVITY_COLOR[a.type] ?? '#d9d9d9',
                 children: (
                   <div>
@@ -132,42 +150,50 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
                     )}
                   </div>
                 ),
-              }))}
-            />
-          )}
-        </Card>
-
-        {/* Submissions — span 1 */}
-        <Card
-          title={<span style={{ fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' }}>แบบฟอร์มที่ส่ง</span>}
-          styles={{ body: { padding: '16px 24px' } }}
-        >
-          {!submissions?.length ? (
-            <span style={{ fontSize: 12, color: '#888' }}>ยังไม่มีการส่งแบบฟอร์ม</span>
-          ) : (
-            <List
-              size="small"
-              dataSource={submissions.slice(0, 8)}
-              renderItem={(s) => (
-                <List.Item style={{ padding: '8px 0' }}>
-                  <List.Item.Meta
-                    title={<span style={{ fontSize: 13, fontWeight: 600 }}>{s.formTemplate.title}</span>}
-                    description={
-                      <div>
-                        <div style={{ fontSize: 11, color: '#aaa' }}>{s.submittedBy.displayName}</div>
-                        <div style={{ fontSize: 10, color: '#ccc' }}>
-                          {new Date(s.submittedAt).toLocaleDateString('th-TH')}
+              }))} />
+            ),
+          },
+          {
+            key: 'formhistory',
+            label: 'Form History',
+            children: !submissions?.length ? (
+              <span style={{ color: '#888', fontSize: 12 }}>ยังไม่มีการส่งแบบฟอร์ม</span>
+            ) : (
+              <Collapse
+                items={submissions.slice(0, 10).map((s) => ({
+                  key: s.id,
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 11, color: '#aaa', fontFamily: 'monospace', flexShrink: 0 }}>
+                        {new Date(s.submittedAt).toLocaleDateString('th-TH')}
+                      </span>
+                      <span style={{ flex: 1, fontWeight: 600, fontSize: 13 }}>{s.formTemplate.title}</span>
+                      <span style={{ fontSize: 11, color: '#888' }}>{s.submittedBy.displayName}</span>
+                    </div>
+                  ),
+                  children: (
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {Array.isArray(s.answers) && (s.answers as any[]).map((ans: any, i: number) => (
+                        <div key={i}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: '#555' }}>{ans.fieldId}</div>
+                          <div style={{ fontSize: 12, padding: '3px 8px', background: '#f5f5f5', borderRadius: 4, display: 'inline-block', marginTop: 2 }}>
+                            {String(ans.value)}
+                          </div>
                         </div>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          )}
-        </Card>
-
-      </div>
+                      ))}
+                    </div>
+                  ),
+                }))}
+              />
+            ),
+          },
+          {
+            key: 'careplan',
+            label: 'Care Plan',
+            children: <CarePlanTab patientId={patient.id} />,
+          },
+        ]} />
+      </Card>
     </div>
   );
 }
