@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AesGcmService } from '../../common/crypto/aes-gcm.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class PatientsService {
-  constructor(private prisma: PrismaService, private crypto: AesGcmService) {}
+  constructor(
+    private prisma: PrismaService,
+    private crypto: AesGcmService,
+    private notifications: NotificationsService,
+  ) {}
 
   async findAll(orgId: string) {
     const patients = await this.prisma.patient.findMany({ where: { organizationId: orgId } });
@@ -110,6 +116,64 @@ export class PatientsService {
     return this.prisma.carePlanItem.delete({
       where: { id: itemId, patientId },
     });
+  }
+
+  async createSos(patientId: string, orgId: string, userId: string, coords: { lat?: number; lng?: number }) {
+    const patient = await this.findOne(patientId, orgId); // throws if not found or wrong org
+    const actor = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { displayName: true },
+    });
+
+    await Promise.all([
+      this.prisma.activity.create({
+        data: {
+          actorId: userId,
+          patientId,
+          type: 'SOS',
+          payload: { lat: coords.lat ?? null, lng: coords.lng ?? null },
+        },
+      }),
+      this.prisma.alert.create({
+        data: { patientId, type: 'SOS', lat: coords.lat, lng: coords.lng },
+      }),
+    ]);
+
+    const cms = await this.prisma.user.findMany({
+      where: {
+        organizationId: orgId,
+        role: UserRole.CASE_MANAGER,
+        lineUserId: { not: null },
+        isActive: true,
+      },
+      select: { lineUserId: true },
+    });
+
+    await Promise.all(
+      cms
+        .filter((cm) => cm.lineUserId)
+        .map((cm) =>
+          this.notifications.enqueueSosAlert({
+            lineUserId: cm.lineUserId!,
+            patientName: patient.name,
+            hn: patient.hn,
+            caregiverName: actor?.displayName ?? 'อาสา',
+            lat: coords.lat,
+            lng: coords.lng,
+          }),
+        ),
+    );
+
+    return { ok: true };
+  }
+
+  async createSosByTask(taskId: string, userId: string, coords: { lat?: number; lng?: number }) {
+    const task = await this.prisma.eventTask.findUnique({
+      where: { id: taskId },
+      include: { patient: { select: { organizationId: true } } },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+    return this.createSos(task.patientId, task.patient.organizationId, userId, coords);
   }
 
   private decrypt(p: any) {

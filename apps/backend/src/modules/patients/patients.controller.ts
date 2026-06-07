@@ -5,6 +5,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
+import { SosDto } from './dto/sos.dto';
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -81,5 +82,25 @@ export class PatientsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.patients.deleteCarePlanItem(id, itemId, user.orgId);
+  }
+
+  @Post('sos-by-task/:taskId')
+  @HttpCode(HttpStatus.OK)
+  createSosByTask(
+    @Param('taskId') taskId: string,
+    @Body() dto: SosDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.createSosByTask(taskId, user.sub, dto);
+  }
+
+  @Post(':id/sos')
+  @HttpCode(HttpStatus.OK)
+  createSos(
+    @Param('id') id: string,
+    @Body() dto: SosDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.createSos(id, user.orgId, user.sub, dto);
   }
 }

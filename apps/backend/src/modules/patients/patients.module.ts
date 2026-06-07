@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { PatientsController } from './patients.controller';
 import { PatientsService } from './patients.service';
 import { AesGcmService } from '../../common/crypto/aes-gcm.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
+  imports: [NotificationsModule],
   controllers: [PatientsController],
   providers: [PatientsService, AesGcmService],
 })

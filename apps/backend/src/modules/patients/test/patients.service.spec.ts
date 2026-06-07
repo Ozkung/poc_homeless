@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { PatientsService } from '../patients.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AesGcmService } from '../../../common/crypto/aes-gcm.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 const mockPrisma = {
   patient: {
@@ -12,13 +13,21 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
   },
-  activity: { findMany: jest.fn() },
+  activity: { findMany: jest.fn(), create: jest.fn() },
   submission: { findMany: jest.fn() },
+  alert: { create: jest.fn() },
+  user: { findUnique: jest.fn(), findMany: jest.fn() },
+  carePlanItem: { findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+  eventTask: { findUnique: jest.fn() },
 };
 
 const mockCrypto = {
   encrypt: jest.fn((v: string) => `enc:${v}`),
   decrypt: jest.fn((v: string) => v.replace('enc:', '')),
+};
+
+const mockNotifications = {
+  enqueueSosAlert: jest.fn(),
 };
 
 describe('PatientsService', () => {
@@ -30,6 +39,7 @@ describe('PatientsService', () => {
         PatientsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AesGcmService, useValue: mockCrypto },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile();
 
