@@ -63,21 +63,21 @@
     "testEnvironment": "node"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.4.9",
-    "@nestjs/schematics": "^10.2.3",
-    "@nestjs/testing": "^10.4.15",
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.1.24",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.1.0",
-    "@types/node": "^22.13.1",
+    "@types/node": "^25.9.2",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "jest": "^30.4.2",
-    "prisma": "^6.3.1",
+    "prisma": "^7.8.0",
     "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^6.0.3"
   }
 }
