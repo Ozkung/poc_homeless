@@ -11,6 +11,8 @@ enum UserRole {
   ADMIN
   CASE_MANAGER
   FIELD_WORKER
+  SUPER_ADMIN
+  MEDICAL_VOLUNTEER
 }
 
 enum Gender {
@@ -50,6 +52,25 @@ enum ActivityType {
   SOS
 }
 
+enum InventoryCategory {
+  DRUG
+  SUPPLY
+}
+
+enum TransactionType {
+  IN_PURCHASE
+  IN_DONATION
+  OUT_PRESCRIPTION
+  OUT_SUPPLY
+  ADJ_APPROVED
+}
+
+enum AdjStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Organization {
   id           String        @id @default(uuid())
   name         String
@@ -59,6 +80,7 @@ model Organization {
   patients     Patient[]
   formTemplates FormTemplate[]
   events       Event[]
+  inventoryItems InventoryItem[]
 }
 
 model User {
@@ -80,6 +102,10 @@ model User {
   submissions       Submission[]
   activities        Activity[]
   formTemplates     FormTemplate[]
+
+  stockTransactions    StockTransaction[] @relation("StockActor")
+  adjRequestsMade      AdjRequest[]       @relation("AdjRequester")
+  adjRequestsReviewed  AdjRequest[]       @relation("AdjReviewer")
 }
 
 model Patient {
@@ -222,4 +248,55 @@ model CarePlanItem {
   isDone       Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model InventoryItem {
+  id                String            @id @default(uuid())
+  organizationId    String
+  organization      Organization      @relation(fields: [organizationId], references: [id])
+  name              String
+  unit              String
+  category          InventoryCategory
+  currentStock      Int               @default(0)
+  lowStockThreshold Int               @default(10)
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  transactions StockTransaction[]
+  adjRequests  AdjRequest[]
+}
+
+model StockTransaction {
+  id           String          @id @default(uuid())
+  itemId       String
+  item         InventoryItem   @relation(fields: [itemId], references: [id])
+  type         TransactionType
+  quantity     Int
+  balanceAfter Int
+  patientId    String?
+  eventId      String?
+  actorId      String
+  actor        User            @relation("StockActor", fields: [actorId], references: [id])
+  donorName    String?
+  receiptNo    String?
+  unitCost     Float?
+  reason       String?
+  createdAt    DateTime        @default(now())
+}
+
+model AdjRequest {
+  id              String        @id @default(uuid())
+  itemId          String
+  item            InventoryItem @relation(fields: [itemId], references: [id])
+  requestedById   String
+  requester       User          @relation("AdjRequester", fields: [requestedById], references: [id])
+  quantity        Int
+  reason          String
+  status          AdjStatus     @default(PENDING)
+  reviewedById    String?
+  reviewer        User?         @relation("AdjReviewer", fields: [reviewedById], references: [id])
+  reviewNote      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
