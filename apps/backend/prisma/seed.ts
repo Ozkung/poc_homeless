@@ -318,6 +318,196 @@ async function main() {
   });
 
   console.log(`✓ Activities: 5 records`);
+
+  // ── Inventory ─────────────────────────────────────────────────────────────
+  // Helper: date relative to today
+  const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
+
+  // 12 items (8 drugs + 4 supplies)
+  const invItems = [
+    { id: 'inv-item-001', name: 'Metformin 500mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 50 },
+    { id: 'inv-item-002', name: 'Amlodipine 5mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 30 },
+    { id: 'inv-item-003', name: 'Paracetamol 500mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 100 },
+    { id: 'inv-item-004', name: 'Omeprazole 20mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 20 },
+    { id: 'inv-item-005', name: 'Isoniazid 300mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 15 },
+    { id: 'inv-item-006', name: 'Rifampicin 600mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 15 },
+    { id: 'inv-item-007', name: 'Efavirenz 600mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 10 },
+    { id: 'inv-item-008', name: 'Atenolol 50mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 20 },
+    { id: 'inv-item-009', name: 'ถุงมือไนไตรล์ M', unit: 'ถุง', category: 'SUPPLY', lowStockThreshold: 10 },
+    { id: 'inv-item-010', name: 'หน้ากาก N95', unit: 'ชิ้น', category: 'SUPPLY', lowStockThreshold: 20 },
+    { id: 'inv-item-011', name: 'แอลกอฮอล์ 70% 450ml', unit: 'ขวด', category: 'SUPPLY', lowStockThreshold: 5 },
+    { id: 'inv-item-012', name: 'ชุดเจาะเลือดปลายนิ้ว', unit: 'กล่อง', category: 'SUPPLY', lowStockThreshold: 5 },
+  ] as const;
+
+  // Transaction blueprint per item:
+  // [daysAgo, type, qty, meta?]
+  type TxBlueprint = {
+    d: number; type: 'IN_PURCHASE' | 'IN_DONATION' | 'OUT_PRESCRIPTION' | 'OUT_SUPPLY' | 'ADJ_APPROVED';
+    qty: number; receiptNo?: string; donorName?: string; reason?: string;
+    patientId?: string; actorId?: string;
+  };
+
+  const patients = ['pat-seed-001','pat-seed-002','pat-seed-003','pat-seed-004','pat-seed-005','pat-seed-006','pat-seed-007'];
+
+  // Build blueprints for each item (deterministic, no random)
+  function drugBlueprints(
+    purchaseQtys: [number, number, number],  // initial, month-1, month-2
+    weeklyDispense: number,
+    adjDay?: number, adjQty?: number,
+  ): TxBlueprint[] {
+    const txs: TxBlueprint[] = [];
+
+    // Initial purchase ~92 days ago
+    txs.push({ d: 92, type: 'IN_PURCHASE', qty: purchaseQtys[0], receiptNo: 'RX-2026-001', actorId: 'user-seed-admin' });
+    // Month-1 restock ~61 days ago
+    txs.push({ d: 61, type: 'IN_PURCHASE', qty: purchaseQtys[1], receiptNo: 'RX-2026-002', actorId: 'user-seed-admin' });
+    // Month-2 restock ~30 days ago
+    txs.push({ d: 30, type: 'IN_PURCHASE', qty: purchaseQtys[2], receiptNo: 'RX-2026-003', actorId: 'user-seed-admin' });
+
+    // Weekly dispensing (every 3-4 days, 13 dispenses over 3 months)
+    const dispenseDays = [89,86,82,78,74,70,66,62,57,52,46,38,30,23,16,10,5,2];
+    dispenseDays.forEach((d, i) => {
+      const pid = patients[i % patients.length];
+      txs.push({ d, type: 'OUT_PRESCRIPTION', qty: weeklyDispense, patientId: pid, actorId: 'user-seed-cm1' });
+    });
+
+    // Optional ADJ correction
+    if (adjDay !== undefined && adjQty !== undefined) {
+      txs.push({ d: adjDay, type: 'ADJ_APPROVED', qty: adjQty, reason: 'นับสต็อกปลายเดือน', actorId: 'user-seed-admin' });
+    }
+
+    return txs.sort((a, b) => b.d - a.d); // oldest first
+  }
+
+  function supplyBlueprints(
+    initQty: number, restockQty: number, dispenseQty: number, donationDay?: number, donationQty?: number,
+  ): TxBlueprint[] {
+    const txs: TxBlueprint[] = [];
+    txs.push({ d: 92, type: 'IN_PURCHASE', qty: initQty, receiptNo: 'RX-2026-001', actorId: 'user-seed-admin' });
+    txs.push({ d: 58, type: 'IN_PURCHASE', qty: restockQty, receiptNo: 'RX-2026-004', actorId: 'user-seed-admin' });
+    if (donationDay) txs.push({ d: donationDay, type: 'IN_DONATION', qty: donationQty!, donorName: 'มูลนิธิกรุงเทพ', actorId: 'user-seed-admin' });
+
+    const dispenseDays = [88,80,72,63,55,45,36,28,21,14,7,3];
+    dispenseDays.forEach((d, i) => {
+      txs.push({ d, type: 'OUT_SUPPLY', qty: dispenseQty, actorId: 'user-seed-fw1' });
+    });
+
+    return txs.sort((a, b) => b.d - a.d);
+  }
+
+  const blueprintMap: Record<string, TxBlueprint[]> = {
+    'inv-item-001': drugBlueprints([500, 300, 250], 15, 45, -5),   // Metformin
+    'inv-item-002': drugBlueprints([300, 200, 150], 10, 35, -3),   // Amlodipine
+    'inv-item-003': drugBlueprints([1000, 600, 500], 25, 70, -8),  // Paracetamol
+    'inv-item-004': drugBlueprints([200, 120, 100], 8, 20),        // Omeprazole
+    'inv-item-005': drugBlueprints([150, 80, 60], 5),              // Isoniazid
+    'inv-item-006': drugBlueprints([150, 80, 60], 5),              // Rifampicin
+    'inv-item-007': drugBlueprints([120, 60, 50], 4, 20, -2),      // Efavirenz
+    'inv-item-008': drugBlueprints([250, 150, 120], 8, 25),        // Atenolol
+    'inv-item-009': supplyBlueprints(80, 40, 5, 40, 20),           // ถุงมือ
+    'inv-item-010': supplyBlueprints(100, 50, 7, 35, 30),          // N95
+    'inv-item-011': supplyBlueprints(40, 20, 2, 25, 10),           // แอลกอฮอล์
+    'inv-item-012': supplyBlueprints(30, 15, 2),                   // ชุดเจาะเลือด
+  };
+
+  // Compute final currentStock for each item by replaying transactions
+  const computedStock: Record<string, number> = {};
+  for (const item of invItems) {
+    const txs = blueprintMap[item.id] ?? [];
+    let stock = 0;
+    for (const tx of [...txs].reverse()) { // chronological order
+      if (tx.type === 'IN_PURCHASE' || tx.type === 'IN_DONATION') stock += tx.qty;
+      else if (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') stock -= tx.qty;
+      else if (tx.type === 'ADJ_APPROVED') stock += tx.qty;
+    }
+    computedStock[item.id] = Math.max(stock, 0);
+  }
+
+  // Upsert items with computed stock
+  for (const item of invItems) {
+    await prisma.inventoryItem.upsert({
+      where: { id: item.id },
+      update: { currentStock: computedStock[item.id] },
+      create: {
+        id: item.id,
+        organizationId: org.id,
+        name: item.name,
+        unit: item.unit,
+        category: item.category as any,
+        lowStockThreshold: item.lowStockThreshold,
+        currentStock: computedStock[item.id],
+      },
+    });
+  }
+  console.log(`✓ Inventory items: ${invItems.length} records`);
+
+  // Insert transactions (skip if already seeded)
+  let txCount = 0;
+  for (const item of invItems) {
+    const txs = (blueprintMap[item.id] ?? []).reverse(); // chronological
+    let running = 0;
+    for (let i = 0; i < txs.length; i++) {
+      const tx = txs[i];
+      if (tx.type === 'IN_PURCHASE' || tx.type === 'IN_DONATION') running += tx.qty;
+      else if (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') running -= tx.qty;
+      else if (tx.type === 'ADJ_APPROVED') running += tx.qty;
+
+      const txId = `tx-seed-${item.id}-${i.toString().padStart(3,'0')}`;
+      const qtyStored = (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') ? -tx.qty : tx.qty;
+
+      await prisma.stockTransaction.upsert({
+        where: { id: txId },
+        update: {},
+        create: {
+          id: txId,
+          itemId: item.id,
+          actorId: tx.actorId ?? 'user-seed-admin',
+          type: tx.type as any,
+          quantity: qtyStored,
+          balanceAfter: running,
+          patientId: tx.patientId,
+          receiptNo: tx.receiptNo,
+          donorName: tx.donorName,
+          reason: tx.reason,
+          unitCost: tx.type === 'IN_PURCHASE' ? 2.5 : undefined,
+          createdAt: daysAgo(tx.d < 0 ? 0 : tx.d),
+        },
+      });
+      txCount++;
+    }
+  }
+  console.log(`✓ Stock transactions: ${txCount} records`);
+
+  // Two pending AdjRequests (large qty → needs SA approval)
+  await prisma.adjRequest.upsert({
+    where: { id: 'adj-seed-001' },
+    update: {},
+    create: {
+      id: 'adj-seed-001',
+      itemId: 'inv-item-003',
+      requestedById: 'user-seed-admin',
+      quantity: -50,
+      reason: 'ยาหมดอายุจากล็อตเดือนมีนาคม',
+      status: 'PENDING',
+      createdAt: daysAgo(3),
+    },
+  });
+
+  await prisma.adjRequest.upsert({
+    where: { id: 'adj-seed-002' },
+    update: {},
+    create: {
+      id: 'adj-seed-002',
+      itemId: 'inv-item-010',
+      requestedById: 'user-seed-admin',
+      quantity: -30,
+      reason: 'ตรวจพบหน้ากากชำรุดจากการจัดเก็บ',
+      status: 'PENDING',
+      createdAt: daysAgo(1),
+    },
+  });
+  console.log(`✓ Adj requests: 2 pending records`);
+
   console.log('\n✅ Seed complete!\n');
   console.log('Default credentials:');
   console.log('  admin@hospital.th   / Admin1234!     (ADMIN)');
