@@ -22,6 +22,24 @@ export interface MorningBriefingPayload {
   patients: { name: string; hn: string; status: string; locationText?: string }[];
 }
 
+export interface AdjNotifyPayload {
+  lineUserId: string; itemName: string; qty: number; adminName: string;
+}
+
+export interface AdjRequestPayload {
+  lineUserId: string; itemName: string; qty: number;
+  adminName: string; reason: string; adjId: string;
+}
+
+export interface AdjResultPayload {
+  lineUserId: string; itemName: string; qty: number;
+  approved: boolean; reviewNote?: string;
+}
+
+export interface LowStockPayload {
+  lineUserId: string; itemName: string; currentStock: number; threshold: number;
+}
+
 const JOB_OPTS = { attempts: 3, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: true };
 
 @Injectable()
@@ -42,5 +60,21 @@ export class NotificationsService {
 
   async enqueueMorningBriefing(payload: MorningBriefingPayload) {
     await this.queue.add('send-morning-briefing', payload, { attempts: 2, removeOnComplete: true });
+  }
+
+  async enqueueAdjNotify(payload: AdjNotifyPayload) {
+    await this.queue.add('send-adj-notify', payload, JOB_OPTS);
+  }
+
+  async enqueueAdjRequest(payload: AdjRequestPayload) {
+    await this.queue.add('send-adj-request', payload, JOB_OPTS);
+  }
+
+  async enqueueAdjResult(payload: AdjResultPayload) {
+    await this.queue.add('send-adj-result', payload, JOB_OPTS);
+  }
+
+  async enqueueLowStock(payload: LowStockPayload) {
+    await this.queue.add('send-low-stock', payload, JOB_OPTS);
   }
 }

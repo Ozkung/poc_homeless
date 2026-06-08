@@ -123,6 +123,35 @@ export class LineService {
     await this.pushText(lineUserId, lines.join('\n'));
   }
 
+  async pushAdjNotify(lineUserId: string, data: { itemName: string; qty: number; adminName: string }) {
+    const dir = data.qty > 0 ? `+${data.qty}` : `${data.qty}`;
+    await this.pushText(lineUserId,
+      `📋 แจ้งทราบ: ปรับสต็อกอัตโนมัติ\n${data.itemName} ${dir} หน่วย\nโดย: ${data.adminName}`
+    );
+  }
+
+  async pushAdjRequest(lineUserId: string, data: { itemName: string; qty: number; adminName: string; reason: string; adjId: string }) {
+    const dir = data.qty > 0 ? `+${data.qty}` : `${data.qty}`;
+    await this.pushText(lineUserId,
+      `⚠️ รออนุมัติ ADJ สต็อก\n${data.itemName} ${dir} หน่วย\nเหตุผล: ${data.reason}\nโดย: ${data.adminName}\n\nกรุณาอนุมัติที่ /inventory/approvals`
+    );
+  }
+
+  async pushAdjResult(lineUserId: string, data: { itemName: string; qty: number; approved: boolean; reviewNote?: string }) {
+    const dir = data.qty > 0 ? `+${data.qty}` : `${data.qty}`;
+    const status = data.approved ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธ';
+    const note = data.reviewNote ? `\nหมายเหตุ: ${data.reviewNote}` : '';
+    await this.pushText(lineUserId,
+      `${status}: ADJ สต็อก\n${data.itemName} ${dir} หน่วย${note}`
+    );
+  }
+
+  async pushLowStock(lineUserId: string, data: { itemName: string; currentStock: number; threshold: number }) {
+    await this.pushText(lineUserId,
+      `🔴 แจ้งเตือนสต็อกใกล้หมด\n${data.itemName}: ${data.currentStock} หน่วยเหลืออยู่ (ต่ำกว่า ${data.threshold})\nกรุณาสั่งซื้อเพิ่ม`
+    );
+  }
+
   private async pushText(lineUserId: string, text: string) {
     const res = await fetch(`${LINE_API}/v2/bot/message/push`, {
       method: 'POST',

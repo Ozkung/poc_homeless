@@ -3,8 +3,8 @@ import { Job } from 'bull';
 import { Inject, Logger, forwardRef } from '@nestjs/common';
 import { LineService } from '../line/line.service';
 import {
-  TaskNotificationPayload, OverdueAlertPayload,
-  SosAlertPayload, MorningBriefingPayload,
+  TaskNotificationPayload, OverdueAlertPayload, SosAlertPayload, MorningBriefingPayload,
+  AdjNotifyPayload, AdjRequestPayload, AdjResultPayload, LowStockPayload,
 } from './notifications.service';
 
 @Processor('notifications')
@@ -39,5 +39,25 @@ export class NotificationsProcessor {
   async handleMorningBriefing(job: Job<MorningBriefingPayload>) {
     this.logger.log(`Sending morning briefing to ${job.data.lineUserId}`);
     await this.line.pushMorningBriefing(job.data.lineUserId, job.data.patients);
+  }
+
+  @Process('send-adj-notify')
+  async handleAdjNotify(job: Job<AdjNotifyPayload>) {
+    await this.line.pushAdjNotify(job.data.lineUserId, job.data);
+  }
+
+  @Process('send-adj-request')
+  async handleAdjRequest(job: Job<AdjRequestPayload>) {
+    await this.line.pushAdjRequest(job.data.lineUserId, job.data);
+  }
+
+  @Process('send-adj-result')
+  async handleAdjResult(job: Job<AdjResultPayload>) {
+    await this.line.pushAdjResult(job.data.lineUserId, job.data);
+  }
+
+  @Process('send-low-stock')
+  async handleLowStock(job: Job<LowStockPayload>) {
+    await this.line.pushLowStock(job.data.lineUserId, job.data);
   }
 }
