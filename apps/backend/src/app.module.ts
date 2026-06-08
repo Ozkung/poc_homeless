@@ -15,6 +15,7 @@ import { SubmissionsModule } from './modules/submissions/submissions.module';
 import { LineModule } from './modules/line/line.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AlertsModule } from './modules/alerts/alerts.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AlertsModule } from './modules/alerts/alerts.module';
     LineModule,
     NotificationsModule,
     AlertsModule,
+    InventoryModule,
   ],
 })
 export class AppModule {}
