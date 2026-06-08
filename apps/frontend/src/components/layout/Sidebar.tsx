@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, Package, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, Package, UserCircle, BarChart3 } from 'lucide-react';
 import type { MenuProps } from 'antd';
 
 const { Text } = Typography;
@@ -20,6 +20,7 @@ export default function Sidebar() {
     { key: '/patients',  label: 'ผู้ป่วย',        icon: <Users size={ICON_SIZE} /> },
     { key: '/events',    label: 'แผนการเยี่ยม',   icon: <CalendarDays size={ICON_SIZE} /> },
     { key: '/forms',     label: 'แบบฟอร์ม',       icon: <FileText size={ICON_SIZE} /> },
+    { key: '/reports',   label: 'รายงาน',          icon: <BarChart3 size={ICON_SIZE} /> },
     ...(role === 'ADMIN' || role === 'SUPER_ADMIN'
       ? [{ key: '/inventory', label: 'คลังยา', icon: <Package size={ICON_SIZE} /> }]
       : []),
