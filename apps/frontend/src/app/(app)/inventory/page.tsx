@@ -165,7 +165,7 @@ export default function InventoryPage() {
 
       {/* Stock IN Drawer */}
       <Drawer title={`รับเข้า: ${selectedItem?.name}`} open={stockInOpen}
-        onClose={() => { setStockInOpen(false); stockInForm.resetFields(); }} width={400}>
+        onClose={() => { setStockInOpen(false); stockInForm.resetFields(); }} styles={{ wrapper: { width: 400 } }}>
         <div style={{ marginBottom: 12 }}>
           <Segmented
             options={[{ label: '🛒 ซื้อ', value: 'IN_PURCHASE' }, { label: '💝 บริจาค', value: 'IN_DONATION' }]}
