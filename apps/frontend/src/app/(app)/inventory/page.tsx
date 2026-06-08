@@ -2,10 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import {
-  App, Button, Card, Drawer, Form, Input, InputNumber,
-  Modal, Segmented, Select, Space, Table, Tag, Typography,
+  App, Alert, Button, Card, DatePicker, Drawer, Form, Input, InputNumber,
+  Modal, Popconfirm, Segmented, Select, Space, Table, Tag, Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
+import { AlertTriangle, Clock, PackageX } from 'lucide-react';
 
 const { Title } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -14,6 +16,29 @@ interface InventoryItem {
   id: string; name: string; unit: string;
   category: 'DRUG' | 'SUPPLY';
   currentStock: number; lowStockThreshold: number; isActive: boolean;
+}
+
+interface ExpiringLot {
+  lotId: string;
+  itemId: string;
+  itemName: string;
+  unit: string;
+  remaining: number;
+  expiryDate: string;
+  daysLeft: number;
+  unitCost: number | null;
+}
+
+interface StockTx {
+  id: string;
+  type: string;
+  quantity: number;
+  balanceAfter: number;
+  createdAt: string;
+  actor: { displayName: string };
+  lot: { expiryDate: string } | null;
+  reason: string | null;
+  patientId: string | null;
 }
 
 export default function InventoryPage() {
@@ -31,6 +56,13 @@ export default function InventoryPage() {
   const [stockInForm] = Form.useForm();
   const [adjForm] = Form.useForm();
   const [addForm] = Form.useForm();
+  const [expiringLots, setExpiringLots] = useState<ExpiringLot[]>([]);
+  const [expiryModalOpen, setExpiryModalOpen] = useState(false);
+  const [expiring, setExpiring] = useState(false);
+  const [txOpen, setTxOpen] = useState(false);
+  const [txItem, setTxItem] = useState<InventoryItem | null>(null);
+  const [txList, setTxList] = useState<StockTx[]>([]);
+  const [txLoading, setTxLoading] = useState(false);
 
   const headers = useCallback(() => ({
     Authorization: `Bearer ${(session as any)?.accessToken ?? ''}`,
@@ -48,19 +80,37 @@ export default function InventoryPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const loadExpiring = useCallback(() => {
+    if (!(session as any)?.accessToken) return;
+    fetch(`${API_URL}/inventory/expiring`, { headers: headers() })
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setExpiringLots(Array.isArray(d) ? d : []));
+  }, [(session as any)?.accessToken, headers]);
+
+  useEffect(() => { loadExpiring(); }, [loadExpiring]);
+
   const filtered = items.filter((i) => i.category === category);
 
   const columns: ColumnsType<InventoryItem> = [
     {
       title: 'ชื่อรายการ', dataIndex: 'name', key: 'name',
-      render: (name, r) => (
-        <div>
-          <span style={{ fontWeight: 600 }}>{name}</span>
-          {r.currentStock <= r.lowStockThreshold && (
-            <Tag color="error" style={{ marginLeft: 8, fontSize: 10 }}>ใกล้หมด</Tag>
-          )}
-        </div>
-      ),
+      render: (name, r) => {
+        const nearExpiry = expiringLots.filter((l) => l.itemId === r.id).length;
+        return (
+          <div>
+            <span style={{ fontWeight: 600 }}>{name}</span>
+            {r.currentStock <= r.lowStockThreshold && (
+              <Tag color="error" style={{ marginLeft: 8, fontSize: 10 }}>ใกล้หมด</Tag>
+            )}
+            {nearExpiry > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                <Clock size={11} color="#ff4d4f" />
+                <span style={{ fontSize: 11, color: '#ff4d4f' }}>{nearExpiry} lots ใกล้หมดอายุ</span>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: 'คงเหลือ', dataIndex: 'currentStock', key: 'currentStock', width: 100,
@@ -72,9 +122,10 @@ export default function InventoryPage() {
     },
     { title: 'หน่วย', dataIndex: 'unit', key: 'unit', width: 80 },
     {
-      title: '', key: 'actions', width: 200,
+      title: '', key: 'actions', width: 260,
       render: (_, r) => (
         <div style={{ display: 'flex', gap: 6 }}>
+          <Button size="small" onClick={() => openTransactions(r)}>ประวัติ</Button>
           <Button size="small" onClick={() => { setSelectedItem(r); setStockInOpen(true); }}>รับเข้า</Button>
           <Button size="small" danger onClick={() => { setSelectedItem(r); setAdjOpen(true); }}>ADJ</Button>
         </div>
@@ -88,7 +139,12 @@ export default function InventoryPage() {
     try {
       const res = await fetch(`${API_URL}/inventory/${selectedItem.id}/stock-in`, {
         method: 'POST', headers: headers(),
-        body: JSON.stringify({ ...values, type: stockInType, quantity: Number(values.quantity) }),
+        body: JSON.stringify({
+          ...values,
+          type: stockInType,
+          quantity: Number(values.quantity),
+          expiryDate: values.expiryDate?.toISOString(),
+        }),
       });
       if (res.ok) {
         message.success('บันทึกการรับเข้าแล้ว');
@@ -130,6 +186,36 @@ export default function InventoryPage() {
     finally { setSaving(false); }
   }
 
+  async function handleExpireLot(lotId: string) {
+    setExpiring(true);
+    try {
+      const res = await fetch(`${API_URL}/inventory/lots/${lotId}/expire`, {
+        method: 'POST', headers: headers(),
+      });
+      if (res.ok) {
+        message.success('นำยาออกจากสต็อกแล้ว');
+        loadExpiring();
+        load();
+      } else {
+        const e = await res.json();
+        message.error(e.message ?? 'เกิดข้อผิดพลาด');
+      }
+    } catch { message.error('เกิดข้อผิดพลาด'); }
+    finally { setExpiring(false); }
+  }
+
+  async function openTransactions(item: InventoryItem) {
+    setTxItem(item);
+    setTxOpen(true);
+    setTxLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/inventory/${item.id}/transactions`, { headers: headers() });
+      const d = res.ok ? await res.json() : [];
+      setTxList(Array.isArray(d) ? d : []);
+    } catch { setTxList([]); }
+    finally { setTxLoading(false); }
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -146,6 +232,22 @@ export default function InventoryPage() {
           + เพิ่มรายการใหม่
         </Button>
       </div>
+
+      {expiringLots.length > 0 && (
+        <Alert
+          type="warning"
+          style={{ marginBottom: 16 }}
+          icon={<AlertTriangle size={16} />}
+          showIcon
+          message={`มียาใกล้หมดอายุ ${expiringLots.length} lots`}
+          description="กรุณาตรวจสอบและนำยาที่หมดอายุออกจากสต็อก"
+          action={
+            <Button size="small" onClick={() => setExpiryModalOpen(true)}>
+              ดูรายละเอียด
+            </Button>
+          }
+        />
+      )}
 
       <Card styles={{ body: { padding: '16px 24px' } }}>
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
@@ -180,6 +282,18 @@ export default function InventoryPage() {
               <InputNumber min={1} style={{ flex: 1 }} />
               <Button disabled style={{ pointerEvents: 'none', minWidth: 56 }}>{selectedItem?.unit}</Button>
             </Space.Compact>
+          </Form.Item>
+          <Form.Item
+            name="expiryDate"
+            label="วันหมดอายุ"
+            rules={[{ required: true, message: 'กรุณาระบุวันหมดอายุ' }]}
+          >
+            <DatePicker
+              style={{ width: '100%' }}
+              disabledDate={(d) => d <= dayjs()}
+              format="DD/MM/YYYY"
+              placeholder="เลือกวันหมดอายุ"
+            />
           </Form.Item>
           {stockInType === 'IN_PURCHASE' && (
             <>
@@ -238,6 +352,110 @@ export default function InventoryPage() {
           <Button type="primary" htmlType="submit" loading={saving} block>เพิ่มรายการ</Button>
         </Form>
       </Modal>
+
+      {/* Expiring Lots Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertTriangle size={16} color="#faad14" />
+            <span>ยาใกล้หมดอายุ</span>
+          </div>
+        }
+        open={expiryModalOpen}
+        onCancel={() => setExpiryModalOpen(false)}
+        footer={null}
+        width={700}
+      >
+        <Table
+          dataSource={expiringLots}
+          rowKey="lotId"
+          size="small"
+          pagination={false}
+          columns={[
+            { title: 'ชื่อยา', dataIndex: 'itemName', key: 'itemName', render: (v) => <span style={{ fontWeight: 600 }}>{v}</span> },
+            { title: 'คงเหลือ', dataIndex: 'remaining', key: 'remaining', width: 90,
+              render: (v, r) => `${v} ${r.unit}` },
+            { title: 'วันหมดอายุ', dataIndex: 'expiryDate', key: 'expiryDate', width: 130,
+              render: (v) => new Date(v).toLocaleDateString('th-TH') },
+            { title: 'เหลือ (วัน)', dataIndex: 'daysLeft', key: 'daysLeft', width: 100,
+              render: (v) => (
+                <Tag color={v <= 0 ? 'error' : v <= 7 ? 'warning' : 'orange'}>{v <= 0 ? 'หมดแล้ว' : `${v} วัน`}</Tag>
+              ) },
+            {
+              title: '', key: 'action', width: 90,
+              render: (_, r) => (
+                <Popconfirm
+                  title="นำ lot นี้ออกจากสต็อก?"
+                  description={`จะลบ ${r.remaining} ${r.unit} ออกจากระบบ (soft delete)`}
+                  okText="ยืนยัน" cancelText="ยกเลิก" okButtonProps={{ danger: true }}
+                  onConfirm={() => handleExpireLot(r.lotId)}
+                >
+                  <Button size="small" danger icon={<PackageX size={13} />} loading={expiring}>
+                    นำออก
+                  </Button>
+                </Popconfirm>
+              ),
+            },
+          ]}
+        />
+      </Modal>
+
+      {/* Transaction History Drawer */}
+      <Drawer
+        title={`ประวัติรายการ: ${txItem?.name}`}
+        open={txOpen}
+        onClose={() => setTxOpen(false)}
+        width={640}
+      >
+        <Table
+          dataSource={txList}
+          rowKey="id"
+          size="small"
+          loading={txLoading}
+          pagination={{ pageSize: 20 }}
+          columns={[
+            {
+              title: 'ประเภท', dataIndex: 'type', key: 'type', width: 140,
+              render: (t) => {
+                const map: Record<string, [string, string]> = {
+                  IN_PURCHASE:      ['green',    'ซื้อเข้า'],
+                  IN_DONATION:      ['cyan',     'บริจาค'],
+                  OUT_PRESCRIPTION: ['blue',     'จ่ายยา'],
+                  OUT_SUPPLY:       ['geekblue', 'จ่ายวัสดุ'],
+                  ADJ_APPROVED:     ['orange',   'ปรับสต็อก'],
+                  OUT_EXPIRED:      ['red',      'หมดอายุ'],
+                };
+                const [color, label] = map[t] ?? ['default', t];
+                return (
+                  <Tag color={color} icon={t === 'OUT_EXPIRED' ? <PackageX size={11} /> : undefined}>
+                    {label}
+                  </Tag>
+                );
+              },
+            },
+            {
+              title: 'จำนวน', dataIndex: 'quantity', key: 'quantity', width: 80,
+              render: (v) => (
+                <span style={{ color: v > 0 ? '#52c41a' : '#ff4d4f', fontWeight: 700 }}>
+                  {v > 0 ? `+${v}` : v}
+                </span>
+              ),
+            },
+            { title: 'คงเหลือ', dataIndex: 'balanceAfter', key: 'balanceAfter', width: 80 },
+            {
+              title: 'วันหมดอายุ (lot)', key: 'expiry', width: 130,
+              render: (_, r) => r.lot?.expiryDate
+                ? <span style={{ fontSize: 12 }}>{new Date(r.lot.expiryDate).toLocaleDateString('th-TH')}</span>
+                : <span style={{ color: '#d9d9d9' }}>—</span>,
+            },
+            { title: 'โดย', key: 'actor', render: (_, r) => r.actor.displayName, width: 120 },
+            {
+              title: 'วันที่', dataIndex: 'createdAt', key: 'createdAt',
+              render: (v) => new Date(v).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }),
+            },
+          ]}
+        />
+      </Drawer>
     </div>
   );
 }
