@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import {
-  Button, Card, Drawer, Form, Input, InputNumber,
-  Modal, Segmented, Select, Space, Table, Tag, Typography, message,
+  App, Button, Card, Drawer, Form, Input, InputNumber,
+  Modal, Segmented, Select, Space, Table, Tag, Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -17,6 +17,7 @@ interface InventoryItem {
 }
 
 export default function InventoryPage() {
+  const { message } = App.useApp();
   const { data: session } = useSession();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);

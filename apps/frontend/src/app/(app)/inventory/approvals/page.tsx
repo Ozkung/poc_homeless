@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { Button, Card, Input, Tag, Typography, message } from 'antd';
+import { App, Button, Card, Input, Tag, Typography } from 'antd';
 
 const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -16,6 +16,7 @@ interface AdjRequest {
 }
 
 export default function ApprovalsPage() {
+  const { message } = App.useApp();
   const { data: session } = useSession();
   const [requests, setRequests] = useState<AdjRequest[]>([]);
   const [loading, setLoading] = useState(true);

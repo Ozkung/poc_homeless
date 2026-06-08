@@ -1,5 +1,5 @@
 'use client';
-import { ConfigProvider } from 'antd';
+import { App, ConfigProvider } from 'antd';
 import thTH from 'antd/locale/th_TH';
 import type { ReactNode } from 'react';
 
@@ -21,7 +21,7 @@ export default function AntdProvider({ children }: { children: ReactNode }) {
         },
       }}
     >
-      {children}
+      <App>{children}</App>
     </ConfigProvider>
   );
 }
