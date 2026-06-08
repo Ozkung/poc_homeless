@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bull';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import configuration, { validationSchema } from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -37,6 +39,10 @@ import { InventoryModule } from './modules/inventory/inventory.module';
       }),
     }),
     PrismaModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     AuthModule,
     UsersModule,
     PatientsModule,

@@ -1,0 +1,116 @@
+<h2>หน้า Profile ของ User — เลือก Layout</h2>
+<p class="subtitle">แต่ละแบบมีข้อดีต่างกัน เลือกที่เหมาะกับการใช้งาน</p>
+
+<div class="cards">
+
+  <!-- Option A: Dedicated Page -->
+  <div class="card" data-choice="A" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#f8f9ff;border-radius:8px">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+        <div style="width:56px;height:56px;border-radius:50%;background:#1677ff;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;flex-shrink:0">ผด</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#111">ผู้ดูแลระบบ</div>
+          <div style="font-size:11px;color:#1677ff;background:#e6f0ff;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:2px">ADMIN</div>
+        </div>
+      </div>
+      <div style="display:grid;gap:8px">
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:8px 10px;font-size:11px">
+          <span style="color:#999">ชื่อแสดง</span>
+          <div style="font-weight:600;margin-top:2px">ผู้ดูแลระบบ</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:8px 10px;font-size:11px">
+          <span style="color:#999">อีเมล</span>
+          <div style="font-weight:600;margin-top:2px">admin@hospital.th</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:8px 10px;font-size:11px">
+          <span style="color:#999">LINE</span>
+          <div style="font-weight:600;margin-top:2px;color:#06c755">● เชื่อมต่อแล้ว</div>
+        </div>
+        <div style="background:#1677ff;color:#fff;border-radius:6px;padding:6px;text-align:center;font-size:11px;font-weight:600">แก้ไขข้อมูล</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — หน้า /profile เต็ม</h3>
+      <p>หน้า route แยกต่างหาก มี section ย่อย: ข้อมูลส่วนตัว, เปลี่ยนรหัสผ่าน, LINE linking เหมาะถ้ามีข้อมูลเยอะหรือขยายได้ในอนาคต</p>
+    </div>
+  </div>
+
+  <!-- Option B: Drawer from Sidebar -->
+  <div class="card" data-choice="B" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#f8f9ff;border-radius:8px">
+      <div style="display:flex;gap:8px;height:160px">
+        <!-- Sidebar mini -->
+        <div style="width:70px;background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:9px;color:#1677ff;font-weight:700">HomeMed</div>
+          <div style="height:1px;background:#f0f0f0"></div>
+          <div style="font-size:9px;color:#666">Dashboard</div>
+          <div style="font-size:9px;color:#666">ผู้ป่วย</div>
+          <div style="font-size:9px;color:#666">กิจกรรม</div>
+          <div style="flex:1"></div>
+          <div style="display:flex;align-items:center;gap:4px;border-top:1px solid #f0f0f0;padding-top:6px;cursor:pointer">
+            <div style="width:20px;height:20px;border-radius:50%;background:#1677ff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">ผด</div>
+            <div style="font-size:8px;color:#333">▶</div>
+          </div>
+        </div>
+        <!-- Drawer -->
+        <div style="flex:1;background:#fff;border:1px solid #e8e8e8;border-radius:6px;padding:10px">
+          <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:#111">โปรไฟล์ของฉัน</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:36px;height:36px;border-radius:50%;background:#1677ff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">ผด</div>
+            <div>
+              <div style="font-size:11px;font-weight:700">ผู้ดูแลระบบ</div>
+              <div style="font-size:9px;color:#1677ff">ADMIN</div>
+            </div>
+          </div>
+          <div style="display:grid;gap:5px">
+            <input style="border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:10px;width:100%;box-sizing:border-box" value="ผู้ดูแลระบบ" />
+            <div style="background:#f9fbe7;border:1px solid #eaff8f;border-radius:4px;padding:4px 6px;font-size:10px;color:#595959">● LINE เชื่อมต่อแล้ว</div>
+            <div style="background:#1677ff;color:#fff;border-radius:4px;padding:4px;text-align:center;font-size:10px;font-weight:600">บันทึก</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Drawer จาก Avatar ใน Sidebar</h3>
+      <p>คลิก avatar มุมล่างซ้าย เปิด Drawer ออกมาทางขวา ไม่ต้องออกจากหน้าปัจจุบัน เหมาะสำหรับ profile ที่ compact และแก้ไขข้อมูลน้อยชิ้น</p>
+    </div>
+  </div>
+
+  <!-- Option C: Modal -->
+  <div class="card" data-choice="C" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#f8f9ff;border-radius:8px">
+      <div style="position:relative;height:160px;display:flex;align-items:center;justify-content:center">
+        <!-- Background blur hint -->
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.12);border-radius:6px"></div>
+        <!-- Modal -->
+        <div style="position:relative;background:#fff;border-radius:8px;padding:12px;width:180px;box-shadow:0 4px 20px rgba(0,0,0,0.15)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:11px;font-weight:700">แก้ไขโปรไฟล์</div>
+            <div style="color:#999;font-size:12px;cursor:pointer">✕</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:10px">
+            <div style="width:44px;height:44px;border-radius:50%;background:#1677ff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">ผด</div>
+            <div style="font-size:9px;color:#1677ff;cursor:pointer">เปลี่ยนรูป</div>
+          </div>
+          <div style="display:grid;gap:5px">
+            <div>
+              <div style="font-size:9px;color:#999;margin-bottom:2px">ชื่อแสดง</div>
+              <input style="border:1px solid #d9d9d9;border-radius:4px;padding:3px 6px;font-size:10px;width:100%;box-sizing:border-box" value="ผู้ดูแลระบบ" />
+            </div>
+            <div style="display:flex;gap:4px">
+              <div style="flex:1;background:#f5f5f5;border-radius:4px;padding:3px 6px;text-align:center;font-size:9px;color:#666">ยกเลิก</div>
+              <div style="flex:1;background:#1677ff;color:#fff;border-radius:4px;padding:3px 6px;text-align:center;font-size:9px;font-weight:600">บันทึก</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Modal popup</h3>
+      <p>ปุ่ม "แก้ไขโปรไฟล์" ที่ไหนก็ได้เปิด Modal ขึ้นมา เหมาะถ้าต้องการประสบการณ์ที่รวดเร็ว แต่จำกัด content ที่ใส่ได้</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">คลิกเลือก layout ที่ชอบ แล้วแจ้งผ่าน terminal</p>

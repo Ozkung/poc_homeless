@@ -47,20 +47,20 @@ async function fetchEventCount(token: string): Promise<number> {
 
 function computeAgeBands(patients: Patient[]): AgeBand[] {
   const bands: Record<string, { critical: number; pending: number; stable: number }> = {
-    '<20':    { critical: 0, pending: 0, stable: 0 },
-    '20–40':  { critical: 0, pending: 0, stable: 0 },
-    '40–60':  { critical: 0, pending: 0, stable: 0 },
-    '60+':    { critical: 0, pending: 0, stable: 0 },
+    '<20': { critical: 0, pending: 0, stable: 0 },
+    '20–40': { critical: 0, pending: 0, stable: 0 },
+    '40–60': { critical: 0, pending: 0, stable: 0 },
+    '60+': { critical: 0, pending: 0, stable: 0 },
     'ไม่ระบุ': { critical: 0, pending: 0, stable: 0 },
   };
 
   for (const p of patients) {
     const key =
       p.age == null ? 'ไม่ระบุ'
-      : p.age < 20  ? '<20'
-      : p.age < 40  ? '20–40'
-      : p.age < 60  ? '40–60'
-      : '60+';
+        : p.age < 20 ? '<20'
+          : p.age < 40 ? '20–40'
+            : p.age < 60 ? '40–60'
+              : '60+';
 
     const field = p.status === 'CRITICAL' ? 'critical' : p.status === 'PENDING' ? 'pending' : 'stable';
     bands[key][field]++;
@@ -82,9 +82,9 @@ export default async function DashboardPage() {
   ]);
 
   const critical = patients.filter((p) => p.status === 'CRITICAL').length;
-  const pending  = patients.filter((p) => p.status === 'PENDING').length;
-  const stable   = patients.filter((p) => p.status === 'STABLE').length;
-  const tracked  = stable + pending;
+  const pending = patients.filter((p) => p.status === 'PENDING').length;
+  const stable = patients.filter((p) => p.status === 'STABLE').length;
+  const tracked = stable + pending;
   const pct = patients.length > 0 ? Math.round((tracked / patients.length) * 100) : 0;
   const ageBands = computeAgeBands(patients);
 
@@ -103,11 +103,11 @@ export default async function DashboardPage() {
       <AlertSection alerts={alerts} />
 
       {/* Bento grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+      <div style={{ display: 'flex', gap: 14 }}>
 
         {/* Hero card — 2 cols × 2 rows */}
         <Card
-          style={{ gridColumn: 'span 2', gridRow: 'span 2', borderTop: '3px solid #1677ff' }}
+          style={{ gridColumn: 'span 2', gridRow: 'span 2', borderTop: '3px solid #1677ff', width: '70%' }}
           styles={{ body: { padding: 24 } }}
         >
           <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
@@ -144,67 +144,68 @@ export default async function DashboardPage() {
             <SeverityChart critical={critical} pending={pending} stable={stable} />
           </div>
         </Card>
-
-        {/* Critical — 1×1 */}
-        <Card style={{ borderTop: '3px solid #ff4d4f' }} styles={{ body: { padding: 24 } }}>
-          <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
-            ผู้ป่วยวิกฤต
-          </span>
-          <div style={{ marginTop: 8 }}>
-            <Statistic
-              value={critical}
-              valueStyle={{ fontSize: 44, fontWeight: 800, color: '#ff4d4f', lineHeight: 1 }}
-            />
-            <span style={{ fontSize: 12, color: '#888' }}>ต้องการความช่วยเหลือเร่งด่วน</span>
-          </div>
-        </Card>
-
-        {/* Events — 1×1 */}
-        <Card style={{ borderTop: '3px solid #faad14' }} styles={{ body: { padding: 24 } }}>
-          <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
-            กิจกรรมเดือนนี้
-          </span>
-          <div style={{ marginTop: 8 }}>
-            <Statistic
-              value={eventCount}
-              valueStyle={{ fontSize: 44, fontWeight: 800, color: '#faad14', lineHeight: 1 }}
-            />
-            <span style={{ fontSize: 12, color: '#888' }}>
-              {new Date().toLocaleString('th-TH', { month: 'long', year: 'numeric' })}
+        <div style={{ display: 'flex', flexDirection: 'column',justifyContent: 'space-between', gap: 14, width: '30%' }}>
+          {/* Critical — 1×1 */}
+          <Card style={{ borderTop: '3px solid #ff4d4f' }} styles={{ body: { padding: 24 } }}>
+            <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
+              ผู้ป่วยวิกฤต
             </span>
-          </div>
-        </Card>
+            <div style={{ marginTop: 8 }}>
+              <Statistic
+                value={critical}
+                valueStyle={{ fontSize: 44, fontWeight: 800, color: '#ff4d4f', lineHeight: 1 }}
+              />
+              <span style={{ fontSize: 12, color: '#888' }}>ต้องการความช่วยเหลือเร่งด่วน</span>
+            </div>
+          </Card>
 
-        {/* Stable — 1×1 */}
-        <Card style={{ borderTop: '3px solid #52c41a' }} styles={{ body: { padding: 24 } }}>
-          <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
-            ผู้ป่วยปกติ
-          </span>
-          <div style={{ marginTop: 8 }}>
-            <Statistic
-              value={stable}
-              valueStyle={{ fontSize: 44, fontWeight: 800, color: '#52c41a', lineHeight: 1 }}
-            />
-            <span style={{ fontSize: 12, color: '#888' }}>สถานะเสถียร</span>
-          </div>
-        </Card>
+          {/* Events — 1×1 */}
+          <Card style={{ borderTop: '3px solid #faad14' }} styles={{ body: { padding: 24 } }}>
+            <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
+              กิจกรรมเดือนนี้
+            </span>
+            <div style={{ marginTop: 8 }}>
+              <Statistic
+                value={eventCount}
+                valueStyle={{ fontSize: 44, fontWeight: 800, color: '#faad14', lineHeight: 1 }}
+              />
+              <span style={{ fontSize: 12, color: '#888' }}>
+                {new Date().toLocaleString('th-TH', { month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+          </Card>
 
-        {/* Age Cluster chart — full 3-col span */}
-        <Card
-          style={{ gridColumn: 'span 3', borderTop: '3px solid #722ed1' }}
-          styles={{ body: { padding: 24 } }}
-        >
-          <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>
-            Cluster ผู้ป่วยตามช่วงอายุ
-          </div>
-          {ageBands.length === 0 ? (
-            <span style={{ fontSize: 12, color: '#bbb' }}>ยังไม่มีข้อมูลผู้ป่วย</span>
-          ) : (
-            <AgeClusterChart bands={ageBands} />
-          )}
-        </Card>
+          {/* Stable — 1×1 */}
+          <Card style={{ borderTop: '3px solid #52c41a' }} styles={{ body: { padding: 24 } }}>
+            <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
+              ผู้ป่วยปกติ
+            </span>
+            <div style={{ marginTop: 8 }}>
+              <Statistic
+                value={stable}
+                valueStyle={{ fontSize: 44, fontWeight: 800, color: '#52c41a', lineHeight: 1 }}
+              />
+              <span style={{ fontSize: 12, color: '#888' }}>สถานะเสถียร</span>
+            </div>
+          </Card>
+        </div>
 
       </div>
+
+      {/* Age Cluster chart — full 3-col span */}
+      <Card
+        style={{ gridColumn: 'span 3', borderTop: '3px solid #722ed1', marginTop: 14 }}
+        styles={{ body: { padding: 24 } }}
+      >
+        <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>
+          Cluster ผู้ป่วยตามช่วงอายุ
+        </div>
+        {ageBands.length === 0 ? (
+          <span style={{ fontSize: 12, color: '#bbb' }}>ยังไม่มีข้อมูลผู้ป่วย</span>
+        ) : (
+          <AgeClusterChart bands={ageBands} />
+        )}
+      </Card>
     </div>
   );
 }

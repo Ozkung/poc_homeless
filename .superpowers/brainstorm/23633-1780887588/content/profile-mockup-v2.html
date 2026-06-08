@@ -1,0 +1,156 @@
+<h2>Profile — ข้อมูลส่วนตัว (updated)</h2>
+<p class="subtitle">เพิ่ม เบอร์โทร, Email (แก้ได้ + confirm), เพศ</p>
+
+<div class="split">
+
+  <!-- /profile full page -->
+  <div class="mockup">
+    <div class="mockup-header">/profile — Section: ข้อมูลส่วนตัว</div>
+    <div class="mockup-body" style="padding:12px;font-size:11px;display:flex;flex-direction:column;gap:10px">
+
+      <!-- Avatar header -->
+      <div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid #f0f0f0">
+        <div style="position:relative">
+          <div style="width:60px;height:60px;border-radius:50%;background:#1677ff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">ผด</div>
+          <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;background:#fff;border-radius:50%;border:1px solid #d9d9d9;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)">✏️</div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:15px">ผู้ดูแลระบบ</div>
+          <span style="font-size:10px;color:#1677ff;background:#e6f4ff;padding:2px 8px;border-radius:10px">ADMIN</span>
+          <div style="font-size:9px;color:#aaa;margin-top:3px">เข้าร่วม 8 มิ.ย. 2568</div>
+        </div>
+      </div>
+
+      <!-- Personal Info section -->
+      <div style="background:#fafafa;border-radius:8px;padding:10px">
+        <div style="font-size:9px;font-weight:700;color:#1677ff;margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">ข้อมูลส่วนตัว</div>
+        <div style="display:grid;gap:6px">
+
+          <div>
+            <div style="font-size:9px;color:#666;margin-bottom:2px">ชื่อแสดง <span style="color:#ff4d4f">*</span></div>
+            <input style="border:1px solid #d9d9d9;border-radius:5px;padding:5px 8px;font-size:11px;width:100%;box-sizing:border-box;background:#fff" value="ผู้ดูแลระบบ"/>
+          </div>
+
+          <!-- Email with editable warning -->
+          <div>
+            <div style="font-size:9px;color:#666;margin-bottom:2px">อีเมล <span style="color:#999;font-weight:normal">(เปลี่ยนแล้ว logout อัตโนมัติ)</span></div>
+            <input style="border:1px solid #d9d9d9;border-radius:5px;padding:5px 8px;font-size:11px;width:100%;box-sizing:border-box;background:#fff" value="admin@hospital.th"/>
+          </div>
+
+          <!-- Phone -->
+          <div>
+            <div style="font-size:9px;color:#666;margin-bottom:2px">เบอร์โทรศัพท์</div>
+            <input style="border:1px solid #d9d9d9;border-radius:5px;padding:5px 8px;font-size:11px;width:100%;box-sizing:border-box;background:#fff" placeholder="0812345678"/>
+          </div>
+
+          <!-- Gender -->
+          <div>
+            <div style="font-size:9px;color:#666;margin-bottom:4px">เพศ</div>
+            <div style="display:flex;gap:6px">
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;background:#e6f4ff;border:1px solid #1677ff;border-radius:5px;padding:4px 10px;color:#1677ff">
+                <input type="radio" name="gender" checked style="margin:0"/> ชาย
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;background:#fff;border:1px solid #d9d9d9;border-radius:5px;padding:4px 10px;color:#666">
+                <input type="radio" name="gender" style="margin:0"/> หญิง
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;background:#fff;border:1px solid #d9d9d9;border-radius:5px;padding:4px 10px;color:#666">
+                <input type="radio" name="gender" style="margin:0"/> อื่นๆ
+              </label>
+            </div>
+          </div>
+
+          <button style="background:#1677ff;color:#fff;border:none;border-radius:5px;padding:7px;font-size:11px;cursor:pointer;width:100%;margin-top:2px;font-weight:600">บันทึกข้อมูล</button>
+        </div>
+      </div>
+
+      <!-- Password section -->
+      <div style="background:#fafafa;border-radius:8px;padding:10px">
+        <div style="font-size:9px;font-weight:700;color:#faad14;margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">เปลี่ยนรหัสผ่าน</div>
+        <div style="display:grid;gap:5px">
+          <input style="border:1px solid #d9d9d9;border-radius:5px;padding:5px 8px;font-size:11px;width:100%;box-sizing:border-box" placeholder="รหัสผ่านเดิม" type="password"/>
+          <input style="border:1px solid #d9d9d9;border-radius:5px;padding:5px 8px;font-size:11px;width:100%;box-sizing:border-box" placeholder="รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)" type="password"/>
+          <input style="border:1px solid #d9d9d9;border-radius:5px;padding:5px 8px;font-size:11px;width:100%;box-sizing:border-box" placeholder="ยืนยันรหัสผ่านใหม่" type="password"/>
+          <button style="background:#faad14;color:#fff;border:none;border-radius:5px;padding:7px;font-size:11px;cursor:pointer;width:100%;font-weight:600">เปลี่ยนรหัสผ่าน</button>
+        </div>
+      </div>
+
+      <!-- LINE section -->
+      <div style="background:#fafafa;border-radius:8px;padding:10px">
+        <div style="font-size:9px;font-weight:700;color:#06c755;margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">LINE Account</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:11px;color:#06c755;font-weight:600">● เชื่อมต่อแล้ว</div>
+            <div style="font-size:9px;color:#aaa;margin-top:2px">U2abc1234xyz5678def9</div>
+          </div>
+          <button style="background:#fff;color:#ff4d4f;border:1px solid #ffccc7;border-radius:5px;padding:4px 10px;font-size:10px;cursor:pointer">Unlink</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Schema changes + API summary -->
+  <div class="mockup">
+    <div class="mockup-header">การเปลี่ยนแปลง Schema + API</div>
+    <div class="mockup-body" style="padding:12px;font-size:11px;display:flex;flex-direction:column;gap:10px">
+
+      <div>
+        <div style="font-size:10px;font-weight:700;color:#722ed1;margin-bottom:6px">Prisma — เพิ่ม fields ใน model User</div>
+        <div style="background:#1a1a2e;color:#e0e0e0;border-radius:6px;padding:10px;font-family:monospace;font-size:10px;line-height:1.6">
+          <span style="color:#aaa">model User {</span><br/>
+          &nbsp;&nbsp;<span style="color:#79b8ff">...existing fields</span><br/>
+          &nbsp;&nbsp;<span style="color:#85e89d">phone</span>&nbsp;&nbsp;&nbsp;<span style="color:#f97583">String?</span><br/>
+          &nbsp;&nbsp;<span style="color:#85e89d">gender</span>&nbsp;&nbsp;<span style="color:#f97583">Gender?</span>&nbsp;&nbsp;<span style="color:#aaa">// reuse enum</span><br/>
+          <span style="color:#aaa">}</span><br/><br/>
+          <span style="color:#aaa">// email แก้ได้ → อยู่แล้ว</span>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:10px;font-weight:700;color:#1677ff;margin-bottom:6px">Backend Endpoints</div>
+        <div style="display:grid;gap:4px">
+          ${[
+            {m:'GET',c:'#52c41a',p:'/auth/me',d:'ดึงข้อมูล user ปัจจุบัน'},
+            {m:'PATCH',c:'#faad14',p:'/auth/me',d:'แก้ displayName, phone, gender, email'},
+            {m:'POST',c:'#1677ff',p:'/auth/me/change-password',d:'เปลี่ยน password'},
+            {m:'DELETE',c:'#ff4d4f',p:'/auth/me/line',d:'Unlink LINE account'},
+            {m:'POST',c:'#1677ff',p:'/auth/me/avatar',d:'Upload avatar (multipart)'},
+            {m:'GET',c:'#52c41a',p:'/users',d:'SA: list users'},
+            {m:'POST',c:'#1677ff',p:'/users',d:'SA: create user'},
+            {m:'PATCH',c:'#faad14',p:'/users/:id',d:'SA: edit user'},
+            {m:'DELETE',c:'#ff4d4f',p:'/users/:id',d:'SA: deactivate user'},
+          ].map(e=>`
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:9px;font-weight:700;color:${e.c};background:${e.c}15;padding:1px 5px;border-radius:3px;min-width:40px;text-align:center">${e.m}</span>
+            <span style="font-family:monospace;font-size:10px;color:#333">${e.p}</span>
+            <span style="font-size:9px;color:#999">${e.d}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:10px;font-weight:700;color:#f5222d;margin-bottom:4px">Email change flow</div>
+        <div style="font-size:10px;color:#666;line-height:1.5">
+          1. User แก้ email → กด "บันทึก"<br/>
+          2. Modal ขอยืนยัน password ก่อน<br/>
+          3. Backend ตรวจ password → update email<br/>
+          4. Frontend เรียก signOut() อัตโนมัติ
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:10px;font-weight:700;color:#13c2c2;margin-bottom:4px">Avatar storage</div>
+        <div style="font-size:10px;color:#666;line-height:1.5">
+          เก็บใน <code style="background:#f0f0f0;padding:1px 4px;border-radius:2px">apps/backend/uploads/avatars/</code><br/>
+          Serve ผ่าน <code style="background:#f0f0f0;padding:1px 4px;border-radius:2px">GET /uploads/:filename</code><br/>
+          จำกัด 2MB, รองรับ jpg/png/webp<br/>
+          Docker: mount volume <code style="background:#f0f0f0;padding:1px 4px;border-radius:2px">uploads:/app/apps/backend/uploads</code>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:10px">ซ้าย = หน้า profile อัปเดตพร้อม fields ใหม่ &nbsp;|&nbsp; ขวา = schema + API ที่ต้องเพิ่ม &nbsp;—&nbsp; approve หรือแก้ไขผ่าน terminal</p>

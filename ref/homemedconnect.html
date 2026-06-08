@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeMed Connect — Case Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface2: #f0f2f5;
+    --border: #dce1e9;
+    --border2: #c9d0db;
+    --text: #1a202c;
+    --text2: #4a5568;
+    --text3: #8a96a8;
+    --accent: #2ea043;
+    --accent2: #22863a;
+    --blue: #0366d6;
+    --blue2: #0550ae;
+    --orange: #b45309;
+    --orange2: #d97706;
+    --red: #cb2431;
+    --red2: #d73a49;
+    --purple: #6f42c1;
+    --purple2: #5a32a3;
+    --teal: #0e7490;
+    --teal2: #0891b2;
+    --radius: 8px;
+    --radius2: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Layout */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 16px 0;
+  }
+  .main { flex: 1; overflow-y: auto; }
+
+  /* Mobile top bar */
+  .mobile-topbar {
+    display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 16px; height: 52px;
+    align-items: center; justify-content: space-between;
+  }
+  .mobile-logo-text { font-size: 15px; font-weight: 700; color: var(--text); }
+  .mobile-logo-text span { color: var(--accent2); font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; display: block; line-height: 1; }
+  .mobile-user-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: white; border: none; cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+  }
+  .bottom-nav-inner { display: flex; justify-content: space-around; }
+  .bottom-nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 4px 4px; cursor: pointer; position: relative;
+    color: var(--text3); transition: color .15s; border: none; background: none;
+    font-family: inherit;
+  }
+  .bottom-nav-item.active { color: var(--accent2); }
+  .bn-icon { font-size: 20px; line-height: 1; }
+  .bn-label { font-size: 10px; font-weight: 500; }
+  .bn-badge {
+    position: absolute; top: 0; right: calc(50% - 20px);
+    background: var(--red); color: white; font-size: 9px; font-weight: 700;
+    padding: 1px 4px; border-radius: 8px; border: 1px solid var(--bg);
+  }
+
+  /* Sidebar */
+  .logo {
+    padding: 4px 16px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .logo-mark {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    color: var(--accent2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .logo-name {
+    font-size: 15px; font-weight: 700;
+    color: var(--text); margin-top: 2px;
+  }
+  .logo-sub { font-size: 11px; color: var(--text3); }
+
+  .nav-section { padding: 0 8px; margin-bottom: 4px; }
+  .nav-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--text3); text-transform: uppercase;
+    letter-spacing: 1px; padding: 8px 8px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: var(--radius);
+    cursor: pointer; color: var(--text2);
+    font-size: 13px; font-weight: 500;
+    transition: all .15s; position: relative;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(46,160,67,.15); color: var(--accent2); }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3px; background: var(--accent2); border-radius: 0 2px 2px 0;
+  }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .badge {
+    margin-left: auto; background: var(--red);
+    color: white; font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 10px;
+  }
+  .badge.green { background: var(--accent); }
+  .badge.orange { background: var(--orange); }
+
+  .sidebar-footer {
+    margin-top: auto; padding: 12px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .user-card {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .user-role { font-size: 11px; color: var(--text3); }
+
+  /* Pages */
+  .page { display: none; padding: 24px; }
+  .page.active { display: block; }
+
+  /* Page header */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-title { font-size: 22px; font-weight: 700; color: var(--text); }
+  .page-subtitle { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: none; transition: all .15s; font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2); color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); color: var(--text); }
+  .btn-danger { background: rgba(218,54,51,.15); color: var(--red2); border: 1px solid var(--red); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-blue { background: var(--blue); color: white; }
+  .btn-blue:hover { background: var(--blue2); }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 20px;
+  }
+  .card-sm { padding: 14px 16px; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* Stat cards */
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 20px;
+    position: relative; overflow: hidden;
+  }
+  .stat-card::after {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+  }
+  .stat-card.green::after { background: var(--accent); }
+  .stat-card.blue::after { background: var(--blue2); }
+  .stat-card.orange::after { background: var(--orange2); }
+  .stat-card.red::after { background: var(--red2); }
+  .stat-label { font-size: 12px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+  .stat-num { font-size: 32px; font-weight: 700; color: var(--text); margin: 6px 0 4px; font-family: 'IBM Plex Mono', monospace; }
+  .stat-change { font-size: 12px; }
+  .stat-change.up { color: var(--accent2); }
+  .stat-change.down { color: var(--red2); }
+  .stat-icon { position: absolute; top: 20px; right: 20px; font-size: 28px; opacity: .3; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 10px 14px;
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .5px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text2); font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,0,0,.02); }
+
+  /* Status badges */
+  .status {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .status.critical { background: rgba(248,81,73,.15); color: var(--red2); }
+  .status.critical::before { background: var(--red2); }
+  .status.active { background: rgba(63,185,80,.15); color: var(--accent2); }
+  .status.active::before { background: var(--accent2); }
+  .status.pending { background: rgba(227,179,65,.15); color: var(--orange2); }
+  .status.pending::before { background: var(--orange2); }
+  .status.stable { background: rgba(56,139,253,.15); color: var(--blue2); }
+  .status.stable::before { background: var(--blue2); }
+
+  /* Priority tags */
+  .priority {
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; font-family: 'IBM Plex Mono', monospace;
+  }
+  .priority.high { background: rgba(248,81,73,.2); color: var(--red2); }
+  .priority.med { background: rgba(227,179,65,.2); color: var(--orange2); }
+  .priority.low { background: rgba(63,185,80,.2); color: var(--accent2); }
+
+  /* Search & filter bar */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap input {
+    width: 100%; padding: 8px 12px 8px 36px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-size: 13px; font-family: inherit;
+    outline: none; transition: border .15s;
+  }
+  .search-wrap input:focus { border-color: var(--blue2); }
+  .search-wrap input::placeholder { color: var(--text3); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 15px; }
+
+  select {
+    padding: 8px 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text2); font-size: 13px; font-family: inherit;
+    outline: none; cursor: pointer;
+  }
+  select:focus { border-color: var(--blue2); }
+
+  /* Form */
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  input[type=text], input[type=date], input[type=number], input[type=tel], textarea {
+    width: 100%; padding: 9px 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-size: 13px; font-family: inherit; outline: none;
+    transition: border .15s;
+  }
+  input[type=text]:focus, input[type=date]:focus, input[type=number]:focus,
+  input[type=tel]:focus, textarea:focus { border-color: var(--blue2); }
+  input::placeholder, textarea::placeholder { color: var(--text3); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.7); z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius2); width: 100%; max-width: 620px;
+    max-height: 90vh; overflow-y: auto;
+    animation: slideUp .2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer; padding: 4px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer {
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 10px; justify-content: flex-end;
+  }
+
+  /* Patient card (list view) */
+  .patient-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    cursor: pointer;
+    transition: all .15s;
+    margin-bottom: 8px;
+  }
+  .patient-card:hover { border-color: var(--border2); background: #e8edf5; }
+  .patient-avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+  }
+  .patient-info { flex: 1; min-width: 0; }
+  .patient-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .patient-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .patient-actions { display: flex; gap: 8px; }
+
+  /* Detail view */
+  .detail-header {
+    display: flex; align-items: flex-start; gap: 20px;
+    margin-bottom: 24px; padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-avatar {
+    width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 700;
+  }
+  .detail-name { font-size: 20px; font-weight: 700; color: var(--text); }
+  .detail-meta { font-size: 13px; color: var(--text3); margin-top: 4px; }
+  .detail-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab {
+    padding: 10px 18px; font-size: 13px; font-weight: 500;
+    color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before { content: ''; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+  .tl-item { position: relative; margin-bottom: 16px; }
+  .tl-dot {
+    position: absolute; left: -20px; top: 4px;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid var(--bg); flex-shrink: 0;
+  }
+  .tl-dot.green { background: var(--accent); }
+  .tl-dot.blue { background: var(--blue2); }
+  .tl-dot.orange { background: var(--orange2); }
+  .tl-dot.red { background: var(--red2); }
+  .tl-date { font-size: 11px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; }
+  .tl-content { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .tl-content strong { color: var(--text); }
+
+  /* Care plan */
+  .care-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 8px;
+  }
+  .care-check {
+    width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--border2);
+    flex-shrink: 0; margin-top: 1px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .care-check.done { background: var(--accent); border-color: var(--accent); }
+  .care-check.done::after { content: '✓'; font-size: 11px; color: white; font-weight: 700; }
+  .care-text { flex: 1; }
+  .care-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .care-freq { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* Task card */
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .task-card:hover { border-color: var(--border2); }
+  .task-main { flex: 1; }
+  .task-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .task-patient { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .task-meta { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .task-tag {
+    font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    background: var(--surface2); color: var(--text3); border: 1px solid var(--border);
+  }
+
+  /* Progress bar */
+  .progress-wrap { margin-top: 8px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .progress-fill.green { background: var(--accent); }
+  .progress-fill.blue { background: var(--blue2); }
+  .progress-fill.orange { background: var(--orange2); }
+
+  /* Chart bars */
+  .mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 60px; margin-top: 8px; }
+  .bar-col { flex: 1; border-radius: 3px 3px 0 0; transition: all .3s; position: relative; }
+  .bar-col:hover { opacity: .8; }
+
+  /* Questionnaire */
+  .q-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px;
+  }
+  .q-num { font-size: 10px; font-weight: 700; color: var(--text3); font-family: 'IBM Plex Mono', monospace; }
+  .q-text { font-size: 13px; color: var(--text); margin-top: 4px; }
+  .q-type { display: inline-block; margin-top: 6px; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+  .q-type.scale { background: rgba(31,111,235,.2); color: var(--blue2); }
+  .q-type.bool { background: rgba(46,160,67,.2); color: var(--accent2); }
+  .q-type.text { background: rgba(137,87,229,.2); color: var(--purple2); }
+
+  /* Alert banner */
+  .alert {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 16px; border-radius: var(--radius);
+    margin-bottom: 12px;
+  }
+  .alert.warning { background: rgba(227,179,65,.1); border: 1px solid rgba(227,179,65,.3); }
+  .alert.danger { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3); }
+  .alert.info { background: rgba(56,139,253,.1); border: 1px solid rgba(56,139,253,.3); }
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert-text { font-size: 13px; color: var(--text2); }
+  .alert-text strong { color: var(--text); }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* Section title */
+  .section-title {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    text-transform: uppercase; letter-spacing: .8px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Chip */
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text3);
+  }
+  .chip.teal { background: rgba(26,188,156,.15); border-color: rgba(26,188,156,.3); color: var(--teal2); }
+  .chip.blue { background: rgba(31,111,235,.15); border-color: rgba(31,111,235,.3); color: var(--blue2); }
+  .chip.purple { background: rgba(137,87,229,.15); border-color: rgba(137,87,229,.3); color: var(--purple2); }
+  .chip.orange { background: rgba(227,179,65,.15); border-color: rgba(227,179,65,.3); color: var(--orange2); }
+
+  /* Donut mini */
+  .donut-wrap { display: flex; align-items: center; gap: 16px; }
+  .donut-legend { display: flex; flex-direction: column; gap: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  .sidebar { box-shadow: 1px 0 4px rgba(0,0,0,.06); }
+
+  /* Notification dot */
+  .notif { position: relative; }
+  .notif::after {
+    content: ''; position: absolute; top: -2px; right: -4px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red2); border: 2px solid var(--surface);
+  }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 24px; color: var(--text3); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+
+  /* Tooltip (simple) */
+  .tooltip-text { font-size: 12px; color: var(--text3); }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .mobile-topbar { display: flex; }
+    .bottom-nav { display: block; }
+    .main { padding-top: 52px; padding-bottom: 72px; height: 100vh; overflow-y: auto; }
+    .app { display: block; height: 100vh; overflow: hidden; }
+    .page { padding: 16px; }
+    .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .page-header .btn { width: 100%; justify-content: center; }
+    .grid-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { grid-template-columns: 1fr; gap: 10px; }
+    .grid-2 { grid-template-columns: 1fr; gap: 10px; }
+    .stat-num { font-size: 26px; }
+    .stat-icon { font-size: 22px; }
+    .toolbar { flex-direction: column; }
+    .search-wrap { min-width: unset; }
+    .toolbar select { width: 100%; }
+    .patient-card { flex-wrap: wrap; }
+    .patient-actions { width: 100%; margin-top: 4px; }
+    .patient-actions .btn { flex: 1; justify-content: center; }
+    .detail-header { flex-wrap: wrap; gap: 12px; }
+    .detail-header > div:last-child { width: 100%; display: flex; gap: 8px; }
+    .detail-header > div:last-child .btn { flex: 1; justify-content: center; font-size: 12px; padding: 7px 8px; }
+    .tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .task-card { flex-wrap: wrap; }
+    .task-card > div:last-child { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .modal-overlay { padding: 0; align-items: flex-end; }
+    .modal { max-width: 100%; width: 100%; border-radius: var(--radius2) var(--radius2) 0 0; max-height: 92vh; }
+    #page-questionnaire .grid-2 { grid-template-columns: 1fr; }
+    .table-wrap { border-radius: var(--radius); overflow: hidden; }
+    td, th { padding: 10px 10px; font-size: 12px; }
+    .card { padding: 14px; }
+    .page-title { font-size: 18px; }
+    .page-subtitle { font-size: 12px; }
+    .alert { font-size: 12px; }
+    .mini-chart { height: 80px; }
+  }
+  @media (max-width: 400px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .stat-num { font-size: 22px; }
+    .page { padding: 12px; }
+    .btn { padding: 8px 12px; font-size: 12px; }
+  }
+
+  /* Form Builder */
+  .fb-pill {
+    display:flex;align-items:center;gap:8px;padding:8px 10px;
+    border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);
+    cursor:grab;margin-bottom:6px;font-size:12px;font-weight:500;color:var(--text2);
+    transition:all .15s;user-select:none;
+  }
+  .fb-pill:hover{border-color:var(--blue);color:var(--blue);background:rgba(3,102,214,.06);}
+  .fb-pill:active{cursor:grabbing;opacity:.7;}
+  .fb-field-card {
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:10px 12px;display:flex;align-items:flex-start;gap:10px;cursor:default;transition:border-color .15s;
+  }
+  .fb-field-card:hover{border-color:var(--border2);}
+  .fb-field-card.selected{border-color:var(--blue);box-shadow:0 0 0 2px rgba(3,102,214,.15);}
+  .fb-field-card.drag-over{border-color:var(--accent);border-style:dashed;}
+  .fb-prop-input{width:100%;padding:6px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:12px;font-family:inherit;outline:none;}
+  .fb-prop-input:focus{border-color:var(--blue);}
+  .fb-tpl-chip {
+    padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;
+    border:1px solid var(--border);background:var(--surface);color:var(--text2);
+    cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s;
+  }
+  .fb-tpl-chip:hover{border-color:var(--blue);color:var(--blue);}
+  .fb-tpl-chip.active{background:var(--blue);color:white;border-color:var(--blue2);}
+
+  /* Calendar */
+  .cal-cell {
+    border-right:1px solid var(--border);border-bottom:1px solid var(--border);
+    padding:4px;min-height:76px;cursor:pointer;transition:background .1s;overflow:hidden;
+  }
+  .cal-cell:nth-child(7n){border-right:none;}
+  .cal-cell:hover{background:#f8faff;}
+  .cal-cell.today .cal-day-num{background:var(--blue);color:white;border-radius:50%;}
+  .cal-cell.other-month .cal-day-num{color:var(--text3);}
+  .cal-day-num{font-size:12px;font-weight:600;color:var(--text2);width:22px;height:22px;display:flex;align-items:center;justify-content:center;margin-bottom:2px;}
+  .cal-ev-chip{font-size:10px;font-weight:500;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+  .cal-ev-chip.c0{background:#dbeafe;color:#1e40af;}
+  .cal-ev-chip.c1{background:#dcfce7;color:#166534;}
+  .cal-ev-chip.c2{background:#fef3c7;color:#92400e;}
+  .cal-ev-chip.c3{background:#ede9fe;color:#5b21b6;}
+  .cal-ev-chip.c4{background:#fee2e2;color:#991b1b;}
+  .cal-nef-label{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;display:block;}
+  .cal-nef-input{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit;outline:none;background:var(--surface2);color:var(--text);}
+  .cal-nef-input:focus{border-color:var(--blue);}
+  .cal-form-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;margin:2px;}
+  .cal-form-tag.on{background:#dbeafe;color:#1e40af;}
+  .cal-form-tag.off{background:var(--surface);border:1px solid var(--border);color:var(--text3);}
+  .cal-pat-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:var(--radius);cursor:pointer;transition:background .1s;}
+  .cal-pat-row:hover{background:var(--surface2);}
+  /* Drawer (desktop) */
+  .cal-drawer-overlay {
+    display:none;position:fixed;inset:0;z-index:500;
+    background:rgba(0,0,0,.35);
+  }
+  .cal-drawer-overlay.open { display:block; }
+  .cal-drawer {
+    position:fixed;top:0;right:0;bottom:0;width:400px;
+    background:var(--surface);border-left:1px solid var(--border);
+    z-index:501;display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  }
+  .cal-drawer.open { transform:translateX(0); }
+  .cal-drawer-head {
+    padding:14px 18px;border-bottom:1px solid var(--border);
+    display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;
+  }
+  .cal-drawer-title { font-size:15px;font-weight:700;color:var(--text); }
+  .cal-drawer-sub { font-size:11px;color:var(--text3);margin-top:2px; }
+  .cal-drawer-close {
+    width:30px;height:30px;border-radius:var(--radius);border:1px solid var(--border);
+    background:var(--surface2);cursor:pointer;font-size:16px;color:var(--text2);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .cal-drawer-close:hover { background:var(--border);color:var(--text); }
+  .cal-drawer-body { flex:1;overflow-y:auto;padding:16px; }
+  .cal-drawer-foot {
+    padding:12px 18px;border-top:1px solid var(--border);
+    display:flex;gap:8px;flex-shrink:0;
+  }
+
+  /* Bottom sheet (mobile) */
+  .cal-sheet-overlay {
+    display:none;position:fixed;inset:0;z-index:500;
+    background:rgba(0,0,0,.45);
+  }
+  .cal-sheet-overlay.open { display:block; }
+  .cal-sheet {
+    position:fixed;left:0;right:0;bottom:0;
+    background:var(--surface);border-radius:16px 16px 0 0;
+    border-top:1px solid var(--border);
+    z-index:501;display:flex;flex-direction:column;
+    max-height:82vh;
+    transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  }
+  .cal-sheet.open { transform:translateY(0); }
+  .cal-sheet-handle {
+    width:40px;height:4px;background:var(--border2);border-radius:2px;
+    margin:10px auto 0;flex-shrink:0;
+  }
+  .cal-sheet-head {
+    padding:12px 18px 10px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  }
+  .cal-sheet-body { flex:1;overflow-y:auto;padding:14px; }
+  .cal-sheet-foot {
+    padding:10px 18px;border-top:1px solid var(--border);
+    display:flex;gap:8px;flex-shrink:0;
+    padding-bottom:max(10px,env(safe-area-inset-bottom));
+  }
+
+  @media (max-width:768px) {
+    .cal-drawer-overlay,.cal-drawer { display:none !important; }
+  }
+  @media (min-width:769px) {
+    .cal-sheet-overlay,.cal-sheet { display:none !important; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Mobile Top Bar -->
+<div class="mobile-topbar">
+  <div class="mobile-logo-text">
+    <span>HOMEMED</span>
+    Case Manager
+  </div>
+  <button class="mobile-user-btn">ส</button>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bottom-nav-item active" id="bn-dashboard" onclick="navigateMobile('dashboard', this)">
+      <span class="bn-icon">📊</span>
+      <span class="bn-label">Dashboard</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-patients" onclick="navigateMobile('patients', this)">
+      <span class="bn-icon">🏥</span>
+      <span class="bn-label">ผู้ป่วย</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-planning" onclick="navigateMobile('planning', this)">
+      <span class="bn-badge">5</span>
+      <span class="bn-icon">🗓️</span>
+      <span class="bn-label">Planning</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-questionnaire" onclick="navigateMobile('questionnaire', this)">
+      <span class="bn-icon">📝</span>
+      <span class="bn-label">แบบสอบถาม</span>
+    </button>
+    <button class="bottom-nav-item" id="bn-reports" onclick="navigateMobile('reports', this)">
+      <span class="bn-icon">📈</span>
+      <span class="bn-label">รายงาน</span>
+    </button>
+  </div>
+</div>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">HomeMed</div>
+      <div class="logo-name">Case Manager</div>
+      <div class="logo-sub">ระบบจัดการผู้ป่วยคนไร้บ้าน</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">หลัก</div>
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="navigate('patients')">
+        <span class="nav-icon">🏥</span> ผู้ป่วย
+        <span class="badge green">23</span>
+      </div>
+      <div class="nav-item" onclick="navigate('planning')">
+        <span class="nav-icon">🗓️</span> Planning
+        <span class="badge">5</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">เครื่องมือ</div>
+      <div class="nav-item" onclick="navigate('questionnaire')">
+        <span class="nav-icon">📝</span> แบบสอบถาม
+      </div>
+      <div class="nav-item" onclick="navigate('reports')">
+        <span class="nav-icon">📈</span> รายงาน
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar">S</div>
+        <div>
+          <div class="user-name">สมใจ รักดี</div>
+          <div class="user-role">Case Manager หลัก</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle">ภาพรวมสัปดาห์นี้ — 26 พ.ค. - 1 มิ.ย. 2569</div>
+        </div>
+        <button class="btn btn-primary" onclick="calOpenNew()">+ มอบหมายงาน</button>
+      </div>
+
+      <!-- Alerts -->
+      <div class="alert danger">
+        <span class="alert-icon">🚨</span>
+        <div class="alert-text"><strong>3 รายต้องดูแลด่วน</strong> — สมศักดิ์ (ขาดยา 7 วัน), มานะ (ไม่พบตัว 14 วัน), สุรีย์ (ผล lab ผิดปกติ)</div>
+      </div>
+      <div class="alert warning">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-text"><strong>5 งานค้างรายสัปดาห์</strong> ที่ยังไม่ได้ส่งมอบให้ผู้ช่วย CM ลงพื้นที่</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="stat-card green">
+          <div class="stat-icon">🏥</div>
+          <div class="stat-label">ผู้ป่วยในระบบ</div>
+          <div class="stat-num">23</div>
+          <div class="stat-change up">↑ 2 รายใหม่เดือนนี้</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">💊</div>
+          <div class="stat-label">อัตรารับยาต่อเนื่อง</div>
+          <div class="stat-num">74%</div>
+          <div class="stat-change down">↓ จาก 81% เดือนที่แล้ว</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">งาน Follow-up เสร็จ</div>
+          <div class="stat-num">18</div>
+          <div class="stat-change up">↑ จาก 12 สัปดาห์ก่อน</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-label">ผู้ป่วยวิกฤต</div>
+          <div class="stat-num">3</div>
+          <div class="stat-change down">ต้องดูแลทันที</div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="section-title">Follow-up รายสัปดาห์ (30 วันล่าสุด)</div>
+          <div class="mini-chart" id="followup-chart">
+            <div class="bar-col" style="height:45%;background:var(--blue2);border-radius:3px 3px 0 0;" title="W1: 9 ราย"></div>
+            <div class="bar-col" style="height:60%;background:var(--blue2);" title="W2: 12 ราย"></div>
+            <div class="bar-col" style="height:35%;background:var(--orange2);" title="W3: 7 ราย"></div>
+            <div class="bar-col" style="height:90%;background:var(--accent);" title="W4: 18 ราย"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:10px;color:var(--text3)">W1</span>
+            <span style="font-size:10px;color:var(--text3)">W2</span>
+            <span style="font-size:10px;color:var(--text3)">W3</span>
+            <span style="font-size:10px;color:var(--text3)">W4</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">สถานะผู้ป่วยทั้งหมด</div>
+          <div class="donut-wrap" style="margin-top:8px;">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="30" fill="none" stroke="var(--surface2)" stroke-width="14"/>
+              <circle cx="40" cy="40" r="30" fill="none" stroke="var(--accent)" stroke-width="14" stroke-dasharray="84.8 103.67" stroke-dashoffset="0" stroke-linecap="round"/>
+              <circle cx="40" cy="40" r="30" fill="none" stroke="var(--orange2)" stroke-width="14" stroke-dasharray="37.7 150.8" stroke-dashoffset="-84.8" stroke-linecap="round"/>
+              <circle cx="40" cy="40" r="30" fill="none" stroke="var(--red2)" stroke-width="14" stroke-dasharray="18.85 169.65" stroke-dashoffset="-122.5" stroke-linecap="round"/>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> สเถียร 13 ราย</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--orange2)"></div> ต้องติดตาม 7 ราย</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--red2)"></div> วิกฤต 3 ราย</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="section-title" style="margin-bottom:0;">กิจกรรมล่าสุด</div>
+          <span style="font-size:12px;color:var(--blue2);cursor:pointer;" onclick="navigate('tasks')">ดูทั้งหมด →</span>
+        </div>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot green"></div>
+            <div class="tl-date">วันนี้ 10:23</div>
+            <div class="tl-content"><strong>อรุณี วงศ์ดี</strong> รับยาครบตามแผน — ผู้ช่วย CM: นายมั่นคง</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot orange"></div>
+            <div class="tl-date">วันนี้ 09:05</div>
+            <div class="tl-content"><strong>ประสิทธิ์ แก้วใส</strong> ไม่พบตัวในพื้นที่ — จะลงพื้นที่อีกครั้งพรุ่งนี้</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot blue"></div>
+            <div class="tl-date">เมื่อวาน 15:40</div>
+            <div class="tl-content"><strong>Care Plan</strong> ของ มานะ ทองดี อัปเดตแล้ว — เพิ่มยา Metformin 500mg</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot red"></div>
+            <div class="tl-date">เมื่อวาน 08:30</div>
+            <div class="tl-content"><strong>สมศักดิ์ ใจดี</strong> ขาดยา 7 วัน — แจ้งเตือนผู้ช่วย CM เพื่อติดตามด่วน</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PATIENTS ===== -->
+    <div id="page-patients" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">รายชื่อผู้ป่วย</div>
+          <div class="page-subtitle">ผู้ป่วยทั้งหมด 23 ราย ในระบบ HomeMed Connect</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-add-patient')">+ เพิ่มผู้ป่วยใหม่</button>
+      </div>
+
+      <!-- If showing patient detail -->
+      <div id="patient-detail" style="display:none;">
+        <!-- Back button -->
+        <button class="btn btn-secondary btn-sm" style="margin-bottom:20px;" onclick="showPatientList()">← กลับรายชื่อ</button>
+
+        <div class="detail-header">
+          <div class="detail-avatar" style="background:linear-gradient(135deg,#1f6feb,#8957e5)">ส</div>
+          <div>
+            <div class="detail-name">สมศักดิ์ ใจดี</div>
+            <div class="detail-meta">ชาย, 52 ปี • เบาหวาน, ความดันโลหิตสูง • พื้นที่: สะพานพระราม 8</div>
+            <div class="detail-tags">
+              <span class="status critical">วิกฤต</span>
+              <span class="chip orange">ขาดยา 7 วัน</span>
+              <span class="chip blue">รพ.ศรีปัญญา</span>
+            </div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="openModal('modal-care-plan')">✏️ Care Plan</button>
+            <button class="btn btn-primary btn-sm" onclick="calOpenNew()">📋 มอบหมายงาน</button>
+          </div>
+        </div>
+
+        <!-- Alert -->
+        <div class="alert danger">
+          <span class="alert-icon">🚨</span>
+          <div class="alert-text"><strong>ไม่ได้รับยามา 7 วัน</strong> — ควรส่งผู้ช่วย CM ลงพื้นที่ด่วน เพื่อส่งยาและประเมินอาการ</div>
+        </div>
+
+        <!-- Tabs — 4 tabs -->
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'detail-profile')">ข้อมูล</div>
+          <div class="tab" onclick="switchTab(this,'detail-timeline')">Timeline</div>
+          <div class="tab" onclick="switchTab(this,'detail-formhistory')">Form History</div>
+          <div class="tab" onclick="switchTab(this,'detail-careplan')">Care Plan</div>
+        </div>
+
+        <!-- Tab: ข้อมูล -->
+        <div id="detail-profile">
+          <!-- Hero stats -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+            <div class="card card-sm" style="text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;">14</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">Visit ทั้งหมด</div>
+            </div>
+            <div class="card card-sm" style="text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--orange2);font-family:'IBM Plex Mono',monospace;">74%</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">อัตรารับยา</div>
+            </div>
+            <div class="card card-sm" style="text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--red2);font-family:'IBM Plex Mono',monospace;">7</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">วันขาดยา</div>
+            </div>
+            <div class="card card-sm" style="text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--blue);font-family:'IBM Plex Mono',monospace;">3</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">Form เดือนนี้</div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="section-title">ข้อมูลส่วนบุคคล</div>
+              <table>
+                <tr><td style="color:var(--text3);width:40%">ชื่อ-นามสกุล</td><td style="color:var(--text)">สมศักดิ์ ใจดี</td></tr>
+                <tr><td style="color:var(--text3)">อายุ</td><td style="color:var(--text)">52 ปี (เกิด 15 ก.พ. 2517)</td></tr>
+                <tr><td style="color:var(--text3)">เพศ</td><td style="color:var(--text)">ชาย</td></tr>
+                <tr><td style="color:var(--text3)">เลขบัตรฯ</td><td style="color:var(--text)">1-1001-00001-11-0</td></tr>
+                <tr><td style="color:var(--text3)">โทรศัพท์</td><td style="color:var(--text)">081-234-5678</td></tr>
+                <tr><td style="color:var(--text3)">พื้นที่พักประจำ</td><td style="color:var(--text)">ใต้สะพานพระราม 8 (ฝั่งบางกอกน้อย)</td></tr>
+              </table>
+            </div>
+            <div class="card">
+              <div class="section-title">ข้อมูลสุขภาพ</div>
+              <table>
+                <tr><td style="color:var(--text3);width:40%">โรคประจำตัว</td><td style="color:var(--text)">เบาหวาน T2, ความดันโลหิตสูง</td></tr>
+                <tr><td style="color:var(--text3)">ยาที่รับ</td><td style="color:var(--text)">Metformin 500mg, Amlodipine 5mg</td></tr>
+                <tr><td style="color:var(--text3)">โรงพยาบาล</td><td style="color:var(--text)">รพ.ศรีปัญญา (OPD เบาหวาน)</td></tr>
+                <tr><td style="color:var(--text3)">นัดล่าสุด</td><td style="color:var(--text)">12 มิ.ย. 2569</td></tr>
+                <tr><td style="color:var(--text3)">สิทธิการรักษา</td><td style="color:var(--text)">บัตรทอง (30 บาท)</td></tr>
+                <tr><td style="color:var(--text3)">น้ำตาลในเลือด</td><td style="color:var(--orange2)">HbA1c 9.2% (สูง)</td></tr>
+              </table>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px;">
+            <div class="section-title">Case Manager ที่ดูแล</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;">ส</div>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text);">สมใจ รักดี</div>
+                <div style="font-size:11px;color:var(--text3);">Case Manager หลัก • ดูแลตั้งแต่ ม.ค. 2567</div>
+              </div>
+              <div style="margin-left:auto;font-size:11px;color:var(--text3);">ผู้ช่วย: มั่นคง สำเร็จ</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Timeline -->
+        <div id="detail-timeline" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <select style="font-size:12px;padding:5px 10px;">
+              <option>ทุก Activity</option>
+              <option>Check-in เท่านั้น</option>
+              <option>Form Submit เท่านั้น</option>
+              <option>Note เท่านั้น</option>
+            </select>
+            <span style="font-size:11px;color:var(--text3);">14 รายการ</span>
+          </div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-dot green"></div>
+              <div class="tl-date">6 มิ.ย. 2569 • 09:14 — มั่นคง สำเร็จ</div>
+              <div class="tl-content"><strong>✅ Check-in</strong> — พบผู้ป่วย ณ ใต้สะพานพระราม 8</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot blue"></div>
+              <div class="tl-date">6 มิ.ย. 2569 • 09:28 — มั่นคง สำเร็จ</div>
+              <div class="tl-content"><strong>📋 Submit Form</strong> — แบบประเมินอาการรายสัปดาห์ (6 คำถาม ครบถ้วน)</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot orange"></div>
+              <div class="tl-date">6 มิ.ย. 2569 • 09:35 — มั่นคง สำเร็จ</div>
+              <div class="tl-content"><strong>📝 Note</strong> — ผู้ป่วยขาดยา 7 วัน บอกว่าหายา Metformin ไม่ได้ ดูเหนื่อยและซีด แนะนำให้ไปรพ.ศรีปัญญาพรุ่งนี้</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot green"></div>
+              <div class="tl-date">30 พ.ค. 2569 • 10:05 — มั่นคง สำเร็จ</div>
+              <div class="tl-content"><strong>✅ Check-in</strong> — พบผู้ป่วย ณ ใต้สะพานพระราม 8</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot blue"></div>
+              <div class="tl-date">30 พ.ค. 2569 • 10:18 — มั่นคง สำเร็จ</div>
+              <div class="tl-content"><strong>📋 Submit Form</strong> — ติดตามการรับยา (3 คำถาม ครบถ้วน)</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot orange"></div>
+              <div class="tl-date">29 พ.ค. 2569 — มั่นคง สำเร็จ</div>
+              <div class="tl-content"><strong>⚠️ ไม่พบตัว</strong> — ลงพื้นที่บริเวณสะพาน ไม่พบผู้ป่วย คาดเคลื่อนที่ไปพื้นที่อื่น</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot blue"></div>
+              <div class="tl-date">22 พ.ค. 2569 — สมใจ รักดี (CM)</div>
+              <div class="tl-content"><strong>📅 Assign Event</strong> — Follow-up ประจำสัปดาห์ (แบบฟอร์ม 2 ชุด)</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot green"></div>
+              <div class="tl-date">22 พ.ค. 2569 — มั่นคง สำเร็จ</div>
+              <div class="tl-content"><strong>✅ Check-in + ส่งยาสำเร็จ</strong> — Metformin + Amlodipine ครบ 7 วัน ความดัน 145/95 mmHg</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Form History -->
+        <div id="detail-formhistory" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <select style="font-size:12px;padding:5px 10px;">
+              <option>ทุก Template</option>
+              <option>แบบประเมินอาการรายสัปดาห์</option>
+              <option>ติดตามการรับยา</option>
+            </select>
+            <span style="font-size:11px;color:var(--text3);">3 sessions</span>
+          </div>
+          <!-- Session 1 -->
+          <div class="card card-sm" style="margin-bottom:8px;cursor:pointer;" onclick="toggleFHSession('fhs1')">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;flex-shrink:0;">6 มิ.ย. 2569</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:var(--text);">แบบประเมินอาการรายสัปดาห์</div>
+                <div style="font-size:11px;color:var(--text3);">กรอกโดย มั่นคง สำเร็จ</div>
+              </div>
+              <span class="status active">ครบถ้วน</span>
+              <span style="color:var(--text3);font-size:14px;" id="fhs1-icon">▼</span>
+            </div>
+          </div>
+          <div id="fhs1" style="display:none;margin-bottom:10px;">
+            <div class="card" style="border-top:none;border-radius:0 0 var(--radius2) var(--radius2);margin-top:-4px;">
+              <div style="display:grid;gap:8px;">
+                <div><div style="font-size:11px;font-weight:600;color:var(--text2);">ผู้ป่วยรับยาครบสัปดาห์ที่ผ่านมาหรือไม่?</div><div style="font-size:12px;color:var(--text);padding:4px 8px;background:var(--surface2);border-radius:var(--radius);display:inline-block;margin-top:3px;">ไม่ครบ</div></div>
+                <div><div style="font-size:11px;font-weight:600;color:var(--text2);">ระดับน้ำตาลในเลือด (mg/dL)</div><div style="font-size:12px;color:var(--red2);padding:4px 8px;background:var(--surface2);border-radius:var(--radius);display:inline-block;margin-top:3px;">185 mg/dL (สูง)</div></div>
+                <div><div style="font-size:11px;font-weight:600;color:var(--text2);">ประเมินความเป็นอยู่โดยรวม</div><div style="font-size:12px;color:var(--text);padding:4px 8px;background:var(--surface2);border-radius:var(--radius);display:inline-block;margin-top:3px;">2 / 5</div></div>
+                <div><div style="font-size:11px;font-weight:600;color:var(--text2);">อาการที่สังเกตเห็น</div><div style="font-size:12px;color:var(--text);padding:4px 8px;background:var(--surface2);border-radius:var(--radius);display:inline-block;margin-top:3px;">เหนื่อยง่าย ซีด หน้ามืดเล็กน้อย</div></div>
+              </div>
+            </div>
+          </div>
+          <!-- Session 2 -->
+          <div class="card card-sm" style="margin-bottom:8px;cursor:pointer;" onclick="toggleFHSession('fhs2')">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;flex-shrink:0;">30 พ.ค. 2569</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:var(--text);">ติดตามการรับยา</div>
+                <div style="font-size:11px;color:var(--text3);">กรอกโดย มั่นคง สำเร็จ</div>
+              </div>
+              <span class="status active">ครบถ้วน</span>
+              <span style="color:var(--text3);font-size:14px;" id="fhs2-icon">▼</span>
+            </div>
+          </div>
+          <div id="fhs2" style="display:none;margin-bottom:10px;">
+            <div class="card" style="border-top:none;border-radius:0 0 var(--radius2) var(--radius2);margin-top:-4px;">
+              <div style="display:grid;gap:8px;">
+                <div><div style="font-size:11px;font-weight:600;color:var(--text2);">รับยาครบตามแผนไหม?</div><div style="font-size:12px;color:var(--text);padding:4px 8px;background:var(--surface2);border-radius:var(--radius);display:inline-block;margin-top:3px;">ครบ</div></div>
+                <div><div style="font-size:11px;font-weight:600;color:var(--text2);">มีผลข้างเคียงจากยาไหม?</div><div style="font-size:12px;color:var(--text);padding:4px 8px;background:var(--surface2);border-radius:var(--radius);display:inline-block;margin-top:3px;">ไม่มี</div></div>
+                <div><div style="font-size:11px;font-weight:600;color:var(--text2);">ระดับน้ำตาล</div><div style="font-size:12px;color:var(--accent2);padding:4px 8px;background:var(--surface2);border-radius:var(--radius);display:inline-block;margin-top:3px;">142 mg/dL</div></div>
+              </div>
+            </div>
+          </div>
+          <!-- Session 3 -->
+          <div class="card card-sm" style="margin-bottom:8px;cursor:pointer;" onclick="toggleFHSession('fhs3')">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;flex-shrink:0;">14 พ.ค. 2569</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:var(--text);">แบบประเมินอาการรายสัปดาห์</div>
+                <div style="font-size:11px;color:var(--text3);">กรอกโดย มั่นคง สำเร็จ</div>
+              </div>
+              <span class="status critical">ไม่พบตัว</span>
+              <span style="color:var(--text3);font-size:14px;" id="fhs3-icon">▼</span>
+            </div>
+          </div>
+          <div id="fhs3" style="display:none;margin-bottom:10px;">
+            <div class="card" style="border-top:none;border-radius:0 0 var(--radius2) var(--radius2);margin-top:-4px;">
+              <div style="text-align:center;font-size:12px;color:var(--text3);padding:12px;">ไม่ได้กรอก — ไม่พบผู้ป่วยในพื้นที่</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Care Plan -->
+        <div id="detail-careplan" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="font-size:13px;color:var(--text3)">อัปเดตล่าสุด: 28 พ.ค. 2569</div>
+            <button class="btn btn-secondary btn-sm" onclick="openModal('modal-care-plan')">+ เพิ่มแผน</button>
+          </div>
+          <div class="care-item">
+            <div class="care-check done" onclick="toggleCheck(this)"></div>
+            <div class="care-text">
+              <div class="care-title">💊 รับ Metformin 500mg หลังอาหารเช้า-เย็น</div>
+              <div class="care-freq">ทุกวัน • ผู้ส่งยา: นายมั่นคง • ส่งทุกวันจันทร์</div>
+            </div>
+            <span class="priority high">HIGH</span>
+          </div>
+          <div class="care-item">
+            <div class="care-check done" onclick="toggleCheck(this)"></div>
+            <div class="care-text">
+              <div class="care-title">💊 รับ Amlodipine 5mg ก่อนนอน</div>
+              <div class="care-freq">ทุกวัน • ผู้ส่งยา: นายมั่นคง • ส่งทุกวันจันทร์</div>
+            </div>
+            <span class="priority high">HIGH</span>
+          </div>
+          <div class="care-item">
+            <div class="care-check" onclick="toggleCheck(this)"></div>
+            <div class="care-text">
+              <div class="care-title">🏥 ไป OPD นัดติดตาม รพ.ศรีปัญญา</div>
+              <div class="care-freq">ทุก 3 เดือน • นัดถัดไป: 12 มิ.ย. 2569</div>
+            </div>
+            <span class="priority high">HIGH</span>
+          </div>
+          <div class="care-item">
+            <div class="care-check" onclick="toggleCheck(this)"></div>
+            <div class="care-text">
+              <div class="care-title">🩺 ตรวจวัดความดันและน้ำตาลในเลือด</div>
+              <div class="care-freq">สัปดาห์ละ 1 ครั้ง (วันจันทร์)</div>
+            </div>
+            <span class="priority med">MED</span>
+          </div>
+          <div class="care-item">
+            <div class="care-check" onclick="toggleCheck(this)"></div>
+            <div class="care-text">
+              <div class="care-title">🥗 แนะนำโภชนาการ ลดน้ำตาล-เกลือ</div>
+              <div class="care-freq">ทุกครั้งที่ลงพื้นที่</div>
+            </div>
+            <span class="priority low">LOW</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patient list -->
+      <div id="patient-list">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="ค้นหาชื่อ, โรค, พื้นที่..." oninput="filterPatients(this.value)">
+          </div>
+          <select>
+            <option>สถานะทั้งหมด</option>
+            <option>วิกฤต</option>
+            <option>ต้องติดตาม</option>
+            <option>สเถียร</option>
+          </select>
+          <select>
+            <option>โรคทั้งหมด</option>
+            <option>เบาหวาน</option>
+            <option>ความดัน</option>
+            <option>วัณโรค</option>
+          </select>
+        </div>
+
+        <div id="patient-list-items">
+          <!-- Critical patients -->
+          <div style="font-size:11px;color:var(--red2);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 8px 4px;">⚡ ต้องดูแลด่วน</div>
+
+          <div class="patient-card" onclick="showPatientDetail()">
+            <div class="patient-avatar" style="background:linear-gradient(135deg,#da3633,#8957e5)">ส</div>
+            <div class="patient-info">
+              <div class="patient-name">สมศักดิ์ ใจดี</div>
+              <div class="patient-meta">ชาย 52 ปี • เบาหวาน, ความดัน • สะพานพระราม 8</div>
+              <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+                <span class="status critical">วิกฤต</span>
+                <span class="chip orange">ขาดยา 7 วัน</span>
+              </div>
+            </div>
+            <div class="patient-actions">
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();calOpenNew()">มอบหมายงาน</button>
+            </div>
+          </div>
+
+          <div class="patient-card">
+            <div class="patient-avatar" style="background:linear-gradient(135deg,#d29922,#da3633)">ม</div>
+            <div class="patient-info">
+              <div class="patient-name">มานะ ทองดี</div>
+              <div class="patient-meta">ชาย 61 ปี • ความดัน, หัวใจ • หน้าสถานีรถไฟหัวลำโพง</div>
+              <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+                <span class="status critical">วิกฤต</span>
+                <span class="chip orange">ไม่พบตัว 14 วัน</span>
+              </div>
+            </div>
+            <div class="patient-actions">
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();calOpenNew()">มอบหมายงาน</button>
+            </div>
+          </div>
+
+          <div style="font-size:11px;color:var(--orange2);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px 4px;">⚠️ ต้องติดตาม</div>
+
+          <div class="patient-card">
+            <div class="patient-avatar" style="background:linear-gradient(135deg,#1f6feb,#1abc9c)">อ</div>
+            <div class="patient-info">
+              <div class="patient-name">อรุณี วงศ์ดี</div>
+              <div class="patient-meta">หญิง 45 ปี • เบาหวาน • ลานจอดรถสวนลุม</div>
+              <div style="margin-top:6px;"><span class="status pending">ต้องติดตาม</span></div>
+            </div>
+            <div class="patient-actions">
+              <button class="btn btn-secondary btn-sm">ดูข้อมูล</button>
+            </div>
+          </div>
+
+          <div class="patient-card">
+            <div class="patient-avatar" style="background:linear-gradient(135deg,#8957e5,#1abc9c)">ป</div>
+            <div class="patient-info">
+              <div class="patient-name">ประสิทธิ์ แก้วใส</div>
+              <div class="patient-meta">ชาย 58 ปี • วัณโรค • ข้างวัดสุทัศน์</div>
+              <div style="margin-top:6px;"><span class="status pending">ต้องติดตาม</span></div>
+            </div>
+            <div class="patient-actions">
+              <button class="btn btn-secondary btn-sm">ดูข้อมูล</button>
+            </div>
+          </div>
+
+          <div style="font-size:11px;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px 4px;">✅ สเถียร</div>
+
+          <div class="patient-card">
+            <div class="patient-avatar" style="background:linear-gradient(135deg,#2ea043,#1f6feb)">ส</div>
+            <div class="patient-info">
+              <div class="patient-name">สุรีย์ มีสุข</div>
+              <div class="patient-meta">หญิง 49 ปี • ความดัน • ใต้สะพานพระปิ่นเกล้า</div>
+              <div style="margin-top:6px;"><span class="status active">สเถียร</span></div>
+            </div>
+            <div class="patient-actions">
+              <button class="btn btn-secondary btn-sm">ดูข้อมูล</button>
+            </div>
+          </div>
+
+          <div class="patient-card">
+            <div class="patient-avatar" style="background:linear-gradient(135deg,#2ea043,#8957e5)">ว</div>
+            <div class="patient-info">
+              <div class="patient-name">วิชัย ดีงาม</div>
+              <div class="patient-meta">ชาย 67 ปี • เบาหวาน, ข้อเข่า • สวนสันติภาพ</div>
+              <div style="margin-top:6px;"><span class="status stable">สเถียร</span></div>
+            </div>
+            <div class="patient-actions">
+              <button class="btn btn-secondary btn-sm">ดูข้อมูล</button>
+            </div>
+          </div>
+
+          <div style="text-align:center;padding:12px;font-size:12px;color:var(--text3);">
+            แสดง 6 จาก 23 ราย — <span style="color:var(--blue2);cursor:pointer;">ดูทั้งหมด</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PLANNING ===== -->
+    <div id="page-planning" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Planning</div>
+          <div class="page-subtitle">ปฏิทิน Event และงานที่มอบหมายผู้ช่วย CM</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="calOpenNew()">+ สร้าง Event</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+          <button class="btn btn-secondary btn-sm" onclick="calChangeMonth(-1)">◀</button>
+          <div id="cal-month-title" style="flex:1;font-size:15px;font-weight:700;color:var(--text);text-align:center;"></div>
+          <button class="btn btn-secondary btn-sm" onclick="calChangeMonth(1)">▶</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);">
+          <div style="padding:6px 0;text-align:center;font-size:11px;font-weight:600;color:var(--text3);">อา</div>
+          <div style="padding:6px 0;text-align:center;font-size:11px;font-weight:600;color:var(--text3);">จ</div>
+          <div style="padding:6px 0;text-align:center;font-size:11px;font-weight:600;color:var(--text3);">อ</div>
+          <div style="padding:6px 0;text-align:center;font-size:11px;font-weight:600;color:var(--text3);">พ</div>
+          <div style="padding:6px 0;text-align:center;font-size:11px;font-weight:600;color:var(--text3);">พฤ</div>
+          <div style="padding:6px 0;text-align:center;font-size:11px;font-weight:600;color:var(--text3);">ศ</div>
+          <div style="padding:6px 0;text-align:center;font-size:11px;font-weight:600;color:var(--text3);">ส</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);" id="cal-grid"></div>
+      </div>
+    </div>
+
+    <!-- Drawer overlay (desktop) -->
+    <div class="cal-drawer-overlay" id="cal-drawer-overlay" onclick="calCloseDrawer()"></div>
+    <div class="cal-drawer" id="cal-drawer">
+      <div class="cal-drawer-head">
+        <div>
+          <div class="cal-drawer-title" id="cal-drawer-title">งาน</div>
+          <div class="cal-drawer-sub" id="cal-drawer-sub"></div>
+        </div>
+        <button class="cal-drawer-close" onclick="calCloseDrawer()">✕</button>
+      </div>
+      <div class="cal-drawer-body" id="cal-drawer-body"></div>
+      <div class="cal-drawer-foot">
+        <button class="btn btn-primary" style="flex:1;" onclick="calSaveEvent()">💾 บันทึก Event & มอบหมายงาน</button>
+        <button class="btn btn-secondary btn-sm" onclick="calCloseDrawer()">ยกเลิก</button>
+      </div>
+    </div>
+
+    <!-- Bottom sheet (mobile) -->
+    <div class="cal-sheet-overlay" id="cal-sheet-overlay" onclick="calCloseSheet()"></div>
+    <div class="cal-sheet" id="cal-sheet">
+      <div class="cal-sheet-handle"></div>
+      <div class="cal-sheet-head">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);" id="cal-sheet-title">งาน</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:1px;" id="cal-sheet-sub"></div>
+        </div>
+        <button class="cal-drawer-close" onclick="calCloseSheet()">✕</button>
+      </div>
+      <div class="cal-sheet-body" id="cal-sheet-body"></div>
+      <div class="cal-sheet-foot">
+        <button class="btn btn-primary" style="flex:1;" onclick="calSaveEvent()">💾 บันทึก Event & มอบหมายงาน</button>
+        <button class="btn btn-secondary btn-sm" onclick="calCloseSheet()">ยกเลิก</button>
+      </div>
+    </div>
+    <div id="page-questionnaire" class="page">
+
+      <!-- ===== FORM LIST VIEW ===== -->
+      <div id="fb-list-view">
+        <div class="page-header">
+          <div>
+            <div class="page-title">แบบสอบถาม</div>
+            <div class="page-subtitle">จัดการ Form Templates สำหรับผู้ช่วย CM ลงพื้นที่</div>
+          </div>
+          <button class="btn btn-primary" onclick="fbOpenNew()">+ สร้าง Form ใหม่</button>
+        </div>
+
+        <!-- Stats strip -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+          <div class="card card-sm" style="text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;" id="fbl-count">0</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">Form ทั้งหมด</div>
+          </div>
+          <div class="card card-sm" style="text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:var(--blue);font-family:'IBM Plex Mono',monospace;" id="fbl-fields-avg">0</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">Fields เฉลี่ย</div>
+          </div>
+          <div class="card card-sm" style="text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:var(--accent2);font-family:'IBM Plex Mono',monospace;">3</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">ใช้งานใน Event</div>
+          </div>
+        </div>
+
+        <!-- Form list -->
+        <div id="fbl-items"></div>
+
+        <!-- Empty state -->
+        <div id="fbl-empty" style="display:none;text-align:center;padding:48px 24px;color:var(--text3);">
+          <div style="font-size:40px;margin-bottom:12px;">📋</div>
+          <div style="font-size:14px;font-weight:500;color:var(--text2);">ยังไม่มี Form Template</div>
+          <div style="font-size:13px;margin-top:6px;margin-bottom:20px;">สร้าง Form แรกเพื่อใช้กับผู้ช่วย CM ลงพื้นที่</div>
+          <button class="btn btn-primary" onclick="fbOpenNew()">+ สร้าง Form ใหม่</button>
+        </div>
+      </div>
+
+      <!-- ===== FORM BUILDER VIEW ===== -->
+      <div id="fb-builder-view" style="display:none;">
+        <div class="page-header">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="btn btn-secondary btn-sm" onclick="fbBackToList()">← กลับ</button>
+            <div>
+              <div class="page-title" id="fb-builder-pagetitle">สร้าง Form ใหม่</div>
+              <div class="page-subtitle" id="fb-builder-pagesub">ลาก Field จากซ้ายมาวางในพื้นที่กลาง</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="fbPreview()">👁️ Preview</button>
+            <button class="btn btn-primary btn-sm" onclick="fbSaveAndBack()">💾 บันทึก</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden;background:var(--surface);height:520px;">
+          <!-- Palette -->
+          <div style="width:190px;flex-shrink:0;background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+            <div style="padding:10px 14px 8px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);flex-shrink:0;">Field Types</div>
+            <div style="overflow-y:auto;padding:8px;flex:1;" id="fb-palette">
+              <div class="fb-pill" draggable="true" data-ftype="text">📝 ข้อความสั้น</div>
+              <div class="fb-pill" draggable="true" data-ftype="textarea">📄 ข้อความยาว</div>
+              <div class="fb-pill" draggable="true" data-ftype="number"># ตัวเลข</div>
+              <div class="fb-pill" draggable="true" data-ftype="select">▾ Dropdown</div>
+              <div class="fb-pill" draggable="true" data-ftype="radio">◉ Radio</div>
+              <div class="fb-pill" draggable="true" data-ftype="checkbox">☑ Checkbox</div>
+              <div class="fb-pill" draggable="true" data-ftype="scale">⑤ Scale 1–5</div>
+              <div class="fb-pill" draggable="true" data-ftype="date">📅 วันที่</div>
+            </div>
+          </div>
+          <!-- Canvas -->
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+            <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <input id="fb-form-title" style="border:none;background:transparent;font-size:14px;font-weight:700;color:var(--text);font-family:inherit;outline:none;flex:1;" placeholder="ชื่อแบบสอบถาม เช่น แบบประเมินอาการรายสัปดาห์">
+            </div>
+            <div id="fb-canvas" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;"
+              ondragover="fbCanvasDragOver(event)" ondragleave="fbCanvasDragLeave(event)" ondrop="fbCanvasDrop(event)">
+              <div id="fb-empty" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);text-align:center;padding:32px;pointer-events:none;">
+                <div style="font-size:36px;margin-bottom:10px;">⬇️</div>
+                <div style="font-size:13px;">ลาก Field มาวางที่นี่</div>
+                <div style="font-size:11px;margin-top:4px;">หรือดับเบิลคลิกที่ field ทางซ้าย</div>
+              </div>
+            </div>
+          </div>
+          <!-- Props -->
+          <div style="width:210px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+            <div style="padding:10px 14px 8px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);flex-shrink:0;">Properties</div>
+            <div style="overflow-y:auto;flex:1;padding:12px;" id="fb-props">
+              <div id="fb-no-sel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text3);text-align:center;gap:8px;padding:24px;">
+                <div style="font-size:28px;">👆</div>
+                <div style="font-size:12px;">เลือก field เพื่อแก้ไข</div>
+              </div>
+              <div id="fb-prop-form" style="display:none;">
+                <div class="form-group">
+                  <label>Label (คำถาม)</label>
+                  <input type="text" id="fp-label" class="fb-prop-input" oninput="fbUpdateProp('label',this.value)">
+                </div>
+                <div class="form-group">
+                  <label>Placeholder</label>
+                  <input type="text" id="fp-placeholder" class="fb-prop-input" oninput="fbUpdateProp('placeholder',this.value)">
+                </div>
+                <div class="form-group" id="fp-opts-group" style="display:none;">
+                  <label>ตัวเลือก (แยกบรรทัด)</label>
+                  <textarea id="fp-options" class="fb-prop-input" rows="4" oninput="fbUpdateProp('options',this.value)"></textarea>
+                </div>
+                <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                  <div id="fp-req-toggle" onclick="fbToggleRequired()" style="width:32px;height:18px;background:var(--border2);border-radius:9px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;"><div id="fp-req-knob" style="width:12px;height:12px;background:white;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;"></div></div>
+                  <span style="font-size:12px;color:var(--text2);">จำเป็นต้องกรอก</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== REPORTS ===== -->
+    <div id="page-reports" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">รายงานและสถิติ</div>
+          <div class="page-subtitle">สรุปผลการดำเนินงานประจำเดือน พฤษภาคม 2569</div>
+        </div>
+        <button class="btn btn-secondary">📥 ส่งออก PDF</button>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="section-title">Follow-up Rate</div>
+          <div style="font-size:40px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace;">74%</div>
+          <div class="progress-wrap">
+            <div class="progress-bar" style="height:10px;"><div class="progress-fill orange" style="width:74%"></div></div>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:6px;">เป้าหมาย: 80% • ต่ำกว่าเป้า 6%</div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">อัตรารับยาต่อเนื่อง</div>
+          <div style="font-size:40px;font-weight:700;color:var(--blue2);font-family:'IBM Plex Mono',monospace;">68%</div>
+          <div class="progress-wrap">
+            <div class="progress-bar" style="height:10px;"><div class="progress-fill blue" style="width:68%"></div></div>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:6px;">เป้าหมาย: 75% • ปรับปรุงจาก 61% (เม.ย.)</div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">งาน Assigned เสร็จ</div>
+          <div style="font-size:40px;font-weight:700;color:var(--orange2);font-family:'IBM Plex Mono',monospace;">83%</div>
+          <div class="progress-wrap">
+            <div class="progress-bar" style="height:10px;"><div class="progress-fill orange" style="width:83%"></div></div>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:6px;">48/58 งาน เสร็จตามกำหนด</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">ผลรวมรายบุคคล — สถิติสำคัญ</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ผู้ป่วย</th>
+                <th>โรคประจำตัว</th>
+                <th>รับยาต่อเนื่อง</th>
+                <th>Follow-up</th>
+                <th>เข้า ER (เดือนนี้)</th>
+                <th>สถานะ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:var(--text);font-weight:500;">สมศักดิ์ ใจดี</td>
+                <td>เบาหวาน, ความดัน</td>
+                <td><span style="color:var(--red2)">43%</span></td>
+                <td>3/7 ครั้ง</td>
+                <td><span style="color:var(--orange2)">1</span></td>
+                <td><span class="status critical">วิกฤต</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--text);font-weight:500;">อรุณี วงศ์ดี</td>
+                <td>เบาหวาน</td>
+                <td><span style="color:var(--accent2)">86%</span></td>
+                <td>6/7 ครั้ง</td>
+                <td>0</td>
+                <td><span class="status active">สเถียร</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--text);font-weight:500;">มานะ ทองดี</td>
+                <td>ความดัน, หัวใจ</td>
+                <td><span style="color:var(--red2)">28%</span></td>
+                <td>2/7 ครั้ง</td>
+                <td><span style="color:var(--red2)">2</span></td>
+                <td><span class="status critical">วิกฤต</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--text);font-weight:500;">สุรีย์ มีสุข</td>
+                <td>ความดัน</td>
+                <td><span style="color:var(--accent2)">100%</span></td>
+                <td>7/7 ครั้ง</td>
+                <td>0</td>
+                <td><span class="status active">สเถียร</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--text);font-weight:500;">ประสิทธิ์ แก้วใส</td>
+                <td>วัณโรค</td>
+                <td><span style="color:var(--orange2)">71%</span></td>
+                <td>5/7 ครั้ง</td>
+                <td>0</td>
+                <td><span class="status pending">ต้องติดตาม</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Add Patient -->
+<div class="modal-overlay" id="modal-add-patient">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🏥 เพิ่มผู้ป่วยใหม่</div>
+      <button class="modal-close" onclick="closeModal('modal-add-patient')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>ชื่อ</label>
+          <input type="text" placeholder="ชื่อจริง">
+        </div>
+        <div class="form-group">
+          <label>นามสกุล</label>
+          <input type="text" placeholder="นามสกุล">
+        </div>
+        <div class="form-group">
+          <label>เพศ</label>
+          <select style="width:100%"><option>ชาย</option><option>หญิง</option></select>
+        </div>
+        <div class="form-group">
+          <label>อายุ (โดยประมาณ)</label>
+          <input type="number" placeholder="ปี">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>พื้นที่พักประจำ</label>
+        <input type="text" placeholder="เช่น ใต้สะพานพระราม 8 ฝั่งบางกอกน้อย">
+      </div>
+      <div class="form-group">
+        <label>โรคประจำตัว</label>
+        <input type="text" placeholder="เช่น เบาหวาน, ความดัน, วัณโรค">
+      </div>
+      <div class="form-group">
+        <label>ยาที่รับอยู่</label>
+        <input type="text" placeholder="เช่น Metformin 500mg, Amlodipine 5mg">
+      </div>
+      <div class="form-group">
+        <label>โรงพยาบาลที่รักษา</label>
+        <input type="text" placeholder="เช่น รพ.ศรีปัญญา">
+      </div>
+      <div class="form-group">
+        <label>สิทธิการรักษา</label>
+        <select style="width:100%">
+          <option>บัตรทอง (30 บาท)</option>
+          <option>ประกันสังคม</option>
+          <option>ไม่มีสิทธิ (บัตรเลส)</option>
+          <option>ไม่ทราบ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>CM ที่รับผิดชอบ</label>
+        <select style="width:100%">
+          <option>สมใจ รักดี (CM หลัก)</option>
+          <option>นายมั่นคง สำเร็จ</option>
+          <option>นางสมหวัง ใจงาม</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>หมายเหตุ</label>
+        <textarea placeholder="ข้อมูลเพิ่มเติม..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-patient')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-add-patient')">✅ บันทึกผู้ป่วย</button>
+    </div>
+  </div>
+</div>
+
+<!-- Care Plan -->
+<div class="modal-overlay" id="modal-care-plan">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🏥 แก้ไข Care Plan — สมศักดิ์ ใจดี</div>
+      <button class="modal-close" onclick="closeModal('modal-care-plan')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>แผนการรักษา / กิจกรรม</label>
+        <input type="text" placeholder="เช่น รับ Metformin 500mg หลังอาหาร">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>ความถี่</label>
+          <select style="width:100%">
+            <option>ทุกวัน</option>
+            <option>สัปดาห์ละ 1 ครั้ง</option>
+            <option>ทุก 2 สัปดาห์</option>
+            <option>ทุกเดือน</option>
+            <option>ทุก 3 เดือน</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>ความสำคัญ</label>
+          <select style="width:100%">
+            <option>🔴 HIGH (ด่วน)</option>
+            <option>🟡 MED (ปานกลาง)</option>
+            <option>🟢 LOW (ติดตาม)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ผู้รับผิดชอบส่งยา/ดูแล</label>
+        <select style="width:100%">
+          <option>นายมั่นคง สำเร็จ</option>
+          <option>นางสมหวัง ใจงาม</option>
+          <option>ผู้ป่วยดูแลเอง</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>หมายเหตุ</label>
+        <textarea placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-care-plan')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-care-plan')">💾 บันทึก Care Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Preview questionnaire for field worker -->
+<div class="modal-overlay" id="modal-preview-q">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">📱 ตัวอย่างหน้าจอผู้ช่วย CM</div>
+      <button class="modal-close" onclick="closeModal('modal-preview-q')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:12px 16px;">
+      <!-- Mobile preview -->
+      <div style="background:#000;border-radius:16px;padding:4px;max-width:280px;margin:0 auto;">
+        <div style="background:#1a1a2e;border-radius:13px;padding:16px;min-height:480px;">
+          <div style="font-size:11px;color:#888;text-align:center;margin-bottom:12px;">📍 ลงพื้นที่: ใต้สะพานพระราม 8</div>
+          <div style="background:#16213e;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:700;color:#e2e8f0;">สมศักดิ์ ใจดี</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">เบาหวาน T2 • Metformin 500mg</div>
+            <div style="margin-top:8px;display:flex;gap:6px;">
+              <div style="flex:1;background:#0f3460;border-radius:6px;padding:8px;text-align:center;">
+                <div style="font-size:18px;">💊</div>
+                <div style="font-size:10px;color:#60a5fa;margin-top:2px;">ส่งยาแล้ว</div>
+              </div>
+              <div style="flex:1;background:#1e3a5f;border-radius:6px;padding:8px;text-align:center;">
+                <div style="font-size:18px;">📋</div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:2px;">กรอกข้อมูล</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;">แบบประเมินอาการ</div>
+          <div style="background:#16213e;border-radius:8px;padding:10px;margin-bottom:8px;">
+            <div style="font-size:11px;color:#60a5fa;margin-bottom:4px;">Q1 ของ 8</div>
+            <div style="font-size:12px;color:#e2e8f0;">ผู้ป่วยรับยาครบสัปดาห์ที่ผ่านมาหรือไม่?</div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button style="flex:1;background:#16a34a;border:none;border-radius:6px;color:white;padding:8px;font-size:12px;cursor:pointer;">✅ ครบ</button>
+              <button style="flex:1;background:#dc2626;border:none;border-radius:6px;color:white;padding:8px;font-size:12px;cursor:pointer;">❌ ไม่ครบ</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:8px;">
+            <div style="flex:1;height:4px;background:#60a5fa;border-radius:2px;"></div>
+            <div style="flex:1;height:4px;background:#1e3a5f;border-radius:2px;"></div>
+            <div style="flex:1;height:4px;background:#1e3a5f;border-radius:2px;"></div>
+            <div style="flex:1;height:4px;background:#1e3a5f;border-radius:2px;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:12px;">ตัวอย่างหน้าจอผู้ช่วย CM บนมือถือ</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-sm" onclick="closeModal('modal-preview-q')">เข้าใจแล้ว</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function navigate(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    event.currentTarget.classList.add('active');
+    syncBottomNav(page);
+    if (page === 'patients') { showPatientList(); }
+    if (page === 'planning') { calRender(); }
+  }
+
+  function navigateMobile(page, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    el.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + page + "'")) n.classList.add('active');
+    });
+    if (page === 'patients') { showPatientList(); }
+    if (page === 'planning') { calRender(); }
+    document.querySelector('.main').scrollTop = 0;
+  }
+
+  function syncBottomNav(page) {
+    document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+    const bn = document.getElementById('bn-' + page);
+    if (bn) bn.classList.add('active');
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+  });
+
+  function showPatientDetail() {
+    document.getElementById('patient-list').style.display = 'none';
+    document.getElementById('patient-detail').style.display = 'block';
+  }
+  function showPatientList() {
+    document.getElementById('patient-list').style.display = 'block';
+    document.getElementById('patient-detail').style.display = 'none';
+  }
+
+  function switchTab(el, targetId) {
+    el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('#detail-profile, #detail-timeline, #detail-formhistory, #detail-careplan').forEach(p => p.style.display = 'none');
+    document.getElementById(targetId).style.display = 'block';
+  }
+
+  function toggleCheck(el) { el.classList.toggle('done'); }
+
+  function filterPatients(val) {
+    document.querySelectorAll('.patient-card').forEach(c => {
+      c.style.opacity = c.textContent.toLowerCase().includes(val.toLowerCase()) || val === '' ? '1' : '0.3';
+    });
+  }
+
+  function toggleFHSession(id) {
+    const el = document.getElementById(id);
+    const icon = document.getElementById(id + '-icon');
+    const open = el.style.display === 'block';
+    el.style.display = open ? 'none' : 'block';
+    if (icon) icon.textContent = open ? '▼' : '▲';
+  }
+
+  /* ===== FORM BUILDER ===== */
+  let fbFields = [], fbSelId = null, fbDragType = null, fbDragId = null, fbCounter = 0;
+  let fbTemplates = JSON.parse(localStorage.getItem('hm_fb_tpls') || '[]');
+
+  const FB_TYPES = {
+    text:     { tag:'TEXT',    label:'ข้อความสั้น',  ph:'กรอกข้อความ...' },
+    textarea: { tag:'TEXTAREA',label:'ข้อความยาว',   ph:'รายละเอียด...' },
+    number:   { tag:'NUMBER',  label:'ค่าตัวเลข',    ph:'0' },
+    select:   { tag:'SELECT',  label:'เลือกรายการ',  opts:'ตัวเลือก 1\nตัวเลือก 2\nตัวเลือก 3' },
+    radio:    { tag:'RADIO',   label:'เลือกข้อ',     opts:'ใช่\nไม่ใช่\nไม่แน่ใจ' },
+    checkbox: { tag:'CHECKBOX',label:'เลือกได้หลายข้อ',opts:'ข้อ 1\nข้อ 2\nข้อ 3' },
+    scale:    { tag:'SCALE',   label:'ประเมินระดับ', ph:'1=น้อยสุด, 5=มากสุด' },
+    date:     { tag:'DATE',    label:'วันที่',        ph:'' },
+  };
+
+  function fbMakeField(type) {
+    fbCounter++;
+    const d = FB_TYPES[type];
+    return { id:'f'+fbCounter+'_'+Date.now(), type, label:d.label, placeholder:d.ph||'', options:d.opts||'', required:false };
+  }
+
+  function fbRender() {
+    const canvas = document.getElementById('fb-canvas');
+    canvas.querySelectorAll('.fb-field-card').forEach(c => c.remove());
+    document.getElementById('fb-empty').style.display = fbFields.length === 0 ? 'flex' : 'none';
+    fbFields.forEach(f => {
+      const d = FB_TYPES[f.type];
+      const card = document.createElement('div');
+      card.className = 'fb-field-card' + (fbSelId === f.id ? ' selected' : '');
+      card.dataset.id = f.id;
+      card.draggable = true;
+      card.innerHTML = `<div style="cursor:grab;color:var(--text3);font-size:14px;padding:2px 0;flex-shrink:0;">⠿</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
+            <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(3,102,214,.15);color:var(--blue2);font-family:'IBM Plex Mono',monospace;">${d.tag}</span>
+            ${f.label}${f.required ? ' <span style="color:var(--red2);font-size:11px;">*</span>' : ''}
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">${f.type==='scale'?'① ② ③ ④ ⑤':['select','radio','checkbox'].includes(f.type)?(f.options.split('\n').slice(0,2).join(' / ')+(f.options.split('\n').length>2?'...':'')):f.placeholder||'—'}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button onclick="fbDup('${f.id}')" style="width:26px;height:26px;border-radius:6px;border:1px solid transparent;background:transparent;cursor:pointer;font-size:12px;color:var(--text3);transition:all .15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">⧉</button>
+          <button onclick="fbDel('${f.id}')" style="width:26px;height:26px;border-radius:6px;border:1px solid transparent;background:transparent;cursor:pointer;font-size:12px;color:var(--text3);transition:all .15s;" onmouseover="this.style.background='rgba(218,54,51,.1)';this.style.color='var(--red2)'" onmouseout="this.style.background='transparent';this.style.color='var(--text3)'">✕</button>
+        </div>`;
+      card.onclick = e => { if (!e.target.closest('button')) fbSelect(f.id); };
+      card.ondragstart = e => { fbDragId = f.id; fbDragType = null; e.dataTransfer.effectAllowed = 'move'; };
+      card.ondragover = e => { e.preventDefault(); card.classList.add('drag-over'); };
+      card.ondragleave = () => card.classList.remove('drag-over');
+      card.ondrop = e => {
+        e.preventDefault(); e.stopPropagation(); card.classList.remove('drag-over');
+        if (fbDragType) {
+          const nf = fbMakeField(fbDragType);
+          fbFields.splice(fbFields.findIndex(x=>x.id===f.id),0,nf);
+          fbDragType=null; fbSelId=nf.id;
+        } else if (fbDragId && fbDragId!==f.id) {
+          const from=fbFields.findIndex(x=>x.id===fbDragId), to=fbFields.findIndex(x=>x.id===f.id);
+          const [m]=fbFields.splice(from,1); fbFields.splice(to,0,m); fbDragId=null;
+        }
+        fbRender(); fbRenderProps();
+      };
+      canvas.appendChild(card);
+    });
+  }
+
+  function fbSelect(id) { fbSelId=id; fbRender(); fbRenderProps(); }
+
+  function fbRenderProps() {
+    const f = fbFields.find(x=>x.id===fbSelId);
+    document.getElementById('fb-no-sel').style.display = f?'none':'flex';
+    document.getElementById('fb-prop-form').style.display = f?'block':'none';
+    if (!f) return;
+    document.getElementById('fp-label').value = f.label;
+    document.getElementById('fp-placeholder').value = f.placeholder||'';
+    const showOpts = ['select','radio','checkbox'].includes(f.type);
+    document.getElementById('fp-opts-group').style.display = showOpts?'block':'none';
+    if (showOpts) document.getElementById('fp-options').value = f.options||'';
+    const tog = document.getElementById('fp-req-toggle');
+    const knob = document.getElementById('fp-req-knob');
+    tog.style.background = f.required ? 'var(--accent)' : 'var(--border2)';
+    knob.style.left = f.required ? '17px' : '3px';
+  }
+
+  function fbUpdateProp(key, val) {
+    const f = fbFields.find(x=>x.id===fbSelId); if(!f) return;
+    f[key]=val; fbRender();
+  }
+
+  function fbToggleRequired() {
+    const f = fbFields.find(x=>x.id===fbSelId); if(!f) return;
+    f.required=!f.required; fbRender(); fbRenderProps();
+  }
+
+  function fbDel(id) { fbFields=fbFields.filter(f=>f.id!==id); if(fbSelId===id) fbSelId=null; fbRender(); fbRenderProps(); }
+  function fbDup(id) {
+    const idx=fbFields.findIndex(f=>f.id===id); if(idx<0) return;
+    const copy=JSON.parse(JSON.stringify(fbFields[idx])); copy.id='f'+(++fbCounter)+'_'+Date.now(); copy.label+=' (copy)';
+    fbFields.splice(idx+1,0,copy); fbSelId=copy.id; fbRender(); fbRenderProps(); fbToast('Duplicated');
+  }
+
+  document.querySelectorAll('.fb-pill').forEach(pill => {
+    pill.addEventListener('dragstart', e => { fbDragType=pill.dataset.ftype; fbDragId=null; e.dataTransfer.effectAllowed='copy'; });
+    pill.addEventListener('dblclick', () => { const nf=fbMakeField(pill.dataset.ftype); fbFields.push(nf); fbSelId=nf.id; fbRender(); fbRenderProps(); });
+  });
+
+  function fbCanvasDragOver(e) { e.preventDefault(); document.getElementById('fb-canvas').style.outline='2px dashed var(--blue)'; }
+  function fbCanvasDragLeave(e) { if(!e.currentTarget.contains(e.relatedTarget)) document.getElementById('fb-canvas').style.outline=''; }
+  function fbCanvasDrop(e) {
+    e.preventDefault(); document.getElementById('fb-canvas').style.outline='';
+    if (fbDragType) { const nf=fbMakeField(fbDragType); fbFields.push(nf); fbSelId=nf.id; fbDragType=null; fbRender(); fbRenderProps(); }
+  }
+
+  let fbEditingId = null;
+
+  function fbRenderList() {
+    const items = document.getElementById('fbl-items');
+    const empty = document.getElementById('fbl-empty');
+    if (!items) return;
+    document.getElementById('fbl-count').textContent = fbTemplates.length;
+    document.getElementById('fbl-fields-avg').textContent = fbTemplates.length ? Math.round(fbTemplates.reduce((a,t)=>a+t.fields.length,0)/fbTemplates.length) : 0;
+    if (fbTemplates.length === 0) { items.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display = 'none'; items.innerHTML = '';
+    const TYPE_COLOR = { text:'var(--purple2)', textarea:'var(--text3)', number:'var(--blue2)', select:'var(--accent2)', radio:'var(--orange)', checkbox:'var(--teal)', scale:'var(--red2)', date:'var(--purple)' };
+    fbTemplates.forEach(tpl => {
+      const summary = tpl.fields.slice(0,4).map(f=>`<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);color:${TYPE_COLOR[f.type]||'var(--text3)'};">${f.label}</span>`).join('') + (tpl.fields.length>4?`<span style="font-size:10px;color:var(--text3);margin-left:2px;">+${tpl.fields.length-4} อื่นๆ</span>`:'');
+      const card = document.createElement('div');
+      card.className = 'card card-sm';
+      card.style.cssText = 'margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color .15s;';
+      card.onmouseenter = ()=>card.style.borderColor='var(--border2)';
+      card.onmouseleave = ()=>card.style.borderColor='';
+      card.innerHTML = `<div style="width:40px;height:40px;border-radius:var(--radius);background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📋</div><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);">${tpl.title}</div><div style="font-size:11px;color:var(--text3);margin-top:3px;">${tpl.fields.length} fields</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${summary}</div></div><div style="display:flex;gap:6px;flex-shrink:0;"><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();fbPreviewById('${tpl.id}')">👁️</button><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();fbOpenEdit('${tpl.id}')">✏️ แก้ไข</button><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();fbConfirmDelete('${tpl.id}')" style="color:var(--red2);">🗑️</button></div>`;
+      card.onclick = () => fbOpenEdit(tpl.id);
+      items.appendChild(card);
+    });
+  }
+
+  function fbOpenNew() {
+    fbEditingId = null; fbFields = []; fbSelId = null; fbCounter = 0;
+    document.getElementById('fb-form-title').value = '';
+    document.getElementById('fb-builder-pagetitle').textContent = 'สร้าง Form ใหม่';
+    document.getElementById('fb-builder-pagesub').textContent = 'ลาก Field จากซ้ายมาวางในพื้นที่กลาง';
+    document.getElementById('fb-list-view').style.display = 'none';
+    document.getElementById('fb-builder-view').style.display = 'block';
+    fbRender(); fbRenderProps(); fbBindPills();
+  }
+
+  function fbOpenEdit(id) {
+    const tpl = fbTemplates.find(t=>t.id===id); if(!tpl) return;
+    fbEditingId = id; fbFields = JSON.parse(JSON.stringify(tpl.fields)); fbSelId = null; fbCounter = fbFields.length;
+    document.getElementById('fb-form-title').value = tpl.title;
+    document.getElementById('fb-builder-pagetitle').textContent = 'แก้ไข: '+tpl.title;
+    document.getElementById('fb-builder-pagesub').textContent = tpl.fields.length+' fields';
+    document.getElementById('fb-list-view').style.display = 'none';
+    document.getElementById('fb-builder-view').style.display = 'block';
+    fbRender(); fbRenderProps(); fbBindPills();
+  }
+
+  function fbBindPills() {
+    document.querySelectorAll('.fb-pill').forEach(pill => {
+      pill.ondragstart = e => { fbDragType=pill.dataset.ftype; fbDragId=null; e.dataTransfer.effectAllowed='copy'; };
+      pill.ondblclick = () => { const nf=fbMakeField(pill.dataset.ftype); fbFields.push(nf); fbSelId=nf.id; fbRender(); fbRenderProps(); };
+    });
+  }
+
+  function fbBackToList() {
+    document.getElementById('fb-builder-view').style.display = 'none';
+    document.getElementById('fb-list-view').style.display = 'block';
+    fbRenderList();
+  }
+
+  function fbSaveAndBack() {
+    const title = document.getElementById('fb-form-title').value.trim() || 'แบบสอบถาม '+(fbTemplates.length+1);
+    if (fbFields.length===0) { fbToast('เพิ่ม field ก่อนบันทึก'); return; }
+    if (fbEditingId) {
+      const idx = fbTemplates.findIndex(t=>t.id===fbEditingId);
+      if (idx>=0) fbTemplates[idx] = { id:fbEditingId, title, fields:JSON.parse(JSON.stringify(fbFields)) };
+    } else {
+      fbTemplates.push({ id:'t'+Date.now(), title, fields:JSON.parse(JSON.stringify(fbFields)) });
+    }
+    localStorage.setItem('hm_fb_tpls', JSON.stringify(fbTemplates));
+    fbToast((fbEditingId?'อัปเดต':'บันทึก')+' "'+title+'" แล้ว');
+    fbEditingId = null;
+    setTimeout(fbBackToList, 300);
+  }
+
+  function fbSave() { fbSaveAndBack(); }
+
+  function fbConfirmDelete(id) {
+    const tpl = fbTemplates.find(t=>t.id===id); if(!tpl) return;
+    if (!confirm('ลบ "'+tpl.title+'" ใช่ไหม?')) return;
+    fbTemplates = fbTemplates.filter(t=>t.id!==id);
+    localStorage.setItem('hm_fb_tpls', JSON.stringify(fbTemplates));
+    fbToast('ลบแล้ว'); fbRenderList();
+  }
+
+  function fbPreviewById(id) {
+    const tpl = fbTemplates.find(t=>t.id===id); if(!tpl) return;
+    const savedFields = fbFields, savedTitle = document.getElementById('fb-form-title').value;
+    fbFields = JSON.parse(JSON.stringify(tpl.fields));
+    document.getElementById('fb-form-title').value = tpl.title;
+    fbPreview();
+    fbFields = savedFields;
+    document.getElementById('fb-form-title').value = savedTitle;
+  }
+
+  function fbRenderTplBar() { fbRenderList(); }
+
+  function fbPreview() {
+    if (fbFields.length===0) { fbToast('ยังไม่มี field'); return; }
+    const title = document.getElementById('fb-form-title').value.trim()||'Preview';
+    document.getElementById('modal-preview-q').querySelector('.modal-title').textContent = '📱 Preview — '+title;
+    const body = document.getElementById('modal-preview-q').querySelector('.modal-body');
+    body.innerHTML = '';
+    fbFields.forEach((f,i) => {
+      const d = FB_TYPES[f.type];
+      const div = document.createElement('div');
+      div.style.cssText='margin-bottom:14px;';
+      let inp='';
+      if (f.type==='select') {
+        const opts=(f.options||'').split('\n').filter(Boolean).map(o=>`<option>${o}</option>`).join('');
+        inp=`<select style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none;"><option>-- เลือก --</option>${opts}</select>`;
+      } else if (f.type==='radio'||f.type==='checkbox') {
+        const type=f.type==='radio'?'radio':'checkbox';
+        inp=(f.options||'').split('\n').filter(Boolean).map(o=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:5px;"><input type="${type}" style="accent-color:var(--accent);"> ${o}</label>`).join('');
+      } else if (f.type==='scale') {
+        inp=`<div style="display:flex;gap:6px;">${[1,2,3,4,5].map(n=>`<button style="flex:1;padding:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface2);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);">${n}</button>`).join('')}</div><div style="font-size:11px;color:var(--text3);margin-top:4px;">${f.placeholder||''}</div>`;
+      } else if (f.type==='textarea') {
+        inp=`<textarea placeholder="${f.placeholder||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit;background:var(--surface2);color:var(--text);min-height:70px;resize:vertical;outline:none;"></textarea>`;
+      } else {
+        const t=f.type==='number'?'number':f.type==='date'?'date':'text';
+        inp=`<input type="${t}" placeholder="${f.placeholder||''}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:inherit;background:var(--surface2);color:var(--text);outline:none;">`;
+      }
+      div.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;">Q${i+1}. ${f.label}${f.required?'<span style="color:var(--red2);"> *</span>':''}</div>${inp}`;
+      body.appendChild(div);
+    });
+    openModal('modal-preview-q');
+  }
+
+  let fbToastTimer;
+  function fbToast(msg) {
+    let t=document.getElementById('fb-toast');
+    if(!t){t=document.createElement('div');t.id='fb-toast';t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(40px);background:#1a202c;color:white;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;z-index:9999;white-space:nowrap;';document.body.appendChild(t);}
+    t.textContent=msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+    clearTimeout(fbToastTimer); fbToastTimer=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(40px)';},2200);
+  }
+
+  fbRenderList();
+
+  /* ===== CALENDAR ===== */
+  let calYear=2026, calMonth=5, calSelDate=null, calNewMode=false;
+  const MONTHS_TH=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const CAL_PATIENTS=[
+    {id:'p1',name:'สมศักดิ์ ใจดี',tag:'วิกฤต',cls:'critical',init:'ส'},
+    {id:'p2',name:'มานะ ทองดี',tag:'ติดตาม',cls:'pending',init:'ม'},
+    {id:'p3',name:'อรุณี วงศ์ดี',tag:'สเถียร',cls:'active',init:'อ'},
+    {id:'p4',name:'ประสิทธิ์ แก้วใส',tag:'ติดตาม',cls:'pending',init:'ป'},
+    {id:'p5',name:'สุรีย์ มีสุข',tag:'วิกฤต',cls:'critical',init:'ส'},
+  ];
+  const CAL_FORM_TPLS=[
+    {id:'t1',name:'แบบประเมินอาการรายสัปดาห์'},
+    {id:'t2',name:'ประเมินสภาพที่พักอาศัย'},
+    {id:'t3',name:'ติดตามการรับยา'},
+  ];
+  let calEvents=[
+    {id:'e1',title:'Follow-up ประจำสัปดาห์',start:new Date(2026,5,6),end:new Date(2026,5,8),forms:['t1'],patients:['p1','p2','p3'],color:0},
+    {id:'e2',title:'ส่งยารอบเดือน',start:new Date(2026,5,10),end:new Date(2026,5,12),forms:['t3'],patients:['p1','p4'],color:2},
+    {id:'e3',title:'ประเมินที่พัก',start:new Date(2026,5,6),end:new Date(2026,5,9),forms:['t2'],patients:['p2','p5'],color:3},
+    {id:'e4',title:'ติดตามผล Lab',start:new Date(2026,5,18),end:new Date(2026,5,20),forms:['t1','t3'],patients:['p5'],color:4},
+    {id:'e5',title:'ลงพื้นที่ประจำเดือน',start:new Date(2026,5,24),end:new Date(2026,5,26),forms:['t1','t2'],patients:['p1','p2','p3','p4'],color:1},
+  ];
+
+  function calIsSame(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+
+  function calRender(){
+    document.getElementById('cal-month-title').textContent=MONTHS_TH[calMonth]+' '+(calYear+543);
+    const grid=document.getElementById('cal-grid'); grid.innerHTML='';
+    const first=new Date(calYear,calMonth,1);
+    const today=new Date();
+    let start=new Date(first); start.setDate(start.getDate()-start.getDay());
+    for(let w=0;w<6;w++){
+      for(let d=0;d<7;d++){
+        const date=new Date(start); date.setDate(start.getDate()+w*7+d);
+        const cell=document.createElement('div');
+        cell.className='cal-cell'+(date.getMonth()!==calMonth?' other-month':'')+(calIsSame(date,today)?' today':'');
+        cell.onclick=()=>calSelectDay(date);
+        const num=document.createElement('div'); num.className='cal-day-num'; num.textContent=date.getDate();
+        cell.appendChild(num);
+        const dayEvs=calEvents.filter(e=>date>=e.start&&date<=e.end);
+        dayEvs.slice(0,2).forEach(ev=>{
+          const chip=document.createElement('div');
+          chip.className='cal-ev-chip c'+ev.color; chip.textContent=ev.title;
+          chip.onclick=e=>{e.stopPropagation();calSelectDay(date);};
+          cell.appendChild(chip);
+        });
+        if(dayEvs.length>2){const m=document.createElement('div');m.style.cssText='font-size:10px;color:var(--blue);padding:0 4px;';m.textContent='+'+( dayEvs.length-2)+' อื่นๆ';cell.appendChild(m);}
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function calChangeMonth(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}calRender();}
+
+  function calCloseDrawer(){
+    document.getElementById('cal-drawer').classList.remove('open');
+    document.getElementById('cal-drawer-overlay').classList.remove('open');
+  }
+  function calCloseSheet(){
+    document.getElementById('cal-sheet').classList.remove('open');
+    document.getElementById('cal-sheet-overlay').classList.remove('open');
+  }
+
+  function calSelectDay(date){
+    calSelDate=date; calNewMode=false;
+    const d=date.getDate(), m=MONTHS_TH[date.getMonth()];
+    const dayEvs=calEvents.filter(e=>date>=e.start&&date<=e.end);
+    const label='งาน — '+d+' '+m+(calYear+543 !== new Date().getFullYear()+543 ? ' '+(calYear+543) : '');
+    const sub=dayEvs.length>0 ? dayEvs.length+' event • '+(dayEvs.reduce((a,e)=>a+e.patients.length,0))+' tasks' : 'ไม่มี event';
+    const html=calBuildTasksHTML(dayEvs, date);
+    // Desktop drawer
+    document.getElementById('cal-drawer-title').textContent=label;
+    document.getElementById('cal-drawer-sub').textContent=sub;
+    document.getElementById('cal-drawer-body').innerHTML=html;
+    document.getElementById('cal-drawer').classList.add('open');
+    document.getElementById('cal-drawer-overlay').classList.add('open');
+    // Mobile sheet
+    document.getElementById('cal-sheet-title').textContent=label;
+    document.getElementById('cal-sheet-sub').textContent=sub;
+    document.getElementById('cal-sheet-body').innerHTML=html;
+    document.getElementById('cal-sheet').classList.add('open');
+    document.getElementById('cal-sheet-overlay').classList.add('open');
+  }
+
+  function calBuildTasksHTML(evs, date){
+    if(evs.length===0) return '<div style="text-align:center;padding:32px;color:var(--text3);"><div style="font-size:32px;margin-bottom:10px;">📭</div><div style="font-size:13px;">ไม่มี event วันนี้</div></div>';
+    const dotColors=['#378add','#22c55e','#d97706','#8b5cf6','#ef4444'];
+    const patStatuses=['critical','pending','active','pending','critical'];
+    const patStatusLabel=['รอดำเนินการ','กำลังทำ','เสร็จแล้ว','รอดำเนินการ','ไม่พบตัว'];
+    const patIcons=['🚑','📋','✅','📝','🔍'];
+    const patLocs={p1:'สะพานพระราม 8',p2:'หัวลำโพง',p3:'สวนลุม',p4:'วัดสุทัศน์',p5:'สะพานพระปิ่นเกล้า'};
+    let html='';
+    evs.forEach(ev=>{
+      const fmNames=ev.forms.map(fid=>CAL_FORM_TPLS.find(t=>t.id===fid)?.name||fid);
+      html+=`<div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+          <div style="width:10px;height:10px;border-radius:50%;background:${dotColors[ev.color]};flex-shrink:0;"></div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);flex:1;">${ev.title}</div>
+          <div style="font-size:11px;color:var(--text3);">${ev.start.getDate()}–${ev.end.getDate()} ${MONTHS_TH[ev.start.getMonth()]}</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+          ${fmNames.map(n=>`<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:#dbeafe;color:#1e40af;">📋 ${n}</span>`).join('')}
+        </div>`;
+      ev.patients.forEach((pid,i)=>{
+        const p=CAL_PATIENTS.find(x=>x.id===pid); if(!p) return;
+        const si=i%5;
+        const borderStyle=(si===0||si===4)?'border-left:3px solid var(--red2);':'';
+        html+=`<div class="task-card" style="margin-bottom:8px;${borderStyle}">
+          <div style="font-size:18px;">${patIcons[si]}</div>
+          <div class="task-main">
+            <div class="task-title">${p.name}</div>
+            <div class="task-patient">👤 นายมั่นคง • 📍 ${patLocs[pid]||'—'}</div>
+            <div class="task-meta" style="margin-top:5px;">
+              <span class="status ${p.cls}" style="font-size:10px;">${p.tag}</span>
+              ${fmNames.map(n=>`<span class="task-tag" style="font-size:10px;">📋 ${n}</span>`).join('')}
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;">
+            <span class="status ${patStatuses[si]}" style="font-size:10px;">${patStatusLabel[si]}</span>
+            <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:3px 8px;">รายละเอียด</button>
+          </div>
+        </div>`;
+      });
+      html+='</div>';
+    });
+    return html;
+  }
+
+  function calOpenNew(){
+    calNewMode=true;
+    const formHTML=calBuildNewEventForm(calSelDate);
+    // Desktop drawer
+    document.getElementById('cal-drawer-title').textContent='สร้าง Event ใหม่';
+    document.getElementById('cal-drawer-sub').textContent='';
+    document.getElementById('cal-drawer-body').innerHTML=formHTML;
+    document.getElementById('cal-drawer').classList.add('open');
+    document.getElementById('cal-drawer-overlay').classList.add('open');
+    // Mobile sheet
+    document.getElementById('cal-sheet-title').textContent='สร้าง Event ใหม่';
+    document.getElementById('cal-sheet-sub').textContent='';
+    document.getElementById('cal-sheet-body').innerHTML=formHTML;
+    document.getElementById('cal-sheet').classList.add('open');
+    document.getElementById('cal-sheet-overlay').classList.add('open');
+  }
+
+  function calBuildNewEventForm(date){
+    const todayStr=date?`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`:'';
+    const allTpls=[...CAL_FORM_TPLS,...fbTemplates.map(t=>({id:t.id,name:t.name||t.title}))];
+    return `<div style="display:flex;flex-direction:column;gap:0;">
+
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">📅 ข้อมูล Event</div>
+
+      <div style="margin-bottom:12px;">
+        <label class="cal-nef-label">ชื่อ Event</label>
+        <input class="cal-nef-input" id="cal-ev-title" placeholder="เช่น Follow-up รายสัปดาห์">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div><label class="cal-nef-label">วันเริ่ม</label><input class="cal-nef-input" id="cal-ev-start" type="date" value="${todayStr}"></div>
+        <div><label class="cal-nef-label">วันสิ้นสุด</label><input class="cal-nef-input" id="cal-ev-end" type="date" value="${todayStr}"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="cal-nef-label">Form Templates <span style="color:var(--text3);font-weight:400;">(เลือกได้หลาย)</span></label>
+        <div style="display:flex;flex-wrap:wrap;padding:6px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface2);min-height:36px;">
+          ${allTpls.map(t=>`<span class="cal-form-tag off" data-tid="${t.id}" onclick="this.classList.toggle('on');this.classList.toggle('off')">${t.name}</span>`).join('')}
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label class="cal-nef-label">ผู้ป่วย <span style="color:var(--text3);font-weight:400;">(เลือกได้หลายคน)</span></label>
+        <div style="display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:4px;background:var(--surface2);">
+          ${CAL_PATIENTS.map(p=>`<label class="cal-pat-row"><input type="checkbox" data-pid="${p.id}" style="accent-color:var(--blue);"><span style="font-size:12px;color:var(--text);flex:1;">${p.name}</span><span class="status ${p.cls}" style="font-size:10px;">${p.tag}</span></label>`).join('')}
+        </div>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">👤 มอบหมายงาน</div>
+
+      <div style="margin-bottom:12px;">
+        <label class="cal-nef-label">มอบหมายให้</label>
+        <select class="cal-nef-input" id="cal-ev-assignee">
+          <option>นายมั่นคง สำเร็จ</option>
+          <option>นางสมหวัง ใจงาม</option>
+          <option>น.ส.รุ้ง สดใส</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="cal-nef-label">ประเภทงาน</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;padding:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface2);">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:400;color:var(--text2);cursor:pointer;"><input type="checkbox" checked style="accent-color:var(--blue);"> 💊 ส่งยา</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:400;color:var(--text2);cursor:pointer;"><input type="checkbox" checked style="accent-color:var(--blue);"> 📋 กรอกแบบสอบถาม</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:400;color:var(--text2);cursor:pointer;"><input type="checkbox" style="accent-color:var(--blue);"> 🩺 วัดความดัน/น้ำตาล</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:400;color:var(--text2);cursor:pointer;"><input type="checkbox" style="accent-color:var(--blue);"> 🔍 ค้นหาตัวผู้ป่วย</label>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="cal-nef-label">ความเร่งด่วน</label>
+        <select class="cal-nef-input" id="cal-ev-priority">
+          <option>📅 ปกติ (ตามแผน)</option>
+          <option>⚠️ ด่วน (ภายใน 2 วัน)</option>
+          <option>🚨 ด่วนมาก (วันนี้)</option>
+        </select>
+      </div>
+      <div style="margin-bottom:4px;">
+        <label class="cal-nef-label">หมายเหตุถึงผู้ช่วย CM</label>
+        <textarea class="cal-nef-input" id="cal-ev-note" rows="3" placeholder="คำแนะนำพิเศษ เช่น ผู้ป่วยมักอยู่ใต้สะพานช่วงเช้า..." style="resize:vertical;min-height:64px;"></textarea>
+      </div>
+
+    </div>`;
+  }
+
+  function calSaveEvent(){
+    const title=document.getElementById('cal-ev-title')?.value.trim();
+    const start=document.getElementById('cal-ev-start')?.value;
+    const end=document.getElementById('cal-ev-end')?.value;
+    if(!title||!start||!end){fbToast('กรุณากรอกข้อมูลให้ครบ');return;}
+    const forms=[...document.querySelectorAll('.cal-form-tag.on')].map(el=>el.dataset.tid);
+    const patients=[...document.querySelectorAll('input[data-pid]:checked')].map(el=>el.dataset.pid);
+    if(!forms.length){fbToast('เลือก Form Template อย่างน้อย 1');return;}
+    if(!patients.length){fbToast('เลือกผู้ป่วยอย่างน้อย 1 คน');return;}
+    calEvents.push({id:'e'+Date.now(),title,start:new Date(start),end:new Date(end),forms,patients,color:calEvents.length%5});
+    calNewMode=false; calRender(); fbToast('บันทึก Event "'+title+'" แล้ว');
+    calCloseDrawer(); calCloseSheet();
+    calSelDate=new Date(start);
+    setTimeout(()=>calSelectDay(calSelDate), 100);
+  }
+
+</script>
+</body>
+</html>

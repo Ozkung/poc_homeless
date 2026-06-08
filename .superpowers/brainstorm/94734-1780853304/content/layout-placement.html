@@ -1,0 +1,145 @@
+<h2>ตำแหน่งกราฟใน Dashboard</h2>
+<p class="subtitle">กราฟ Donut+Column จะวางไว้ที่ไหน?</p>
+
+<div class="cards">
+
+  <!-- Option A: Replace hero card bottom section -->
+  <div class="card" data-choice="inside-hero" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:12px;background:#fafafa;border-radius:8px;">
+        <!-- Grid mockup -->
+        <div style="display:grid;grid-template-columns:2fr 1fr;grid-template-rows:auto auto;gap:6px;font-size:9px;">
+          <!-- Hero card: 2×2 -->
+          <div style="grid-column:span 1;grid-row:span 2;background:#e6f4ff;border:2px solid #1677ff;border-radius:6px;padding:8px;min-height:110px;">
+            <div style="font-weight:700;color:#1677ff;margin-bottom:4px;">ภาพรวมผู้ป่วย</div>
+            <div style="font-size:18px;font-weight:800;color:#111;">42</div>
+            <div style="height:3px;background:#1677ff;border-radius:2px;margin:4px 0;opacity:0.3;"></div>
+            <div style="display:flex;gap:4px;margin-bottom:6px;">
+              <span style="background:#fff2f0;color:#ff4d4f;padding:1px 4px;border-radius:3px;font-size:8px;">●9 วิกฤต</span>
+              <span style="background:#fffbe6;color:#d48806;padding:1px 4px;border-radius:3px;font-size:8px;">●15 รอ</span>
+              <span style="background:#f6ffed;color:#389e0d;padding:1px 4px;border-radius:3px;font-size:8px;">●18 ปกติ</span>
+            </div>
+            <!-- mini chart inside -->
+            <div style="background:#fff;border-radius:4px;padding:4px;border:1px solid #f0f0f0;display:flex;gap:4px;align-items:center;">
+              <svg width="36" height="36" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="12" fill="none" stroke="#f0f0f0" stroke-width="7"/>
+                <circle cx="18" cy="18" r="12" fill="none" stroke="#ff4d4f" stroke-width="7" stroke-dasharray="15 75" stroke-dashoffset="0" transform="rotate(-90 18 18)"/>
+                <circle cx="18" cy="18" r="12" fill="none" stroke="#faad14" stroke-width="7" stroke-dasharray="27 75" stroke-dashoffset="-15" transform="rotate(-90 18 18)"/>
+                <circle cx="18" cy="18" r="12" fill="none" stroke="#52c41a" stroke-width="7" stroke-dasharray="33 75" stroke-dashoffset="-42" transform="rotate(-90 18 18)"/>
+              </svg>
+              <div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:28px;">
+                <div style="width:10px;height:14px;background:#ff4d4f;border-radius:1px;"></div>
+                <div style="width:10px;height:20px;background:#faad14;border-radius:1px;"></div>
+                <div style="width:10px;height:26px;background:#52c41a;border-radius:1px;"></div>
+              </div>
+            </div>
+          </div>
+          <!-- right col cards -->
+          <div style="background:#fff2f0;border:1px solid #ffccc7;border-radius:6px;padding:6px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#ff4d4f;">9</div>
+            <div style="color:#888;">วิกฤต</div>
+          </div>
+          <div style="background:#fff7e6;border:1px solid #ffe58f;border-radius:6px;padding:6px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#d48806;">5</div>
+            <div style="color:#888;">กิจกรรม</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — ฝังในการ์ดหลัก</h3>
+      <p>ใส่กราฟด้านล่าง hero card เดิม แทนรายการผู้ป่วยล่าสุด ประหยัดพื้นที่ ดูกระชับ</p>
+    </div>
+  </div>
+
+  <!-- Option B: New full-width row below -->
+  <div class="card" data-choice="new-row" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:12px;background:#fafafa;border-radius:8px;">
+        <div style="display:grid;grid-template-columns:2fr 1fr;grid-template-rows:auto auto auto;gap:6px;font-size:9px;">
+          <!-- Hero card existing -->
+          <div style="grid-column:span 1;grid-row:span 2;background:#e6f4ff;border:2px solid #1677ff;border-radius:6px;padding:8px;min-height:80px;">
+            <div style="font-weight:700;color:#1677ff;">ภาพรวมผู้ป่วย</div>
+            <div style="font-size:18px;font-weight:800;color:#111;">42</div>
+            <div style="font-size:8px;color:#888;margin-top:4px;">รายชื่อผู้ป่วยล่าสุด...</div>
+          </div>
+          <div style="background:#fff2f0;border:1px solid #ffccc7;border-radius:6px;padding:6px;text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:#ff4d4f;">9</div>
+            <div style="color:#888;font-size:8px;">วิกฤต</div>
+          </div>
+          <div style="background:#fff7e6;border:1px solid #ffe58f;border-radius:6px;padding:6px;text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:#d48806;">5</div>
+            <div style="color:#888;font-size:8px;">กิจกรรม</div>
+          </div>
+          <!-- NEW: chart row full width -->
+          <div style="grid-column:span 2;background:#f0f7ff;border:2px solid #1677ff;border-radius:6px;padding:8px;display:flex;align-items:center;gap:10px;">
+            <svg width="44" height="44" viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="15" fill="none" stroke="#f0f0f0" stroke-width="9"/>
+              <circle cx="22" cy="22" r="15" fill="none" stroke="#ff4d4f" stroke-width="9" stroke-dasharray="18 94" stroke-dashoffset="0" transform="rotate(-90 22 22)"/>
+              <circle cx="22" cy="22" r="15" fill="none" stroke="#faad14" stroke-width="9" stroke-dasharray="33 94" stroke-dashoffset="-18" transform="rotate(-90 22 22)"/>
+              <circle cx="22" cy="22" r="15" fill="none" stroke="#52c41a" stroke-width="9" stroke-dasharray="43 94" stroke-dashoffset="-51" transform="rotate(-90 22 22)"/>
+            </svg>
+            <div style="flex:1;display:flex;gap:4px;align-items:flex-end;height:34px;">
+              <div style="flex:1;background:#ff4d4f;border-radius:2px;height:40%;"></div>
+              <div style="flex:1;background:#faad14;border-radius:2px;height:60%;"></div>
+              <div style="flex:1;background:#52c41a;border-radius:2px;height:80%;"></div>
+            </div>
+            <div style="font-size:8px;color:#1677ff;font-weight:700;">กราฟวิเคราะห์ความร้ายแรง</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — แถวใหม่ด้านล่าง</h3>
+      <p>เพิ่ม card กราฟ full-width แถวใหม่ใต้ bento เดิม ไม่แตะ layout ปัจจุบัน กราฟใหญ่ขึ้น</p>
+    </div>
+  </div>
+
+  <!-- Option C: Replace hero, hero moves smaller -->
+  <div class="card" data-choice="replace-hero" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding:12px;background:#fafafa;border-radius:8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:6px;font-size:9px;">
+          <!-- stat cards row 1 -->
+          <div style="background:#e6f4ff;border:1px solid #91d5ff;border-radius:6px;padding:6px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#1677ff;">42</div>
+            <div style="color:#888;font-size:8px;">ทั้งหมด</div>
+          </div>
+          <div style="background:#fff2f0;border:1px solid #ffccc7;border-radius:6px;padding:6px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#ff4d4f;">9</div>
+            <div style="color:#888;font-size:8px;">วิกฤต</div>
+          </div>
+          <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;padding:6px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:#52c41a;">18</div>
+            <div style="color:#888;font-size:8px;">ปกติ</div>
+          </div>
+          <!-- chart card full width row 2 -->
+          <div style="grid-column:span 3;background:#f0f7ff;border:2px solid #1677ff;border-radius:6px;padding:8px;display:flex;gap:12px;align-items:center;min-height:60px;">
+            <svg width="50" height="50" viewBox="0 0 50 50">
+              <circle cx="25" cy="25" r="17" fill="none" stroke="#f0f0f0" stroke-width="10"/>
+              <circle cx="25" cy="25" r="17" fill="none" stroke="#ff4d4f" stroke-width="10" stroke-dasharray="21 107" stroke-dashoffset="0" transform="rotate(-90 25 25)"/>
+              <circle cx="25" cy="25" r="17" fill="none" stroke="#faad14" stroke-width="10" stroke-dasharray="38 107" stroke-dashoffset="-21" transform="rotate(-90 25 25)"/>
+              <circle cx="25" cy="25" r="17" fill="none" stroke="#52c41a" stroke-width="10" stroke-dasharray="48 107" stroke-dashoffset="-59" transform="rotate(-90 25 25)"/>
+              <text x="25" y="28" text-anchor="middle" font-size="10" font-weight="800" fill="#111">42</text>
+            </svg>
+            <div style="flex:1;display:flex;gap:4px;align-items:flex-end;height:40px;">
+              <div style="flex:1;background:#ff4d4f;border-radius:2px;height:35%;"></div>
+              <div style="flex:1;background:#faad14;border-radius:2px;height:60%;"></div>
+              <div style="flex:1;background:#52c41a;border-radius:2px;height:85%;"></div>
+            </div>
+            <div style="font-size:8px;color:#555;line-height:1.6;">
+              <div>● 21% วิกฤต</div>
+              <div>● 36% รอดำเนินการ</div>
+              <div>● 43% ปกติ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — ปรับ Layout ใหม่</h3>
+      <p>ย้าย stat cards เป็น 3 คอลัมน์แถวแรก แล้วกราฟ full-width แถว 2 แทน hero card เดิม เน้นกราฟเป็นหลัก</p>
+    </div>
+  </div>
+
+</div>

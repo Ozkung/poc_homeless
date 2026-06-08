@@ -1,0 +1,109 @@
+<h2>เลือกประเภทกราฟ Highcharts</h2>
+<p class="subtitle">กราฟแสดงการจัดกลุ่มผู้ป่วยตามความร้ายแรง (Critical / Pending / Stable)</p>
+
+<div class="cards">
+
+  <!-- Option A: Donut -->
+  <div class="card" data-choice="donut" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 200 180" width="200" height="180" style="display:block;margin:auto">
+        <!-- donut ring -->
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#f0f0f0" stroke-width="30"/>
+        <!-- CRITICAL ~20% -->
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#ff4d4f" stroke-width="30"
+          stroke-dasharray="75 302" stroke-dashoffset="0" transform="rotate(-90 100 90)"/>
+        <!-- PENDING ~35% -->
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#faad14" stroke-width="30"
+          stroke-dasharray="133 302" stroke-dashoffset="-75" transform="rotate(-90 100 90)"/>
+        <!-- STABLE ~45% -->
+        <circle cx="100" cy="90" r="60" fill="none" stroke="#52c41a" stroke-width="30"
+          stroke-dasharray="94 302" stroke-dashoffset="-208" transform="rotate(-90 100 90)"/>
+        <text x="100" y="85" text-anchor="middle" font-size="22" font-weight="800" fill="#111">42</text>
+        <text x="100" y="102" text-anchor="middle" font-size="10" fill="#888">ผู้ป่วยทั้งหมด</text>
+        <!-- legend -->
+        <rect x="20" y="155" width="10" height="10" rx="2" fill="#ff4d4f"/>
+        <text x="35" y="164" font-size="10" fill="#555">วิกฤต 9</text>
+        <rect x="80" y="155" width="10" height="10" rx="2" fill="#faad14"/>
+        <text x="95" y="164" font-size="10" fill="#555">รอดำเนินการ 15</text>
+        <rect x="160" y="155" width="10" height="10" rx="2" fill="#52c41a"/>
+        <text x="175" y="164" font-size="10" fill="#555">ปกติ 18</text>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>A — Donut Chart</h3>
+      <p>แสดงสัดส่วน 3 กลุ่มในวงกลม เห็นภาพรวมได้ทันที เหมาะกับการดูสัดส่วน % ของแต่ละระดับ</p>
+    </div>
+  </div>
+
+  <!-- Option B: Column/Bar grouped by status -->
+  <div class="card" data-choice="column" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 200 180" width="200" height="180" style="display:block;margin:auto">
+        <!-- axes -->
+        <line x1="30" y1="20" x2="30" y2="145" stroke="#e0e0e0" stroke-width="1"/>
+        <line x1="30" y1="145" x2="185" y2="145" stroke="#e0e0e0" stroke-width="1"/>
+        <!-- Y labels -->
+        <text x="24" y="148" text-anchor="end" font-size="9" fill="#bbb">0</text>
+        <text x="24" y="115" text-anchor="end" font-size="9" fill="#bbb">5</text>
+        <text x="24" y="82" text-anchor="end" font-size="9" fill="#bbb">10</text>
+        <text x="24" y="49" text-anchor="end" font-size="9" fill="#bbb">15</text>
+        <!-- gridlines -->
+        <line x1="30" y1="112" x2="185" y2="112" stroke="#f5f5f5" stroke-width="1"/>
+        <line x1="30" y1="79" x2="185" y2="79" stroke="#f5f5f5" stroke-width="1"/>
+        <line x1="30" y1="46" x2="185" y2="46" stroke="#f5f5f5" stroke-width="1"/>
+        <!-- CRITICAL bar -->
+        <rect x="45" y="109" width="30" height="36" rx="3" fill="#ff4d4f"/>
+        <text x="60" y="155" text-anchor="middle" font-size="9" fill="#888">วิกฤต</text>
+        <!-- PENDING bar -->
+        <rect x="95" y="96" width="30" height="49" rx="3" fill="#faad14"/>
+        <text x="110" y="155" text-anchor="middle" font-size="9" fill="#888">รอดำเนิน</text>
+        <!-- STABLE bar -->
+        <rect x="145" y="79" width="30" height="66" rx="3" fill="#52c41a"/>
+        <text x="160" y="155" text-anchor="middle" font-size="9" fill="#888">ปกติ</text>
+        <!-- values -->
+        <text x="60" y="106" text-anchor="middle" font-size="9" font-weight="700" fill="#ff4d4f">9</text>
+        <text x="110" y="93" text-anchor="middle" font-size="9" font-weight="700" fill="#d48806">15</text>
+        <text x="160" y="76" text-anchor="middle" font-size="9" font-weight="700" fill="#389e0d">18</text>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>B — Column Chart</h3>
+      <p>แท่งกราฟแยกตามกลุ่ม เปรียบเทียบจำนวนแต่ละระดับชัดเจน เหมาะถ้าต้องการดูตัวเลขสัมบูรณ์</p>
+    </div>
+  </div>
+
+  <!-- Option C: Donut + Column combo -->
+  <div class="card" data-choice="combo" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 200 180" width="200" height="180" style="display:block;margin:auto">
+        <!-- mini donut left -->
+        <circle cx="55" cy="75" r="38" fill="none" stroke="#f0f0f0" stroke-width="18"/>
+        <circle cx="55" cy="75" r="38" fill="none" stroke="#ff4d4f" stroke-width="18"
+          stroke-dasharray="47 239" stroke-dashoffset="0" transform="rotate(-90 55 75)"/>
+        <circle cx="55" cy="75" r="38" fill="none" stroke="#faad14" stroke-width="18"
+          stroke-dasharray="84 239" stroke-dashoffset="-47" transform="rotate(-90 55 75)"/>
+        <circle cx="55" cy="75" r="38" fill="none" stroke="#52c41a" stroke-width="18"
+          stroke-dasharray="108 239" stroke-dashoffset="-131" transform="rotate(-90 55 75)"/>
+        <text x="55" y="71" text-anchor="middle" font-size="14" font-weight="800" fill="#111">42</text>
+        <text x="55" y="83" text-anchor="middle" font-size="8" fill="#888">ราย</text>
+        <!-- divider -->
+        <line x1="108" y1="20" x2="108" y2="155" stroke="#f0f0f0" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- mini bars right -->
+        <rect x="118" y="105" width="18" height="40" rx="2" fill="#ff4d4f"/>
+        <rect x="143" y="88" width="18" height="57" rx="2" fill="#faad14"/>
+        <rect x="168" y="70" width="18" height="75" rx="2" fill="#52c41a"/>
+        <text x="127" y="155" text-anchor="middle" font-size="8" fill="#888">9</text>
+        <text x="152" y="155" text-anchor="middle" font-size="8" fill="#888">15</text>
+        <text x="177" y="155" text-anchor="middle" font-size="8" fill="#888">18</text>
+        <text x="127" y="102" text-anchor="middle" font-size="7" fill="#ff4d4f" font-weight="700">วิกฤต</text>
+        <text x="152" y="85" text-anchor="middle" font-size="7" fill="#d48806" font-weight="700">รอ</text>
+        <text x="177" y="67" text-anchor="middle" font-size="7" fill="#389e0d" font-weight="700">ปกติ</text>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>C — Donut + Column</h3>
+      <p>Donut แสดงสัดส่วน + Column แสดงจำนวน ใน card เดียวกัน ให้ข้อมูลครบใน 1 มุมมอง</p>
+    </div>
+  </div>
+
+</div>

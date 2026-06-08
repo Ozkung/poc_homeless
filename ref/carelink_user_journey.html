@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareLink — User Journey Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: #f8f7f4;
+    color: #1a1a1a;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  header {
+    background: #fff;
+    border-bottom: 1px solid #e8e6e0;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo-badge {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #534AB7, #1D9E75);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  header h1 { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+  header p { font-size: 13px; color: #666; margin-top: 2px; }
+  .tab-nav {
+    background: #fff;
+    border-bottom: 1px solid #e8e6e0;
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px; font-weight: 500;
+    padding: 14px 20px;
+    border: none; background: transparent;
+    color: #888; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: #444; }
+  .tab-btn.active { color: #534AB7; border-bottom-color: #534AB7; font-weight: 600; }
+  .main { padding: 28px 32px; max-width: 960px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #888;
+    margin: 24px 0 12px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* Journey Steps */
+  .journey-steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 14px 0;
+  }
+  .step-line {
+    display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+  }
+  .step-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .step-connector {
+    width: 2px; flex: 1; min-height: 16px;
+    background: #e8e6e0; margin: 4px 0;
+  }
+  .step-body { flex: 1; padding-top: 4px; }
+  .step-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+  .step-desc { font-size: 13px; color: #666; margin-top: 3px; line-height: 1.5; }
+
+  /* Cards */
+  .card {
+    background: #fff;
+    border: 1px solid #e8e6e0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 16px; font-weight: 700; margin-bottom: 4px; color: #1a1a1a;
+  }
+  .card-sub { font-size: 13px; color: #888; margin-bottom: 16px; }
+  hr.divider { border: none; border-top: 1px solid #f0ede8; margin: 16px 0; }
+
+  /* Pills */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
+  .pill {
+    font-size: 12px; font-family: 'Sarabun', sans-serif;
+    padding: 5px 12px; border-radius: 99px;
+    font-weight: 500;
+  }
+  .pill-purple { background: #EEEDFE; color: #3C3489; }
+  .pill-teal   { background: #E1F5EE; color: #085041; }
+  .pill-blue   { background: #E6F1FB; color: #0C447C; }
+  .pill-amber  { background: #FAEEDA; color: #633806; }
+  .pill-red    { background: #FCEBEB; color: #791F1F; }
+  .pill-gray   { background: #F1EFE8; color: #444441; }
+  .arrow-pill  { color: #bbb; font-size: 16px; line-height: 1; }
+
+  /* Overview grid */
+  .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .mini-card {
+    background: #f8f7f4; border: 1px solid #e8e6e0;
+    border-radius: 10px; padding: 16px;
+  }
+  .mini-card-title { font-size: 12px; font-weight: 700; color: #888; margin-bottom: 10px; }
+  .mini-item { font-size: 13px; color: #333; line-height: 1.9; }
+
+  /* Cross role */
+  .cross-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid #f0ede8;
+  }
+  .cross-row:last-child { border-bottom: none; }
+  .from-badge {
+    font-size: 12px; font-family: 'Sarabun', sans-serif;
+    padding: 4px 10px; border-radius: 8px;
+    font-weight: 600; white-space: nowrap; flex-shrink: 0;
+  }
+  .cross-arrow { color: #bbb; font-size: 18px; line-height: 1.4; flex-shrink: 0; }
+  .cross-body { flex: 1; }
+  .cross-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .cross-desc { font-size: 12px; color: #666; margin-top: 2px; line-height: 1.5; }
+
+  /* Triage table */
+  table.triage { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  table.triage th {
+    background: #f8f7f4; font-weight: 700; font-size: 12px;
+    padding: 8px 12px; text-align: left; border-bottom: 1px solid #e8e6e0;
+  }
+  table.triage td { padding: 10px 12px; border-bottom: 1px solid #f0ede8; vertical-align: middle; }
+  table.triage tr:last-child td { border-bottom: none; }
+
+  /* Role header */
+  .role-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
+  }
+  .role-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+  .role-title { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .role-sub { font-size: 13px; color: #888; margin-top: 2px; }
+
+  @media (max-width: 600px) {
+    .main { padding: 16px; }
+    header { padding: 16px; }
+    .tab-nav { padding: 0 16px; }
+    .overview-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-badge">💙</div>
+  <div>
+    <h1>CareLink — User Journey Map</h1>
+    <p>HACK4HOPE 2026 · มูลนิธิกระจกเงา + สุขภาวะข้างถนน · 6 Roles · 40+ Screens</p>
+  </div>
+</header>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('overview')">ภาพรวม</button>
+  <button class="tab-btn" onclick="showTab('caregiver')">🦺 อาสาลงพื้นที่</button>
+  <button class="tab-btn" onclick="showTab('volunteer')">🏥 อาสาแพทย์</button>
+  <button class="tab-btn" onclick="showTab('cm')">🩺 Case Manager</button>
+  <button class="tab-btn" onclick="showTab('admin')">⚙️ Admin</button>
+  <button class="tab-btn" onclick="showTab('founder')">👔 Founder</button>
+  <button class="tab-btn" onclick="showTab('cross')">🔗 ข้ามหน้าที่</button>
+</div>
+
+<div class="main">
+
+  <!-- ========== OVERVIEW ========== -->
+  <div id="tab-overview" class="tab-panel active">
+    <div class="card">
+      <div class="card-title">เส้นทางผู้ป่วยในระบบ Care Link</div>
+      <div class="card-sub">จากท้องถนน → ติดตาม → ฟื้นฟู</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line">
+            <div class="step-dot" style="background:#E1F5EE;color:#085041;">1</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">พบผู้ป่วยบนท้องถนน</div>
+            <div class="step-desc">อาสาลงพื้นที่พบ → ถ่ายรูป + บันทึก → CM สร้างเคสใหม่ + กำหนด Triage</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line">
+            <div class="step-dot" style="background:#E6F1FB;color:#0C447C;">2</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">เข้ารับบริการ Mobile Clinic</div>
+            <div class="step-desc">ลงทะเบียน → พบหมออาสา / ทันตกรรม / นักจิต → รับยาจากเภสัชกร → หักสต็อกอัตโนมัติ</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line">
+            <div class="step-dot" style="background:#EEEDFE;color:#3C3489;">3</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">CM วาง Care Plan</div>
+            <div class="step-desc">กำหนดเงื่อนไขโรค (TB / แผล / ยาเสพติด ฯลฯ) → ระบบสร้างฟอร์ม Visit อัตโนมัติ → Assign Caregiver</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line">
+            <div class="step-dot" style="background:#FAEEDA;color:#633806;">4</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">ติดตามเยี่ยมต่อเนื่อง</div>
+            <div class="step-desc">Caregiver ลงพื้นที่ตาม Triage · 🔴 2 วัน / 🟡 4 วัน / 🟢 7 วัน → บันทึก Offline → Sync → ขึ้น Timeline</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line">
+            <div class="step-dot" style="background:#EAF3DE;color:#27500A;">5</div>
+            <div class="step-connector"></div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">รับเข้า IPD บ้านพักพิงทางการแพทย์</div>
+            <div class="step-desc">CM Admit → เลือกเตียง (Bed Board) → พยาบาล/หมอดูแลรายวัน (Daily Log) → จำหน่าย + นัด F/U 1/3/6/12 เดือน</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line">
+            <div class="step-dot" style="background:#F1EFE8;color:#444441;">6</div>
+          </div>
+          <div class="step-body">
+            <div class="step-title">ฟื้นฟู / จำหน่าย / ปิดเคส</div>
+            <div class="step-desc">ส่งต่อสังคม / โรงพยาบาล / กลับบ้าน → บันทึก Outcome → ขึ้นรายงาน Founder</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-grid">
+      <div class="mini-card">
+        <div class="mini-card-title">6 Roles ในระบบ</div>
+        <div class="mini-item">🦺 อาสาลงพื้นที่ (Caregiver)</div>
+        <div class="mini-item">🏥 อาสาทางการแพทย์ (หมอ / พยาบาล / นักจิต)</div>
+        <div class="mini-item">🩺 Case Manager (นักสังคม)</div>
+        <div class="mini-item">⚙️ Admin</div>
+        <div class="mini-item">👔 Founder</div>
+        <div class="mini-item">🔐 Super Admin</div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-title">ระบบหลัก 6 ระบบ</div>
+        <div class="mini-item">📋 ติดตามเยี่ยม + Triage Alert</div>
+        <div class="mini-item">🏥 Mobile Clinic (MC01–MC07)</div>
+        <div class="mini-item">🏠 IPD Respite House + Bed Board</div>
+        <div class="mini-item">💊 คลังยา + เวชภัณฑ์ + ADJ</div>
+        <div class="mini-item">💰 บัญชีการเงิน NPO (F05)</div>
+        <div class="mini-item">🔔 LINE OA + Rich Menu ต่อ Role</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Triage & Escalation Matrix</div>
+      <table class="triage">
+        <thead>
+          <tr>
+            <th>ระดับ</th>
+            <th>ความถี่เยี่ยม</th>
+            <th>แจ้ง CM หลัง</th>
+            <th>สูญหาย หลัง</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🔴 วิกฤต</td>
+            <td>ทุก 2 วัน</td>
+            <td>1 วัน</td>
+            <td>5 วัน</td>
+          </tr>
+          <tr>
+            <td>🟡 เฝ้าระวัง</td>
+            <td>ทุก 4 วัน</td>
+            <td>2 วัน</td>
+            <td>14 วัน</td>
+          </tr>
+          <tr>
+            <td>🟢 ปกติ</td>
+            <td>ทุก 7 วัน</td>
+            <td>3 วัน</td>
+            <td>30 วัน</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== CAREGIVER ========== -->
+  <div id="tab-caregiver" class="tab-panel">
+    <div class="role-header">
+      <div class="role-icon" style="background:#E1F5EE;">🦺</div>
+      <div>
+        <div class="role-title">อาสาลงพื้นที่ (Caregiver)</div>
+        <div class="role-sub">บันทึกการเยี่ยม ติดตามผู้ป่วยข้างถนน — ใช้งาน Offline ได้</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">เช้าวันลงพื้นที่</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E1F5EE;color:#085041;">1</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">รับการแจ้งเตือนจาก LINE OA</div>
+            <div class="step-desc">08:00 — แจ้งรายชื่อผู้ป่วยที่ต้องเยี่ยมวันนี้ พร้อม Triage level</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E1F5EE;color:#085041;">2</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">เปิดแอปผ่าน LINE → ดูรายชื่อผู้ป่วย</div>
+            <div class="step-desc">เห็นชื่อแฝง + สถานที่ + ระดับ Triage ของแต่ละคน (PDPA — ไม่เห็นประวัติการรักษา)</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E1F5EE;color:#085041;">3</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">กรอกฟอร์ม Visit (ทำงาน Offline ได้)</div>
+            <div class="step-desc">Vital Signs + ถ่ายภาพ + ตอบคำถามตาม Care Plan ที่ CM กำหนด + บันทึกยาที่ส่งมอบ</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E1F5EE;color:#085041;">4</div></div>
+          <div class="step-body">
+            <div class="step-title">บันทึก + Sync ข้อมูล</div>
+            <div class="step-desc">ข้อมูลขึ้น Timeline ผู้ป่วยทันที → CM รับ Notification อัตโนมัติ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">กรณีพิเศษ</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#FCEBEB;color:#791F1F;">!</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">SOS เหตุฉุกเฉิน</div>
+            <div class="step-desc">กด 1 ปุ่ม → LINE alert CM ทันที + บันทึก Location อัตโนมัติ</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#FAEEDA;color:#633806;">?</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">หาไม่พบผู้ป่วย</div>
+            <div class="step-desc">บันทึกเป็น "หาไม่พบ" → นับเป็น Visit (Caregiver ไม่โดนโทษ) → CM รับแจ้ง</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#EEEDFE;color:#3C3489;">↑</div></div>
+          <div class="step-body">
+            <div class="step-title">Escalation อัตโนมัติ</div>
+            <div class="step-desc">เกินกำหนด → ระบบ Push แจ้ง CM → ถึง threshold → สถานะ "สูญหาย"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MEDICAL VOLUNTEER ========== -->
+  <div id="tab-volunteer" class="tab-panel">
+    <div class="role-header">
+      <div class="role-icon" style="background:#E6F1FB;">🏥</div>
+      <div>
+        <div class="role-title">อาสาสมัครทางการแพทย์</div>
+        <div class="role-sub">หมออาสา / พยาบาล / นักจิตวิทยา — เข้าถึงประวัติการรักษา</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">วันงาน Mobile Clinic</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E6F1FB;color:#0C447C;">1</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">รับแจ้ง LINE ว่าถูก Assign เข้า Event</div>
+            <div class="step-desc">ชื่อ Event + วันเวลา + สถานที่ + สถานีที่ต้องประจำ</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E6F1FB;color:#0C447C;">2</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">เลือกผู้ป่วยที่จะตรวจ</div>
+            <div class="step-desc">เห็นเฉพาะผู้ป่วยใน Event ที่ถูก Assign เท่านั้น (PDPA)</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E6F1FB;color:#0C447C;">3</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">ดูประวัติการรักษา (Medical Summary)</div>
+            <div class="step-desc">ประวัติโรค + ยาที่เคยได้รับ + Visit ที่ผ่านมา + ผลตรวจ</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E6F1FB;color:#0C447C;">4</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">บันทึกผลการรักษา (ตาม Sub-role)</div>
+            <div class="step-desc">
+              <strong>หมออาสา:</strong> วินิจฉัย + สั่งจ่ายยาได้เลยทันที → หักสต็อกยาอัตโนมัติ<br>
+              <strong>พยาบาล:</strong> Vital Signs + ทำแผล + บันทึกเวชภัณฑ์ที่ใช้ → หักสต็อกเวชภัณฑ์อัตโนมัติ<br>
+              <strong>นักจิต:</strong> PHQ-9 / AUDIT + ประเมิน + ส่งต่อจิตแพทย์
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#E6F1FB;color:#0C447C;">5</div></div>
+          <div class="step-body">
+            <div class="step-title">ข้อมูลขึ้น Timeline → LINE แจ้ง CM</div>
+            <div class="step-desc">CM รับทราบผลวินิจฉัย → อัปเดต Care Plan ตามคำแนะนำของหมอ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">บ้านพักพิงทางการแพทย์ (IPD Respite House)</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#B5D4F4;color:#042C53;">1</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">Admin Assign เข้าบ้านพักพิง</div>
+            <div class="step-desc">เห็นผู้ป่วยที่พักอยู่ทั้งหมด + สถานะเตียง (Bed Board)</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#B5D4F4;color:#042C53;">2</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">กรอก Daily Log ทุกวัน</div>
+            <div class="step-desc">Vital Signs + อาการ + ยาที่ให้ + เวชภัณฑ์ที่ใช้ → หักสต็อกอัตโนมัติ</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#B5D4F4;color:#042C53;">3</div></div>
+          <div class="step-body">
+            <div class="step-title">CM ออก Discharge Summary + นัดติดตาม</div>
+            <div class="step-desc">F/U 1 / 3 / 6 / 12 เดือน หลังจำหน่าย</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CASE MANAGER ========== -->
+  <div id="tab-cm" class="tab-panel">
+    <div class="role-header">
+      <div class="role-icon" style="background:#EEEDFE;">🩺</div>
+      <div>
+        <div class="role-title">Case Manager (CM)</div>
+        <div class="role-sub">นักสังคม — วาง Care Plan + จัดการเคส (ไม่ได้อนุมัติการรักษา)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">เช้าวันทำงาน</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#EEEDFE;color:#3C3489;">1</div></div>
+          <div class="step-body">
+            <div class="step-title">เปิด Dashboard → ดู Alert ที่รอดำเนินการ</div>
+            <div class="step-desc">เคสเกินกำหนดเยี่ยม / รายงานจากหมออาสา / ผู้ป่วยใหม่รอ Care Plan / SOS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">รับผู้ป่วยใหม่</div>
+      <div class="flow">
+        <span class="pill pill-purple">สร้างโปรไฟล์</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">ถ่ายรูป + ข้อมูล</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">กำหนด Triage</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">วาง Care Plan</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">Assign Caregiver</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">LINE แจ้ง Caregiver</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">รับแจ้งจากหมออาสา + บันทึกค่าใช้จ่าย</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#EEEDFE;color:#3C3489;">1</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">รับ LINE notification จากหมออาสา</div>
+            <div class="step-desc">หมอวินิจฉัยแล้ว → CM อัปเดต Care Plan ตามคำแนะนำ (CM ไม่ต้องอนุมัติการรักษา)</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#EEEDFE;color:#3C3489;">2</div></div>
+          <div class="step-body">
+            <div class="step-title">บันทึกค่าใช้จ่ายโรงพยาบาล (M08)</div>
+            <div class="step-desc">เมื่อ NPO จ่ายส่วนต่างค่ารักษา → กรอกผู้ป่วย + โรงพยาบาล + ยอดเงิน + แนบใบเสร็จ → ขึ้น F05 อัตโนมัติ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">IPD Admit / Discharge</div>
+      <div class="flow">
+        <span class="pill pill-purple">Admit ผู้ป่วย</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">เลือกเตียง (Bed Board)</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">ติดตาม Daily Log</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">Discharge Summary</span>
+        <span class="arrow-pill">→</span>
+        <span class="pill pill-purple">นัด F/U 1/3/6/12 เดือน</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ADMIN ========== -->
+  <div id="tab-admin" class="tab-panel">
+    <div class="role-header">
+      <div class="role-icon" style="background:#FAEEDA;">⚙️</div>
+      <div>
+        <div class="role-title">Admin</div>
+        <div class="role-sub">จัดการ Event + คลังยา + เวชภัณฑ์ + อาสาสมัคร</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">วันงาน Mobile Clinic</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#FAEEDA;color:#633806;">1</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">สร้าง Event (MC01)</div>
+            <div class="step-desc">กำหนดวัน + สถานที่ + สถานีที่เปิด (หมอ / ทันตกรรม / จิตใจ / เภสัช)</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#FAEEDA;color:#633806;">2</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">Assign อาสาทางการแพทย์เข้า Event</div>
+            <div class="step-desc">LINE แจ้งอาสาอัตโนมัติทุกคนที่ถูก Assign</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#FAEEDA;color:#633806;">3</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">ลงทะเบียนผู้ป่วยวันงาน (MC02)</div>
+            <div class="step-desc">Scan QR หรือค้นชื่อแฝง → ผู้ป่วยใหม่สร้างเคสได้เลย</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#FAEEDA;color:#633806;">4</div></div>
+          <div class="step-body">
+            <div class="step-title">ดู Event Summary หลังงาน (MC07)</div>
+            <div class="step-desc">จำนวนผู้รับบริการ + ยาที่จ่ายไป + ค่าใช้จ่ายรวม</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">จัดการคลังยา + เวชภัณฑ์ (A03)</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#FAC775;color:#412402;">1</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">รับยา / เวชภัณฑ์เข้า (Drug IN)</div>
+            <div class="step-desc">
+              <strong>บริจาค:</strong> บันทึกผู้บริจาค + มูลค่า (ไม่นับเป็นค่าใช้จ่าย)<br>
+              <strong>ซื้อ:</strong> ใส่เลขใบเสร็จ + ยอดเงิน + วิธีจ่าย → ขึ้นบัญชีการเงิน F05 อัตโนมัติ
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#FAC775;color:#412402;">2</div></div>
+          <div class="step-body">
+            <div class="step-title">ปรับสต็อก ADJ (กรณียาหาย / ผิดพลาด)</div>
+            <div class="step-desc">
+              <strong>≤ 20 เม็ด:</strong> Admin ทำเองได้ + ระบุเหตุผล + LINE แจ้ง SA อัตโนมัติ<br>
+              <strong>&gt; 20 เม็ด:</strong> ส่ง Request ขออนุมัติ → SA Approve/Reject → Admin รับแจ้ง
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== FOUNDER ========== -->
+  <div id="tab-founder" class="tab-panel">
+    <div class="role-header">
+      <div class="role-icon" style="background:#EEEDFE;">👔</div>
+      <div>
+        <div class="role-title">Founder</div>
+        <div class="role-sub">ดู Dashboard + รายงาน (Read-only ทั้งหมด) — เข้าผ่าน LINE Rich Menu</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ทุกต้นเดือน</div>
+      <div class="journey-steps">
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#EEEDFE;color:#3C3489;">1</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">เปิด LINE OA → Rich Menu → KPI Dashboard (F01)</div>
+            <div class="step-desc">ผู้ป่วยรวม / เคสใหม่เดือนนี้ / อัตราการติดตาม / SOS เดือนนี้</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#EEEDFE;color:#3C3489;">2</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">ดู Analytics เชิงลึก (F02)</div>
+            <div class="step-desc">แผนที่ผู้ป่วย / การกระจาย Triage / Outcome สถิติ</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#EEEDFE;color:#3C3489;">3</div><div class="step-connector"></div></div>
+          <div class="step-body">
+            <div class="step-title">ดูรายงานคลังยา (F04)</div>
+            <div class="step-desc">ยาคงเหลือ / ยาใกล้หมด / ประวัติการปรับ ADJ</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-dot" style="background:#EEEDFE;color:#3C3489;">4</div></div>
+          <div class="step-body">
+            <div class="step-title">ดูสรุปการเงิน (F05) → Export</div>
+            <div class="step-desc">ค่าซื้อยา + ค่ารักษาโรงพยาบาล + มูลค่าบริจาค (แยกประเภท) → Export PDF / Excel</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CROSS ROLE ========== -->
+  <div id="tab-cross" class="tab-panel">
+    <div class="role-header">
+      <div class="role-icon" style="background:#E1F5EE;">🔗</div>
+      <div>
+        <div class="role-title">จุดเชื่อมต่อข้ามหน้าที่</div>
+        <div class="role-sub">ข้อมูลไหลอย่างไรระหว่าง Role ต่างๆ</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cross-row">
+        <span class="from-badge" style="background:#E6F1FB;color:#0C447C;">หมออาสา</span>
+        <span class="cross-arrow">→</span>
+        <div class="cross-body">
+          <div class="cross-title">Case Manager</div>
+          <div class="cross-desc">หมอวินิจฉัย + จ่ายยาโดยตรง → LINE แจ้ง CM → CM อัปเดต Care Plan ตามคำแนะนำของหมอ</div>
+        </div>
+      </div>
+      <div class="cross-row">
+        <span class="from-badge" style="background:#E1F5EE;color:#085041;">Caregiver</span>
+        <span class="cross-arrow">→</span>
+        <div class="cross-body">
+          <div class="cross-title">Case Manager</div>
+          <div class="cross-desc">บันทึก Visit / SOS / หาไม่พบ → ขึ้น Timeline → CM รับ Alert อัตโนมัติ</div>
+        </div>
+      </div>
+      <div class="cross-row">
+        <span class="from-badge" style="background:#EEEDFE;color:#3C3489;">CM</span>
+        <span class="cross-arrow">→</span>
+        <div class="cross-body">
+          <div class="cross-title">Caregiver</div>
+          <div class="cross-desc">อัปเดต Care Plan → แจ้ง Caregiver ผ่าน LINE ว่าฟอร์ม Visit เปลี่ยนแล้ว</div>
+        </div>
+      </div>
+      <div class="cross-row">
+        <span class="from-badge" style="background:#E6F1FB;color:#0C447C;">พยาบาล</span>
+        <span class="cross-arrow">→</span>
+        <div class="cross-body">
+          <div class="cross-title">Admin (คลังเวชภัณฑ์)</div>
+          <div class="cross-desc">บันทึกเวชภัณฑ์ที่ใช้ → ระบบหักสต็อกเวชภัณฑ์อัตโนมัติทันที</div>
+        </div>
+      </div>
+      <div class="cross-row">
+        <span class="from-badge" style="background:#FAEEDA;color:#633806;">Admin</span>
+        <span class="cross-arrow">→</span>
+        <div class="cross-body">
+          <div class="cross-title">Super Admin</div>
+          <div class="cross-desc">ADJ &gt; threshold → ส่ง Request ขออนุมัติ → SA Approve / Reject → Admin รับแจ้งผล</div>
+        </div>
+      </div>
+      <div class="cross-row">
+        <span class="from-badge" style="background:#FAEEDA;color:#633806;">Admin</span>
+        <span class="cross-arrow">→</span>
+        <div class="cross-body">
+          <div class="cross-title">อาสาทางการแพทย์</div>
+          <div class="cross-desc">Assign เข้า Event / บ้านพักพิง → LINE แจ้งอาสาอัตโนมัติ</div>
+        </div>
+      </div>
+      <div class="cross-row">
+        <span class="from-badge" style="background:#EEEDFE;color:#3C3489;">CM</span>
+        <span class="cross-arrow">→</span>
+        <div class="cross-body">
+          <div class="cross-title">Founder (F05)</div>
+          <div class="cross-desc">บันทึกค่ารักษาโรงพยาบาล (M08) → ขึ้นรายงานการเงินสรุปรายเดือนอัตโนมัติ</div>
+        </div>
+      </div>
+      <div class="cross-row">
+        <span class="from-badge" style="background:#E6F1FB;color:#0C447C;">หมออาสา</span>
+        <span class="cross-arrow">→</span>
+        <div class="cross-body">
+          <div class="cross-title">Admin (คลังยา)</div>
+          <div class="cross-desc">สั่งจ่ายยาโดยตรง → ระบบหักสต็อกยาอัตโนมัติทันที</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<h2>Layout ที่เสนอ — 2 หน้า</h2>
+<p class="subtitle">A = /profile (ทุก user) &nbsp;|&nbsp; B = /users (SUPER_ADMIN เท่านั้น)</p>
+
+<div class="split">
+
+  <!-- /profile page -->
+  <div class="mockup">
+    <div class="mockup-header">A — /profile (ทุก user)</div>
+    <div class="mockup-body" style="padding:12px;font-size:11px;display:flex;flex-direction:column;gap:10px">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid #f0f0f0">
+        <div style="position:relative">
+          <div style="width:56px;height:56px;border-radius:50%;background:#1677ff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700">ผด</div>
+          <div style="position:absolute;bottom:0;right:0;width:18px;height:18px;background:#fff;border-radius:50%;border:1px solid #d9d9d9;display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer">✏️</div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:14px">ผู้ดูแลระบบ</div>
+          <div style="font-size:10px;color:#1677ff;background:#e6f4ff;padding:1px 7px;border-radius:10px;display:inline-block;margin-top:2px">ADMIN</div>
+        </div>
+      </div>
+
+      <!-- Section 1: ข้อมูลส่วนตัว -->
+      <div style="background:#fafafa;border-radius:6px;padding:8px">
+        <div style="font-size:10px;font-weight:700;color:#1677ff;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">ข้อมูลส่วนตัว</div>
+        <div style="display:grid;gap:4px">
+          <div>
+            <div style="font-size:9px;color:#999">ชื่อแสดง</div>
+            <input style="border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:10px;width:100%;box-sizing:border-box;background:#fff" value="ผู้ดูแลระบบ"/>
+          </div>
+          <div>
+            <div style="font-size:9px;color:#999">อีเมล (ไม่สามารถแก้ไข)</div>
+            <input style="border:1px solid #f0f0f0;border-radius:4px;padding:4px 6px;font-size:10px;width:100%;box-sizing:border-box;background:#fafafa;color:#aaa" value="admin@hospital.th" disabled/>
+          </div>
+          <button style="background:#1677ff;color:#fff;border:none;border-radius:4px;padding:5px;font-size:10px;cursor:pointer;width:100%;margin-top:2px">บันทึกข้อมูล</button>
+        </div>
+      </div>
+
+      <!-- Section 2: เปลี่ยนรหัสผ่าน -->
+      <div style="background:#fafafa;border-radius:6px;padding:8px">
+        <div style="font-size:10px;font-weight:700;color:#1677ff;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">เปลี่ยนรหัสผ่าน</div>
+        <div style="display:grid;gap:4px">
+          <input style="border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:10px;width:100%;box-sizing:border-box" placeholder="รหัสผ่านเดิม" type="password"/>
+          <input style="border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:10px;width:100%;box-sizing:border-box" placeholder="รหัสผ่านใหม่" type="password"/>
+          <input style="border:1px solid #d9d9d9;border-radius:4px;padding:4px 6px;font-size:10px;width:100%;box-sizing:border-box" placeholder="ยืนยันรหัสผ่านใหม่" type="password"/>
+          <button style="background:#faad14;color:#fff;border:none;border-radius:4px;padding:5px;font-size:10px;cursor:pointer;width:100%;margin-top:2px">เปลี่ยนรหัสผ่าน</button>
+        </div>
+      </div>
+
+      <!-- Section 3: LINE -->
+      <div style="background:#fafafa;border-radius:6px;padding:8px">
+        <div style="font-size:10px;font-weight:700;color:#06c755;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">LINE Account</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:10px;color:#06c755;font-weight:600">● เชื่อมต่อแล้ว</div>
+            <div style="font-size:9px;color:#aaa;margin-top:2px">U2abc1234xyz...</div>
+          </div>
+          <button style="background:#fff;color:#ff4d4f;border:1px solid #ff4d4f;border-radius:4px;padding:3px 8px;font-size:9px;cursor:pointer">Unlink</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- /users page (SUPER_ADMIN) -->
+  <div class="mockup">
+    <div class="mockup-header">B — /users (SUPER_ADMIN เท่านั้น)</div>
+    <div class="mockup-body" style="padding:12px;font-size:11px">
+
+      <!-- Header row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <div style="font-size:9px;color:#722ed1;letter-spacing:2px;text-transform:uppercase">Users</div>
+          <div style="font-size:14px;font-weight:800">จัดการผู้ใช้งาน</div>
+        </div>
+        <button style="background:#722ed1;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:10px;cursor:pointer">+ เพิ่ม User</button>
+      </div>
+
+      <!-- Table -->
+      <div style="border:1px solid #f0f0f0;border-radius:6px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:1fr 80px 70px 60px;background:#fafafa;padding:5px 8px;gap:4px;border-bottom:1px solid #f0f0f0">
+          <div style="font-size:9px;color:#999;font-weight:700">ชื่อ / อีเมล</div>
+          <div style="font-size:9px;color:#999;font-weight:700">สิทธิ์</div>
+          <div style="font-size:9px;color:#999;font-weight:700">สถานะ</div>
+          <div style="font-size:9px;color:#999;font-weight:700"></div>
+        </div>
+
+        <!-- rows -->
+        ${[
+          {init:'ผด', name:'ผู้ดูแลระบบ', email:'admin@hospital.th', role:'ADMIN', roleColor:'#1677ff', active:true},
+          {init:'ผอ', name:'ผู้อำนวยการ', email:'sa@hospital.th', role:'SA', roleColor:'#722ed1', active:true},
+          {init:'สช', name:'นายสมชาย ดูแลดี', email:'cm1@hospital.th', role:'CM', roleColor:'#52c41a', active:true},
+          {init:'มล', name:'น.ส.มาลี ใจดี', email:'cm2@hospital.th', role:'CM', roleColor:'#52c41a', active:false},
+        ].map(u => `
+        <div style="display:grid;grid-template-columns:1fr 80px 70px 60px;padding:5px 8px;gap:4px;border-bottom:1px solid #f9f9f9;align-items:center">
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="width:22px;height:22px;border-radius:50%;background:${u.roleColor}22;color:${u.roleColor};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0">${u.init}</div>
+            <div>
+              <div style="font-size:10px;font-weight:600">${u.name}</div>
+              <div style="font-size:9px;color:#aaa">${u.email}</div>
+            </div>
+          </div>
+          <div><span style="font-size:9px;background:${u.roleColor}15;color:${u.roleColor};padding:1px 6px;border-radius:8px">${u.role}</span></div>
+          <div><span style="font-size:9px;color:${u.active?'#52c41a':'#aaa'}">${u.active?'● ใช้งาน':'○ ปิด'}</span></div>
+          <div style="display:flex;gap:3px">
+            <button style="background:#f0f0f0;border:none;border-radius:3px;padding:2px 5px;font-size:9px;cursor:pointer">✏️</button>
+            <button style="background:#fff0f0;border:none;border-radius:3px;padding:2px 5px;font-size:9px;cursor:pointer;color:#ff4d4f">🗑</button>
+          </div>
+        </div>`).join('')}
+      </div>
+
+      <!-- Create modal hint -->
+      <div style="margin-top:8px;background:#f9f0ff;border:1px dashed #d3adf7;border-radius:6px;padding:8px;text-align:center;font-size:10px;color:#722ed1">
+        ปุ่ม + เพิ่ม User → เปิด Drawer กรอก ชื่อ / อีเมล / รหัสผ่าน / สิทธิ์
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:12px">ดู layout ทั้ง 2 หน้า — แจ้ง feedback ผ่าน terminal</p>

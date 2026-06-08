@@ -1,0 +1,108 @@
+<h2>Section 3: LINE Message Format</h2>
+<p class="subtitle">3 ประเภท — CM Overdue Alert / CM SOS Alert / Caregiver Morning Briefing</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px;">
+
+  <!-- CM Overdue Alert -->
+  <div>
+    <div class="label" style="margin-bottom:8px;">📩 CM — แจ้งเกินกำหนดเยี่ยม</div>
+    <!-- LINE bubble mockup -->
+    <div style="background:#1a1a2e;border-radius:12px;padding:16px;font-family:'Sarabun',sans-serif;">
+      <!-- LINE header -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#06c755,#04a844);display:flex;align-items:center;justify-content:center;font-size:16px;">💙</div>
+        <div>
+          <div style="color:#fff;font-size:12px;font-weight:600;">CareLink</div>
+          <div style="color:#888;font-size:10px;">Official Account</div>
+        </div>
+      </div>
+      <!-- message bubble -->
+      <div style="background:#fff;border-radius:12px 12px 12px 4px;padding:14px;max-width:240px;">
+        <div style="font-size:12px;font-weight:700;color:#ff4d4f;margin-bottom:6px;">⚠️ แจ้งเตือน: เกินกำหนดเยี่ยม</div>
+        <div style="font-size:11px;color:#333;line-height:1.7;">
+          <div style="margin-bottom:2px;"><b>ผู้ป่วย:</b> สมชาย ใจดี (HN 0001)</div>
+          <div style="margin-bottom:2px;"><b>ระดับ:</b> 🔴 วิกฤต</div>
+          <div style="margin-bottom:2px;"><b>เยี่ยมล่าสุด:</b> 5 มิ.ย. 2568</div>
+          <div style="margin-bottom:8px;"><b>เกินกำหนด:</b> 3 วัน (ครบทุก 2 วัน)</div>
+          <div style="background:#fff2f0;border-radius:6px;padding:6px 8px;font-size:10px;color:#ff4d4f;">กรุณาติดตามหรือส่ง Caregiver โดยด่วน</div>
+        </div>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">
+          <button style="background:#1677ff;color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;width:100%;">ดูโปรไฟล์ผู้ป่วย</button>
+        </div>
+      </div>
+      <div style="color:#666;font-size:10px;margin-top:6px;margin-left:4px;">06:03 น.</div>
+    </div>
+  </div>
+
+  <!-- CM SOS Alert -->
+  <div>
+    <div class="label" style="margin-bottom:8px;">🚨 CM — SOS ฉุกเฉิน</div>
+    <div style="background:#1a1a2e;border-radius:12px;padding:16px;font-family:'Sarabun',sans-serif;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#06c755,#04a844);display:flex;align-items:center;justify-content:center;font-size:16px;">💙</div>
+        <div>
+          <div style="color:#fff;font-size:12px;font-weight:600;">CareLink</div>
+          <div style="color:#888;font-size:10px;">Official Account</div>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:12px 12px 12px 4px;padding:14px;max-width:240px;">
+        <div style="font-size:13px;font-weight:800;color:#ff4d4f;margin-bottom:8px;">🚨 SOS — เหตุฉุกเฉิน</div>
+        <div style="font-size:11px;color:#333;line-height:1.7;">
+          <div style="margin-bottom:2px;"><b>อาสา:</b> วิภา สุขใจ</div>
+          <div style="margin-bottom:2px;"><b>ผู้ป่วย:</b> สมหมาย ขยัน (HN 0023)</div>
+          <div style="margin-bottom:8px;"><b>เวลา:</b> 07:42 น.</div>
+          <div style="background:#fff2f0;border-radius:6px;padding:6px 8px;font-size:10px;color:#ff4d4f;margin-bottom:8px;">📍 13.7563°N, 100.5018°E<br/>ใกล้: สะพานพุทธ กรุงเทพฯ</div>
+        </div>
+        <button style="background:#ff4d4f;color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">📍 ดูตำแหน่งใน Maps</button>
+      </div>
+      <div style="color:#666;font-size:10px;margin-top:6px;margin-left:4px;">07:42 น.</div>
+    </div>
+  </div>
+
+  <!-- Caregiver Morning Briefing -->
+  <div>
+    <div class="label" style="margin-bottom:8px;">☀️ Caregiver — Morning Briefing 08:00</div>
+    <div style="background:#1a1a2e;border-radius:12px;padding:16px;font-family:'Sarabun',sans-serif;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#06c755,#04a844);display:flex;align-items:center;justify-content:circle;font-size:16px;">💙</div>
+        <div>
+          <div style="color:#fff;font-size:12px;font-weight:600;">CareLink</div>
+          <div style="color:#888;font-size:10px;">Official Account</div>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:12px 12px 12px 4px;padding:14px;max-width:240px;">
+        <div style="font-size:12px;font-weight:700;color:#1677ff;margin-bottom:8px;">☀️ ผู้ป่วยที่ต้องเยี่ยมวันนี้</div>
+        <div style="font-size:10px;color:#888;margin-bottom:10px;">อาทิตย์ที่ 8 มิ.ย. 2568</div>
+        <!-- patient list -->
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+          <div style="background:#fff2f0;border-radius:6px;padding:6px 8px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#333;">สมชาย ใจดี</div>
+              <div style="font-size:10px;color:#888;">HN 0001 · สะพานพุทธ</div>
+            </div>
+            <span style="background:#fff2f0;color:#ff4d4f;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;border:1px solid #ffccc7;">🔴 วิกฤต</span>
+          </div>
+          <div style="background:#fffbe6;border-radius:6px;padding:6px 8px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#333;">มานี มีสุข</div>
+              <div style="font-size:10px;color:#888;">HN 0047 · เยาวราช</div>
+            </div>
+            <span style="background:#fffbe6;color:#d48806;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;border:1px solid #ffe58f;">🟡 เฝ้าระวัง</span>
+          </div>
+          <div style="background:#f6ffed;border-radius:6px;padding:6px 8px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:#333;">วิเชียร ดีดี</div>
+              <div style="font-size:10px;color:#888;">HN 0088 · หัวลำโพง</div>
+            </div>
+            <span style="background:#f6ffed;color:#389e0d;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;border:1px solid #b7eb8f;">🟢 ปกติ</span>
+          </div>
+        </div>
+        <button style="background:#1677ff;color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;width:100%;">เปิด LIFF →</button>
+      </div>
+      <div style="color:#666;font-size:10px;margin-top:6px;margin-left:4px;">08:00 น.</div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">มี feedback ไหมครับ? ถ้าโอเคจะ show SOS button ใน LIFF ต่อ</p>

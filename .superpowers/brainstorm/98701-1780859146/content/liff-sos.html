@@ -1,0 +1,113 @@
+<h2>Section 4: SOS Button ใน LIFF</h2>
+<p class="subtitle">เลือก placement ของปุ่ม SOS บน LIFF app</p>
+
+<div class="cards">
+
+  <!-- Option A: Floating button -->
+  <div class="card" data-choice="floating" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:200px;margin:auto;background:#f8f8f8;border-radius:16px;overflow:hidden;border:1px solid #e0e0e0;position:relative;min-height:320px;font-family:'Sarabun',sans-serif;">
+        <!-- phone status bar -->
+        <div style="background:#fff;padding:8px 12px 4px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:9px;color:#333;font-weight:600;">09:41</span>
+          <span style="font-size:9px;color:#333;">●●●</span>
+        </div>
+        <!-- app header -->
+        <div style="background:#fff;padding:8px 12px 10px;border-bottom:1px solid #f0f0f0;">
+          <div style="font-size:8px;color:#7c3aed;font-weight:700;letter-spacing:1px;text-transform:uppercase;">HomeMed Connect</div>
+          <div style="font-size:13px;font-weight:800;color:#111;margin-top:1px;">งานของฉัน</div>
+          <div style="font-size:10px;color:#888;">3 งาน</div>
+        </div>
+        <!-- task cards -->
+        <div style="padding:8px;">
+          <div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:8px;margin-bottom:6px;">
+            <div style="font-size:10px;font-weight:600;color:#111;">Follow-up รายสัปดาห์</div>
+            <div style="font-size:9px;color:#888;margin-top:2px;">HN 0001 · สะพานพุทธ</div>
+            <div style="display:flex;gap:4px;margin-top:5px;">
+              <div style="flex:1;background:#f3f0ff;color:#7c3aed;border-radius:4px;padding:3px;font-size:8px;text-align:center;font-weight:600;">Check-in</div>
+              <div style="flex:1;background:#7c3aed;color:#fff;border-radius:4px;padding:3px;font-size:8px;text-align:center;font-weight:600;">กรอกฟอร์ม</div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:8px;">
+            <div style="font-size:10px;font-weight:600;color:#111;">เยี่ยมติดตาม</div>
+            <div style="font-size:9px;color:#888;margin-top:2px;">HN 0047 · เยาวราช</div>
+          </div>
+        </div>
+        <!-- Floating SOS button -->
+        <div style="position:absolute;bottom:14px;right:12px;width:44px;height:44px;border-radius:50%;background:#ff4d4f;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(255,77,79,0.5);cursor:pointer;">
+          <span style="font-size:16px;">🚨</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Floating Button</h3>
+      <p>ปุ่มกลมลอยมุมขวาล่าง เข้าถึงได้ตลอด ทุกหน้า กด 1 ครั้ง → confirm → ส่ง SOS ทันที</p>
+    </div>
+  </div>
+
+  <!-- Option B: Fixed bottom bar -->
+  <div class="card" data-choice="bottom-bar" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:200px;margin:auto;background:#f8f8f8;border-radius:16px;overflow:hidden;border:1px solid #e0e0e0;position:relative;min-height:320px;font-family:'Sarabun',sans-serif;">
+        <div style="background:#fff;padding:8px 12px 4px;display:flex;justify-content:space-between;">
+          <span style="font-size:9px;color:#333;font-weight:600;">09:41</span>
+          <span style="font-size:9px;color:#333;">●●●</span>
+        </div>
+        <div style="background:#fff;padding:8px 12px 10px;border-bottom:1px solid #f0f0f0;">
+          <div style="font-size:8px;color:#7c3aed;font-weight:700;letter-spacing:1px;text-transform:uppercase;">HomeMed Connect</div>
+          <div style="font-size:13px;font-weight:800;color:#111;margin-top:1px;">งานของฉัน</div>
+        </div>
+        <div style="padding:8px;">
+          <div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:8px;margin-bottom:6px;">
+            <div style="font-size:10px;font-weight:600;color:#111;">Follow-up รายสัปดาห์</div>
+            <div style="font-size:9px;color:#888;margin-top:2px;">HN 0001 · สะพานพุทธ</div>
+            <div style="display:flex;gap:4px;margin-top:5px;">
+              <div style="flex:1;background:#f3f0ff;color:#7c3aed;border-radius:4px;padding:3px;font-size:8px;text-align:center;font-weight:600;">Check-in</div>
+              <div style="flex:1;background:#7c3aed;color:#fff;border-radius:4px;padding:3px;font-size:8px;text-align:center;font-weight:600;">กรอกฟอร์ม</div>
+            </div>
+          </div>
+        </div>
+        <!-- Bottom SOS bar -->
+        <div style="position:absolute;bottom:0;left:0;right:0;background:#ff4d4f;padding:10px 12px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+          <span style="font-size:14px;">🚨</span>
+          <span style="color:#fff;font-size:11px;font-weight:700;letter-spacing:0.5px;">SOS ฉุกเฉิน</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Bottom Bar</h3>
+      <p>แถบสีแดง fixed ด้านล่างทุกหน้า เห็นชัดมาก แต่กินพื้นที่ และอาจกดพลาดง่ายกว่า</p>
+    </div>
+  </div>
+
+  <!-- Option C: SOS page in task detail -->
+  <div class="card" data-choice="task-button" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="width:200px;margin:auto;background:#f8f8f8;border-radius:16px;overflow:hidden;border:1px solid #e0e0e0;min-height:320px;font-family:'Sarabun',sans-serif;">
+        <div style="background:#fff;padding:8px 12px 4px;display:flex;justify-content:space-between;">
+          <span style="font-size:9px;color:#333;font-weight:600;">09:41</span>
+          <span style="font-size:9px;color:#333;">●●●</span>
+        </div>
+        <div style="background:#fff;padding:8px 12px 10px;border-bottom:1px solid #f0f0f0;">
+          <div style="font-size:8px;color:#7c3aed;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Follow-up · HN 0001</div>
+          <div style="font-size:12px;font-weight:800;color:#111;margin-top:1px;">สมชาย ใจดี</div>
+          <span style="background:#fff2f0;color:#ff4d4f;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;border:1px solid #ffccc7;">🔴 วิกฤต</span>
+        </div>
+        <div style="padding:8px;display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;gap:4px;">
+            <div style="flex:1;background:#f3f0ff;color:#7c3aed;border-radius:6px;padding:7px;font-size:9px;text-align:center;font-weight:600;">📍 Check-in</div>
+            <div style="flex:1;background:#7c3aed;color:#fff;border-radius:6px;padding:7px;font-size:9px;text-align:center;font-weight:600;">📋 ฟอร์ม</div>
+          </div>
+          <div style="background:#f8f8f8;color:#555;border:1px solid #e8e8e8;border-radius:6px;padding:7px;font-size:9px;text-align:center;font-weight:600;">📝 บันทึก</div>
+          <!-- SOS button in task -->
+          <div style="background:#fff2f0;color:#ff4d4f;border:1.5px solid #ffccc7;border-radius:6px;padding:7px;font-size:9px;text-align:center;font-weight:700;margin-top:2px;">🚨 SOS ฉุกเฉิน</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — ปุ่มใน Task Detail</h3>
+      <p>SOS อยู่ในหน้า task detail ต่อจากปุ่ม Check-in / ฟอร์ม / บันทึก เห็นในบริบทของผู้ป่วยนั้นๆ ชัดเจนว่า SOS เกี่ยวกับใคร</p>
+    </div>
+  </div>
+
+</div>
