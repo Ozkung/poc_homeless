@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Table, Button, Card, Popconfirm, Typography } from 'antd';
+import { Table, Button, Card, Popconfirm, Typography, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import Link from 'next/link';
+import { Eye } from 'lucide-react';
 
 const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -59,6 +60,11 @@ export default function FormsPage() {
       title: '', key: 'actions', width: 140,
       render: (_, r) => (
         <div style={{ display: 'flex', gap: 8 }}>
+          <Tooltip title="ดูตัวอย่าง">
+            <Link href={`/forms/${r.id}`}>
+              <Button size="small" icon={<Eye size={13} />} />
+            </Link>
+          </Tooltip>
           <Link href={`/forms/${r.id}/builder`}>
             <Button size="small">แก้ไข</Button>
           </Link>
