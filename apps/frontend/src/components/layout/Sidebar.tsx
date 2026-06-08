@@ -2,26 +2,30 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Users, CalendarDays, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, Package } from 'lucide-react';
 import type { MenuProps } from 'antd';
 
 const { Text } = Typography;
 
 const ICON_SIZE = 15;
 
-const items: MenuProps['items'] = [
-  { key: '/dashboard', label: 'Dashboard',      icon: <LayoutDashboard size={ICON_SIZE} /> },
-  { key: '/patients',  label: 'ผู้ป่วย',        icon: <Users size={ICON_SIZE} /> },
-  { key: '/events',    label: 'แผนการเยี่ยม',   icon: <CalendarDays size={ICON_SIZE} /> },
-  { key: '/forms',     label: 'แบบฟอร์ม',       icon: <FileText size={ICON_SIZE} /> },
-];
-
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
 
-  const selectedKey = (items ?? []).find(
+  const role: string = (session as any)?.role ?? '';
+  const navItems: MenuProps['items'] = [
+    { key: '/dashboard', label: 'Dashboard',      icon: <LayoutDashboard size={ICON_SIZE} /> },
+    { key: '/patients',  label: 'ผู้ป่วย',        icon: <Users size={ICON_SIZE} /> },
+    { key: '/events',    label: 'แผนการเยี่ยม',   icon: <CalendarDays size={ICON_SIZE} /> },
+    { key: '/forms',     label: 'แบบฟอร์ม',       icon: <FileText size={ICON_SIZE} /> },
+    ...(role === 'ADMIN' || role === 'SUPER_ADMIN'
+      ? [{ key: '/inventory', label: 'คลังยา', icon: <Package size={ICON_SIZE} /> }]
+      : []),
+  ];
+
+  const selectedKey = (navItems ?? []).find(
     (item) => item != null && pathname.startsWith((item as { key: string }).key),
   )?.key as string ?? '/dashboard';
 
@@ -60,7 +64,7 @@ export default function Sidebar() {
       <Menu
         mode="inline"
         selectedKeys={[selectedKey]}
-        items={items}
+        items={navItems}
         onClick={({ key }) => router.push(key)}
         style={{ flex: 1, border: 'none', paddingTop: 8 }}
       />
