@@ -72,7 +72,7 @@ export class InventoryService {
     await this.prisma.$transaction(async (tx) => {
       await tx.inventoryLot.update({
         where: { id: lotId },
-        data: { isExpired: true, expiredAt: new Date(), expiredById: actorId },
+        data: { isExpired: true, expiredAt: new Date(), expiredById: actorId, remaining: 0 },
       });
       await tx.stockTransaction.create({
         data: {
