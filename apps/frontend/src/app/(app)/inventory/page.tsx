@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import {
   Button, Card, Drawer, Form, Input, InputNumber,
-  Modal, Segmented, Select, Table, Tag, Typography, message,
+  Modal, Segmented, Select, Space, Table, Tag, Typography, message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -175,7 +175,10 @@ export default function InventoryPage() {
         </div>
         <Form form={stockInForm} layout="vertical" onFinish={handleStockIn}>
           <Form.Item name="quantity" label="จำนวน" rules={[{ required: true }]}>
-            <InputNumber min={1} style={{ width: '100%' }} addonAfter={selectedItem?.unit} />
+            <Space.Compact style={{ width: '100%' }}>
+              <InputNumber min={1} style={{ flex: 1 }} />
+              <Button disabled style={{ pointerEvents: 'none', minWidth: 56 }}>{selectedItem?.unit}</Button>
+            </Space.Compact>
           </Form.Item>
           {stockInType === 'IN_PURCHASE' && (
             <>
@@ -202,7 +205,10 @@ export default function InventoryPage() {
         <Form form={adjForm} layout="vertical" onFinish={handleAdj}>
           <Form.Item name="quantity" label="จำนวน (บวก = เพิ่ม, ลบ = ลด)"
             rules={[{ required: true }, { validator: (_, v) => v !== 0 ? Promise.resolve() : Promise.reject('ต้องไม่เป็น 0') }]}>
-            <InputNumber style={{ width: '100%' }} addonAfter={selectedItem?.unit} />
+            <Space.Compact style={{ width: '100%' }}>
+              <InputNumber style={{ flex: 1 }} />
+              <Button disabled style={{ pointerEvents: 'none', minWidth: 56 }}>{selectedItem?.unit}</Button>
+            </Space.Compact>
           </Form.Item>
           <Form.Item name="reason" label="เหตุผล" rules={[{ required: true }]}>
             <Input.TextArea rows={2} placeholder="เช่น ยาหมดอายุ, สต็อกผิดพลาด" />
