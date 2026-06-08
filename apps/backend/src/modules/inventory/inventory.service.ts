@@ -34,6 +34,64 @@ export class InventoryService {
     return items.filter((i) => i.currentStock <= i.lowStockThreshold);
   }
 
+  async getExpiringLots(orgId: string) {
+    const cutoff = new Date(Date.now() + 30 * 86_400_000);
+    const lots = await this.prisma.inventoryLot.findMany({
+      where: {
+        item: { organizationId: orgId },
+        isExpired: false,
+        remaining: { gt: 0 },
+        expiryDate: { lte: cutoff },
+      },
+      include: { item: { select: { name: true, unit: true } } },
+      orderBy: { expiryDate: 'asc' },
+    });
+
+    return lots.map((lot) => ({
+      lotId: lot.id,
+      itemId: lot.itemId,
+      itemName: lot.item.name,
+      unit: lot.item.unit,
+      remaining: lot.remaining,
+      expiryDate: lot.expiryDate,
+      daysLeft: Math.ceil((lot.expiryDate.getTime() - Date.now()) / 86_400_000),
+      unitCost: lot.unitCost,
+    }));
+  }
+
+  async expireLot(lotId: string, actorId: string, orgId: string) {
+    const lot = await this.prisma.inventoryLot.findFirst({
+      where: { id: lotId, item: { organizationId: orgId } },
+      include: { item: true },
+    });
+    if (!lot) throw new NotFoundException('Lot not found');
+    if (lot.isExpired) throw new BadRequestException('Lot นี้ถูกนำออกไปแล้ว');
+
+    const newStock = lot.item.currentStock - lot.remaining;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.inventoryLot.update({
+        where: { id: lotId },
+        data: { isExpired: true, expiredAt: new Date(), expiredById: actorId },
+      });
+      await tx.stockTransaction.create({
+        data: {
+          itemId: lot.itemId,
+          actorId,
+          type: 'OUT_EXPIRED',
+          quantity: -lot.remaining,
+          balanceAfter: newStock,
+          lotId,
+          reason: 'ยาหมดอายุ',
+        },
+      });
+      await tx.inventoryItem.update({
+        where: { id: lot.itemId },
+        data: { currentStock: newStock },
+      });
+    });
+  }
+
   async getTransactionHistory(itemId: string, orgId: string) {
     await this.findItemOrThrow(itemId, orgId);
     return this.prisma.stockTransaction.findMany({

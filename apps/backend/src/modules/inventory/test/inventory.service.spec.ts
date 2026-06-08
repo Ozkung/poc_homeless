@@ -167,4 +167,72 @@ describe('InventoryService', () => {
       expect(mockPrisma.stockTransaction.create).not.toHaveBeenCalled();
     });
   });
+
+  describe('getExpiringLots', () => {
+    it('returns lots expiring within 30 days with daysLeft computed', async () => {
+      const soon = new Date(Date.now() + 15 * 86_400_000);
+      mockPrisma.inventoryLot.findMany.mockResolvedValue([
+        {
+          id: 'lot1', itemId: 'item1', remaining: 50, expiryDate: soon,
+          unitCost: 2.5, item: { name: 'Metformin 500mg', unit: 'เม็ด' },
+        },
+      ]);
+
+      const result = await service.getExpiringLots('org1');
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        lotId: 'lot1', itemName: 'Metformin 500mg', remaining: 50,
+      });
+      expect(result[0].daysLeft).toBeGreaterThanOrEqual(14);
+      expect(result[0].daysLeft).toBeLessThanOrEqual(16);
+    });
+  });
+
+  describe('expireLot', () => {
+    it('soft-deletes lot and creates OUT_EXPIRED transaction', async () => {
+      mockPrisma.inventoryLot.findFirst.mockResolvedValue({
+        id: 'lot1', itemId: 'item1', remaining: 50, isExpired: false,
+        item: { currentStock: 100, organizationId: 'org1' },
+      });
+      mockPrisma.inventoryLot.update.mockResolvedValue({ id: 'lot1', isExpired: true });
+      mockPrisma.inventoryItem.update.mockResolvedValue({ id: 'item1', currentStock: 50 });
+      mockPrisma.stockTransaction.create.mockResolvedValue({ id: 'tx1' });
+
+      await service.expireLot('lot1', 'user1', 'org1');
+
+      expect(mockPrisma.inventoryLot.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ isExpired: true, expiredById: 'user1' }),
+        }),
+      );
+      expect(mockPrisma.stockTransaction.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            type: 'OUT_EXPIRED', quantity: -50, lotId: 'lot1', balanceAfter: 50,
+          }),
+        }),
+      );
+      expect(mockPrisma.inventoryItem.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { currentStock: 50 } }),
+      );
+    });
+
+    it('throws BadRequestException if lot already expired', async () => {
+      mockPrisma.inventoryLot.findFirst.mockResolvedValue({
+        id: 'lot1', isExpired: true, remaining: 0,
+        item: { currentStock: 0, organizationId: 'org1' },
+      });
+
+      await expect(service.expireLot('lot1', 'user1', 'org1'))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('throws NotFoundException if lot not found', async () => {
+      mockPrisma.inventoryLot.findFirst.mockResolvedValue(null);
+
+      await expect(service.expireLot('bad-lot', 'user1', 'org1'))
+        .rejects.toThrow(NotFoundException);
+    });
+  });
 });
