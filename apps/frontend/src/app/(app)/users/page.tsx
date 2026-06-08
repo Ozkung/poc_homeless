@@ -6,6 +6,7 @@ import {
   Popconfirm, Select, Table, Tag, Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const { Title } = Typography;
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -45,6 +46,7 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
 
+  const isMobile = useIsMobile();
   const token = (session as any)?.accessToken ?? '';
   const myId = (session as any)?.sub ?? '';
   const headers = useCallback(() => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }), [token]);
@@ -147,14 +149,14 @@ export default function UsersPage() {
       </div>
 
       <Card>
-        <Table columns={columns} dataSource={users} rowKey="id" loading={loading} size="middle" pagination={{ pageSize: 20 }} />
+        <Table columns={columns} dataSource={users} rowKey="id" loading={loading} size="middle" pagination={{ pageSize: 20 }} scroll={{ x: 600 }} />
       </Card>
 
       <Drawer
         title={editing ? `แก้ไข: ${editing.displayName}` : 'เพิ่ม User ใหม่'}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        styles={{ wrapper: { width: 420 } }}
+        styles={{ wrapper: { width: isMobile ? '100%' : 420 } }}
       >
         <Form form={form} layout="vertical" onFinish={handleSave}>
           <Form.Item name="displayName" label="ชื่อแสดง" rules={[{ required: true }]}>

@@ -131,6 +131,7 @@ export default function PatientsPage() {
           pagination={{ pageSize: 20, showSizeChanger: false }}
           locale={{ emptyText: 'ไม่มีข้อมูลผู้ป่วย' }}
           size="middle"
+          scroll={{ x: 600 }}
         />
       </Card>
     </div>

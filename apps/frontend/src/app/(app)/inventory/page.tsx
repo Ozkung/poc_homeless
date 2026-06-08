@@ -6,6 +6,7 @@ import {
   Modal, Popconfirm, Segmented, Select, Space, Table, Tag, Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import dayjs from 'dayjs';
 import { AlertTriangle, Clock, PackageX } from 'lucide-react';
 
@@ -44,6 +45,7 @@ interface StockTx {
 export default function InventoryPage() {
   const { message } = App.useApp();
   const { data: session } = useSession();
+  const isMobile = useIsMobile();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<'DRUG' | 'SUPPLY'>('DRUG');
@@ -263,12 +265,13 @@ export default function InventoryPage() {
           pagination={{ pageSize: 20, showSizeChanger: false }}
           locale={{ emptyText: 'ยังไม่มีรายการ' }}
           rowClassName={(r) => r.currentStock <= r.lowStockThreshold ? 'bg-red-50' : ''}
+          scroll={{ x: 600 }}
         />
       </Card>
 
       {/* Stock IN Drawer */}
       <Drawer title={`รับเข้า: ${selectedItem?.name}`} open={stockInOpen}
-        onClose={() => { setStockInOpen(false); stockInForm.resetFields(); }} styles={{ wrapper: { width: 400 } }}>
+        onClose={() => { setStockInOpen(false); stockInForm.resetFields(); }} styles={{ wrapper: { width: isMobile ? '100%' : 400 } }}>
         <div style={{ marginBottom: 12 }}>
           <Segmented
             options={[{ label: '🛒 ซื้อ', value: 'IN_PURCHASE' }, { label: '💝 บริจาค', value: 'IN_DONATION' }]}
@@ -364,7 +367,7 @@ export default function InventoryPage() {
         open={expiryModalOpen}
         onCancel={() => setExpiryModalOpen(false)}
         footer={null}
-        width={700}
+        width={isMobile ? undefined : 700}
       >
         <Table
           dataSource={expiringLots}
@@ -405,7 +408,7 @@ export default function InventoryPage() {
         title={`ประวัติรายการ: ${txItem?.name}`}
         open={txOpen}
         onClose={() => setTxOpen(false)}
-        width={640}
+        width={isMobile ? '100%' : 640}
       >
         <Table
           dataSource={txList}

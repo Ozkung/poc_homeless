@@ -8,6 +8,7 @@ import {
 } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { Button, Card, Drawer, Form, Input, Select, DatePicker, Tag, Typography, message } from 'antd';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { User } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -154,6 +155,7 @@ function CreateEventForm({
 
 export default function EventsPage() {
   const { data: session } = useSession();
+  const isMobile = useIsMobile();
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -302,11 +304,12 @@ export default function EventsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', borderBottom: '1px solid #f0f0f0' }}>
           {THAI_DAY_NAMES.map((day) => (
             <div key={day} style={{
-              padding: '8px 0', textAlign: 'center',
-              fontFamily: "'Sarabun',sans-serif", fontSize: 11, color: '#aaa',
-              textTransform: 'uppercase', letterSpacing: 1,
+              padding: isMobile ? '6px 0' : '8px 0', textAlign: 'center',
+              fontFamily: "'Sarabun',sans-serif",
+              fontSize: isMobile ? 9 : 11,
+              color: '#aaa', textTransform: 'uppercase', letterSpacing: 1,
             }}>
-              {day}
+              {isMobile ? day.slice(0, 2) : day}
             </div>
           ))}
         </div>
@@ -328,10 +331,10 @@ export default function EventsPage() {
                 key={day.toISOString()}
                 onClick={() => setSelectedDate((prev) => prev && isSameDay(prev, day) ? null : day)}
                 style={{
-                  minHeight: 80,
+                  minHeight: isMobile ? 48 : 80,
                   borderBottom: '1px solid #f5f5f5',
                   borderRight: '1px solid #f5f5f5',
-                  padding: 8,
+                  padding: isMobile ? 4 : 8,
                   textAlign: 'left',
                   background: isSelected ? '#e6f4ff' : 'transparent',
                   outline: isSelected ? '2px solid #1677ff' : 'none',
@@ -389,7 +392,7 @@ export default function EventsPage() {
           ) : 'กิจกรรม'
         }
         placement="right"
-        width={400}
+        width={isMobile ? '100%' : 400}
         open={selectedDate !== null || drawerMode === 'create'}
         onClose={() => { setSelectedDate(null); setDrawerMode('view'); createForm.resetFields(); }}
         extra={
