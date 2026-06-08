@@ -1,0 +1,212 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UserRole } from '@prisma/client';
+import { CreateItemDto } from './dto/create-item.dto';
+import { StockInDto } from './dto/stock-in.dto';
+import { AdjRequestDto } from './dto/adj-request.dto';
+import { ReviewAdjDto } from './dto/review-adj.dto';
+
+@Injectable()
+export class InventoryService {
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
+
+  async createItem(orgId: string, dto: CreateItemDto) {
+    return this.prisma.inventoryItem.create({
+      data: { ...dto, organizationId: orgId, lowStockThreshold: dto.lowStockThreshold ?? 10 },
+    });
+  }
+
+  async listItems(orgId: string, category?: string) {
+    return this.prisma.inventoryItem.findMany({
+      where: { organizationId: orgId, isActive: true, ...(category ? { category: category as any } : {}) },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async getLowStockItems(orgId: string) {
+    const items = await this.prisma.inventoryItem.findMany({
+      where: { organizationId: orgId, isActive: true },
+    });
+    return items.filter((i) => i.currentStock <= i.lowStockThreshold);
+  }
+
+  async getTransactionHistory(itemId: string, orgId: string) {
+    await this.findItemOrThrow(itemId, orgId);
+    return this.prisma.stockTransaction.findMany({
+      where: { itemId },
+      include: { actor: { select: { displayName: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async stockIn(itemId: string, orgId: string, actorId: string, dto: StockInDto) {
+    const item = await this.findItemOrThrow(itemId, orgId);
+    const newStock = item.currentStock + dto.quantity;
+
+    await this.prisma.$transaction([
+      this.prisma.inventoryItem.update({
+        where: { id: itemId },
+        data: { currentStock: newStock },
+      }),
+      this.prisma.stockTransaction.create({
+        data: {
+          itemId, actorId,
+          type: dto.type,
+          quantity: dto.quantity,
+          balanceAfter: newStock,
+          donorName: dto.donorName,
+          receiptNo: dto.receiptNo,
+          unitCost: dto.unitCost,
+        },
+      }),
+    ]);
+  }
+
+  async deduct(
+    itemId: string,
+    qty: number,
+    ctx: { actorId: string; type: 'OUT_PRESCRIPTION' | 'OUT_SUPPLY'; patientId?: string; eventId?: string; orgId: string },
+  ) {
+    const item = await this.findItemOrThrow(itemId, ctx.orgId);
+    if (item.currentStock - qty < 0) {
+      throw new BadRequestException(`สต็อกไม่พอ (มี ${item.currentStock} หน่วย)`);
+    }
+    const newStock = item.currentStock - qty;
+
+    await this.prisma.$transaction([
+      this.prisma.inventoryItem.update({ where: { id: itemId }, data: { currentStock: newStock } }),
+      this.prisma.stockTransaction.create({
+        data: {
+          itemId, actorId: ctx.actorId,
+          type: ctx.type,
+          quantity: -qty,
+          balanceAfter: newStock,
+          patientId: ctx.patientId,
+          eventId: ctx.eventId,
+        },
+      }),
+    ]);
+
+    if (newStock <= item.lowStockThreshold) {
+      const admins = await this.prisma.user.findMany({
+        where: { organizationId: ctx.orgId, role: UserRole.ADMIN, lineUserId: { not: null } },
+        select: { lineUserId: true },
+      });
+      for (const a of admins) {
+        if (a.lineUserId) {
+          await this.notifications.enqueueLowStock({
+            lineUserId: a.lineUserId, itemName: item.name,
+            currentStock: newStock, threshold: item.lowStockThreshold,
+          });
+        }
+      }
+    }
+  }
+
+  async requestAdj(itemId: string, orgId: string, actorId: string, dto: AdjRequestDto) {
+    const item = await this.findItemOrThrow(itemId, orgId);
+    const requester = await this.prisma.user.findUnique({
+      where: { id: actorId }, select: { displayName: true },
+    });
+
+    const superAdmins = await this.prisma.user.findMany({
+      where: { organizationId: orgId, role: UserRole.SUPER_ADMIN, lineUserId: { not: null } },
+      select: { lineUserId: true },
+    });
+
+    if (Math.abs(dto.quantity) <= 20) {
+      const newStock = item.currentStock + dto.quantity;
+      await this.prisma.$transaction([
+        this.prisma.inventoryItem.update({ where: { id: itemId }, data: { currentStock: newStock } }),
+        this.prisma.stockTransaction.create({
+          data: {
+            itemId, actorId, type: 'ADJ_APPROVED',
+            quantity: dto.quantity, balanceAfter: newStock, reason: dto.reason,
+          },
+        }),
+      ]);
+
+      for (const sa of superAdmins) {
+        if (sa.lineUserId) {
+          await this.notifications.enqueueAdjNotify({
+            lineUserId: sa.lineUserId, itemName: item.name,
+            qty: dto.quantity, adminName: requester?.displayName ?? 'Admin',
+          });
+        }
+      }
+      return { autoApproved: true };
+    }
+
+    const adj = await this.prisma.adjRequest.create({
+      data: { itemId, requestedById: actorId, quantity: dto.quantity, reason: dto.reason },
+    });
+
+    for (const sa of superAdmins) {
+      if (sa.lineUserId) {
+        await this.notifications.enqueueAdjRequest({
+          lineUserId: sa.lineUserId, itemName: item.name,
+          qty: dto.quantity, adminName: requester?.displayName ?? 'Admin',
+          reason: dto.reason, adjId: adj.id,
+        });
+      }
+    }
+    return { autoApproved: false, adjId: adj.id };
+  }
+
+  async getPendingAdj(orgId: string) {
+    return this.prisma.adjRequest.findMany({
+      where: { item: { organizationId: orgId }, status: 'PENDING' },
+      include: {
+        item: { select: { name: true, unit: true } },
+        requester: { select: { displayName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async reviewAdj(adjId: string, reviewerId: string, orgId: string, dto: ReviewAdjDto) {
+    const adj = await this.prisma.adjRequest.findFirst({
+      where: { id: adjId, item: { organizationId: orgId }, status: 'PENDING' },
+      include: { item: true, requester: { select: { lineUserId: true } } },
+    });
+    if (!adj) throw new NotFoundException('AdjRequest not found');
+
+    await this.prisma.adjRequest.update({
+      where: { id: adjId },
+      data: { status: dto.status, reviewedById: reviewerId, reviewNote: dto.reviewNote },
+    });
+
+    if (dto.status === 'APPROVED') {
+      const newStock = adj.item.currentStock + adj.quantity;
+      await this.prisma.$transaction([
+        this.prisma.inventoryItem.update({ where: { id: adj.itemId }, data: { currentStock: newStock } }),
+        this.prisma.stockTransaction.create({
+          data: {
+            itemId: adj.itemId, actorId: reviewerId, type: 'ADJ_APPROVED',
+            quantity: adj.quantity, balanceAfter: newStock, reason: adj.reason,
+          },
+        }),
+      ]);
+    }
+
+    if (adj.requester.lineUserId) {
+      await this.notifications.enqueueAdjResult({
+        lineUserId: adj.requester.lineUserId, itemName: adj.item.name,
+        qty: adj.quantity, approved: dto.status === 'APPROVED', reviewNote: dto.reviewNote,
+      });
+    }
+  }
+
+  private async findItemOrThrow(itemId: string, orgId: string) {
+    const item = await this.prisma.inventoryItem.findFirst({
+      where: { id: itemId, organizationId: orgId, isActive: true },
+    });
+    if (!item) throw new NotFoundException('Inventory item not found');
+    return item;
+  }
+}
