@@ -36,6 +36,7 @@ async function main() {
 
   // ── Users ─────────────────────────────────────────────────────────────────
   const adminPw   = await hash('Admin1234!');
+  const saPw      = await hash('SuperAdmin1!');
   const cmPw      = await hash('CaseManager1!');
   const fwPw      = await hash('FieldWork1!');
 
@@ -49,6 +50,19 @@ async function main() {
       passwordHash: adminPw,
       role: 'ADMIN',
       displayName: 'ผู้ดูแลระบบ',
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'sa@hospital.th' },
+    update: {},
+    create: {
+      id: 'user-seed-sa',
+      organizationId: org.id,
+      email: 'sa@hospital.th',
+      passwordHash: saPw,
+      role: 'SUPER_ADMIN',
+      displayName: 'ผู้อำนวยการ',
     },
   });
 
@@ -91,7 +105,7 @@ async function main() {
     },
   });
 
-  console.log(`✓ Users: admin, cm1, cm2, fw1`);
+  console.log(`✓ Users: admin, sa, cm1, cm2, fw1`);
 
   // ── Patients ──────────────────────────────────────────────────────────────
   const patientsData = [
@@ -513,6 +527,7 @@ async function main() {
   console.log('  admin@hospital.th   / Admin1234!     (ADMIN)');
   console.log('  cm1@hospital.th     / CaseManager1!  (CASE_MANAGER)');
   console.log('  cm2@hospital.th     / CaseManager1!  (CASE_MANAGER)');
+  console.log('  sa@hospital.th      / SuperAdmin1!   (SUPER_ADMIN)');
   console.log('  fw1@hospital.th     / FieldWork1!    (FIELD_WORKER)');
 }
 
