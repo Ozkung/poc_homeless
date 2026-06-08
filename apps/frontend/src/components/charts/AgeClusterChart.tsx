@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useRef } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
@@ -14,6 +15,17 @@ interface AgeClusterChartProps {
 }
 
 export default function AgeClusterChart({ bands }: AgeClusterChartProps) {
+  const chartRef = useRef<Highcharts.Chart | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => chartRef.current?.reflow());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const options: Highcharts.Options = {
     chart: {
       type: 'column',
@@ -57,26 +69,20 @@ export default function AgeClusterChart({ bands }: AgeClusterChartProps) {
       },
     },
     series: [
-      {
-        type: 'column',
-        name: 'วิกฤต',
-        color: '#ff4d4f',
-        data: bands.map((b) => b.critical),
-      },
-      {
-        type: 'column',
-        name: 'รอดำเนินการ',
-        color: '#faad14',
-        data: bands.map((b) => b.pending),
-      },
-      {
-        type: 'column',
-        name: 'ปกติ',
-        color: '#52c41a',
-        data: bands.map((b) => b.stable),
-      },
+      { type: 'column', name: 'วิกฤต',         color: '#ff4d4f', data: bands.map((b) => b.critical) },
+      { type: 'column', name: 'รอดำเนินการ',   color: '#faad14', data: bands.map((b) => b.pending)  },
+      { type: 'column', name: 'ปกติ',          color: '#52c41a', data: bands.map((b) => b.stable)   },
     ],
   };
 
-  return <HighchartsReact highcharts={Highcharts} options={options} />;
+  return (
+    <div ref={containerRef} style={{ width: '100%' }}>
+      <HighchartsReact
+        highcharts={Highcharts}
+        options={options}
+        containerProps={{ style: { width: '100%' } }}
+        callback={(chart: Highcharts.Chart) => { chartRef.current = chart; }}
+      />
+    </div>
+  );
 }
