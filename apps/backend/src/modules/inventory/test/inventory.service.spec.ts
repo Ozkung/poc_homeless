@@ -4,8 +4,14 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
-const mockPrisma = {
+const mockPrisma: any = {
   inventoryItem: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+  },
+  inventoryLot: {
     create: jest.fn(),
     findMany: jest.fn(),
     findFirst: jest.fn(),
@@ -17,7 +23,10 @@ const mockPrisma = {
     findFirst: jest.fn(), update: jest.fn(),
   },
   user: { findMany: jest.fn(), findUnique: jest.fn() },
-  $transaction: jest.fn((ops: any[]) => Promise.all(ops)),
+  $transaction: jest.fn((fnOrOps: any) => {
+    if (typeof fnOrOps === 'function') return fnOrOps(mockPrisma);
+    return Promise.all(fnOrOps);
+  }),
 };
 
 const mockNotifications = {
@@ -43,25 +52,47 @@ describe('InventoryService', () => {
   });
 
   describe('stockIn', () => {
-    it('increases currentStock and creates StockTransaction', async () => {
+    it('creates InventoryLot + StockTransaction and updates currentStock', async () => {
       mockPrisma.inventoryItem.findFirst.mockResolvedValue(
         { id: 'item1', currentStock: 100, name: 'Metformin', organizationId: 'org1' },
       );
+      mockPrisma.inventoryLot.create.mockResolvedValue({ id: 'lot1' });
       mockPrisma.inventoryItem.update.mockResolvedValue({ id: 'item1', currentStock: 150 });
       mockPrisma.stockTransaction.create.mockResolvedValue({ id: 'tx1' });
 
       await service.stockIn('item1', 'org1', 'user1', {
-        type: 'IN_PURCHASE', quantity: 50, receiptNo: 'RX-001', unitCost: 2.5,
+        type: 'IN_PURCHASE', quantity: 50,
+        expiryDate: '2027-01-01', receiptNo: 'RX-001', unitCost: 2.5,
       });
 
-      expect(mockPrisma.inventoryItem.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { currentStock: 150 } }),
+      expect(mockPrisma.inventoryLot.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            itemId: 'item1', quantity: 50, remaining: 50,
+            expiryDate: new Date('2027-01-01'),
+          }),
+        }),
       );
       expect(mockPrisma.stockTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ type: 'IN_PURCHASE', quantity: 50, balanceAfter: 150 }),
+          data: expect.objectContaining({
+            type: 'IN_PURCHASE', quantity: 50, balanceAfter: 150, lotId: 'lot1',
+          }),
         }),
       );
+      expect(mockPrisma.inventoryItem.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { currentStock: 150 } }),
+      );
+    });
+
+    it('throws BadRequestException when expiryDate is in the past', async () => {
+      mockPrisma.inventoryItem.findFirst.mockResolvedValue(
+        { id: 'item1', currentStock: 100, name: 'Metformin', organizationId: 'org1' },
+      );
+
+      await expect(service.stockIn('item1', 'org1', 'user1', {
+        type: 'IN_PURCHASE', quantity: 50, expiryDate: '2020-01-01',
+      })).rejects.toThrow(BadRequestException);
     });
   });
 

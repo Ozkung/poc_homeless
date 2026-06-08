@@ -46,25 +46,46 @@ export class InventoryService {
 
   async stockIn(itemId: string, orgId: string, actorId: string, dto: StockInDto) {
     const item = await this.findItemOrThrow(itemId, orgId);
+
+    if (new Date(dto.expiryDate) <= new Date()) {
+      throw new BadRequestException('วันหมดอายุต้องเป็นวันในอนาคต');
+    }
+
     const newStock = item.currentStock + dto.quantity;
 
-    await this.prisma.$transaction([
-      this.prisma.inventoryItem.update({
+    await this.prisma.$transaction(async (tx) => {
+      const lot = await tx.inventoryLot.create({
+        data: {
+          itemId,
+          actorId,
+          quantity: dto.quantity,
+          remaining: dto.quantity,
+          expiryDate: new Date(dto.expiryDate),
+          receiptNo: dto.receiptNo,
+          donorName: dto.donorName,
+          unitCost: dto.unitCost,
+        },
+      });
+
+      await tx.inventoryItem.update({
         where: { id: itemId },
         data: { currentStock: newStock },
-      }),
-      this.prisma.stockTransaction.create({
+      });
+
+      await tx.stockTransaction.create({
         data: {
-          itemId, actorId,
+          itemId,
+          actorId,
           type: dto.type,
           quantity: dto.quantity,
           balanceAfter: newStock,
           donorName: dto.donorName,
           receiptNo: dto.receiptNo,
           unitCost: dto.unitCost,
+          lotId: lot.id,
         },
-      }),
-    ]);
+      });
+    });
   }
 
   async deduct(
