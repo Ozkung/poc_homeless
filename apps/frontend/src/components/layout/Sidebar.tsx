@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, Package } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, Package, UserCircle } from 'lucide-react';
 import type { MenuProps } from 'antd';
 
 const { Text } = Typography;
@@ -22,6 +22,9 @@ export default function Sidebar() {
     { key: '/forms',     label: 'แบบฟอร์ม',       icon: <FileText size={ICON_SIZE} /> },
     ...(role === 'ADMIN' || role === 'SUPER_ADMIN'
       ? [{ key: '/inventory', label: 'คลังยา', icon: <Package size={ICON_SIZE} /> }]
+      : []),
+    ...(role === 'SUPER_ADMIN'
+      ? [{ key: '/users', label: 'ผู้ใช้งาน', icon: <Users size={ICON_SIZE} /> }]
       : []),
   ];
 
@@ -71,7 +74,10 @@ export default function Sidebar() {
 
       {/* User footer */}
       <div style={{ padding: 12, borderTop: '1px solid #f5f5f5' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#fafafa', borderRadius: 8, marginBottom: 8 }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#fafafa', borderRadius: 8, marginBottom: 8, cursor: 'pointer' }}
+          onClick={() => router.push('/profile')}
+        >
           <Avatar size={28} style={{ background: '#1677ff', fontSize: 11, fontWeight: 700 }}>
             {initials}
           </Avatar>
@@ -83,6 +89,7 @@ export default function Sidebar() {
               {role || 'USER'}
             </Text>
           </div>
+          <UserCircle size={14} style={{ color: '#bbb', flexShrink: 0 }} />
         </div>
         <Button
           block
