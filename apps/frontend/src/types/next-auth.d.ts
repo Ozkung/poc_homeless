@@ -5,10 +5,14 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string;
     role?: string;
+    displayName?: string;
+    avatarUrl?: string | null;
   }
   interface User {
     accessToken?: string;
     role?: string;
+    displayName?: string;
+    avatarUrl?: string | null;
   }
 }
 
@@ -16,5 +20,7 @@ declare module 'next-auth/jwt' {
   interface JWT {
     accessToken?: string;
     role?: string;
+    displayName?: string;
+    avatarUrl?: string | null;
   }
 }

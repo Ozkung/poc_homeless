@@ -31,12 +31,16 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = user.accessToken;
         token.refreshToken = (user as any).refreshToken;
         token.role = user.role;
+        token.displayName = (user as any).displayName;
+        token.avatarUrl = (user as any).avatarUrl ?? null;
       }
       return token;
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.role = token.role;
+      session.displayName = token.displayName as string | undefined;
+      session.avatarUrl = token.avatarUrl as string | null | undefined;
       return session;
     },
   },

@@ -24,7 +24,7 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    return this.issueTokens(user.id, user.email, user.role, user.organizationId);
+    return this.issueTokens(user.id, user.email, user.role, user.organizationId, user.displayName, user.avatarUrl ?? null);
   }
 
   async refresh(refreshToken: string) {
@@ -39,7 +39,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.isActive) throw new UnauthorizedException();
 
-    return this.issueTokens(user.id, user.email, user.role, user.organizationId);
+    return this.issueTokens(user.id, user.email, user.role, user.organizationId, user.displayName, user.avatarUrl ?? null);
   }
 
   async logout(refreshToken: string) {
@@ -85,9 +85,9 @@ export class AuthService {
     return { message: 'Setup complete' };
   }
 
-  private async issueTokens(userId: string, email: string, role: string, orgId: string) {
+  private async issueTokens(userId: string, email: string, role: string, orgId: string, displayName: string, avatarUrl: string | null) {
     const accessToken = await this.jwt.signAsync(
-      { sub: userId, email, role, orgId },
+      { sub: userId, email, role, orgId, displayName, avatarUrl },
       { expiresIn: this.config.get('jwt.expiresIn') },
     );
 

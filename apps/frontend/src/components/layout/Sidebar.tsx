@@ -29,7 +29,7 @@ export default function Sidebar() {
     (item) => item != null && pathname.startsWith((item as { key: string }).key),
   )?.key as string ?? '/dashboard';
 
-  const userName: string = (session as any)?.user?.name ?? 'Case Manager';
+  const userName: string = (session as any)?.displayName ?? (session as any)?.user?.name ?? 'ผู้ใช้งาน';
   const initials = userName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -80,7 +80,7 @@ export default function Sidebar() {
               {userName}
             </Text>
             <Text style={{ fontSize: 10, color: '#bbb' }}>
-              CASE_MANAGER
+              {role || 'USER'}
             </Text>
           </div>
         </div>
