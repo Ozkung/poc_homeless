@@ -63,6 +63,7 @@ enum TransactionType {
   OUT_PRESCRIPTION
   OUT_SUPPLY
   ADJ_APPROVED
+  OUT_EXPIRED
 }
 
 enum AdjStatus {
@@ -109,6 +110,8 @@ model User {
   stockTransactions    StockTransaction[] @relation("StockActor")
   adjRequestsMade      AdjRequest[]       @relation("AdjRequester")
   adjRequestsReviewed  AdjRequest[]       @relation("AdjReviewer")
+  lotsReceived         InventoryLot[]     @relation("LotReceiver")
+  lotsExpired          InventoryLot[]     @relation("LotExpirer")
 }
 
 model Patient {
@@ -268,6 +271,7 @@ model InventoryItem {
 
   transactions StockTransaction[]
   adjRequests  AdjRequest[]
+  lots         InventoryLot[]
 }
 
 model StockTransaction {
@@ -285,6 +289,8 @@ model StockTransaction {
   receiptNo    String?
   unitCost     Float?
   reason       String?
+  lotId        String?
+  lot          InventoryLot? @relation(fields: [lotId], references: [id])
   createdAt    DateTime        @default(now())
 }
 
@@ -302,4 +308,25 @@ model AdjRequest {
   reviewNote      String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+}
+
+model InventoryLot {
+  id          String        @id @default(uuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  quantity    Int
+  remaining   Int
+  expiryDate  DateTime
+  receivedAt  DateTime      @default(now())
+  receiptNo   String?
+  donorName   String?
+  unitCost    Float?
+  actorId     String
+  actor       User          @relation("LotReceiver", fields: [actorId], references: [id])
+  isExpired   Boolean       @default(false)
+  expiredAt   DateTime?
+  expiredById String?
+  expiredBy   User?         @relation("LotExpirer", fields: [expiredById], references: [id])
+
+  transactions StockTransaction[]
 }

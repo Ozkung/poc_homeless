@@ -7,10 +7,9 @@ import { resolve } from 'path';
 dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const prisma = new PrismaClient();
-
 const ENC_KEY = process.env.ENCRYPTION_KEY ?? '0'.repeat(64);
 
-function encryptName(plaintext: string): string {
+function encrypt(plaintext: string): string {
   const key = Buffer.from(ENC_KEY, 'hex');
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key, iv);
@@ -19,417 +18,526 @@ function encryptName(plaintext: string): string {
   return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
 }
 
-async function hash(pw: string) {
-  return bcrypt.hash(pw, 12);
-}
+const hash = (pw: string) => bcrypt.hash(pw, 12);
+const ago  = (d: number) => new Date(Date.now() - d * 86_400_000);
+const fwd  = (d: number) => new Date(Date.now() + d * 86_400_000);
 
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // ── Organisation ─────────────────────────────────────────────────────────
+  // ── Organisation ──────────────────────────────────────────────────────────
   const org = await prisma.organization.upsert({
-    where: { id: 'org-seed-001' },
+    where:  { id: 'org-seed-001' },
     update: {},
     create: { id: 'org-seed-001', name: 'โรงพยาบาลชุมชนกรุงเทพ' },
   });
   console.log(`✓ Organisation: ${org.name}`);
 
-  // ── Users ─────────────────────────────────────────────────────────────────
-  const adminPw   = await hash('Admin1234!');
-  const saPw      = await hash('SuperAdmin1!');
-  const cmPw      = await hash('CaseManager1!');
-  const fwPw      = await hash('FieldWork1!');
+  // ── Users (with phone + gender) ───────────────────────────────────────────
+  const [adminPw, saPw, cmPw, fwPw, mvPw] = await Promise.all([
+    hash('Admin1234!'), hash('SuperAdmin1!'), hash('CaseManager1!'),
+    hash('FieldWork1!'),  hash('MedVol1234!'),
+  ]);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@hospital.th' },
-    update: {},
+    where:  { email: 'admin@hospital.th' },
+    update: { phone: '02-000-1234', gender: 'MALE' },
     create: {
-      id: 'user-seed-admin',
-      organizationId: org.id,
-      email: 'admin@hospital.th',
-      passwordHash: adminPw,
-      role: 'ADMIN',
-      displayName: 'ผู้ดูแลระบบ',
+      id: 'user-seed-admin', organizationId: org.id,
+      email: 'admin@hospital.th', passwordHash: adminPw,
+      role: 'ADMIN', displayName: 'ผู้ดูแลระบบ',
+      phone: '02-000-1234', gender: 'MALE',
     },
   });
 
   await prisma.user.upsert({
-    where: { email: 'sa@hospital.th' },
-    update: {},
+    where:  { email: 'sa@hospital.th' },
+    update: { phone: '081-999-8888', gender: 'FEMALE' },
     create: {
-      id: 'user-seed-sa',
-      organizationId: org.id,
-      email: 'sa@hospital.th',
-      passwordHash: saPw,
-      role: 'SUPER_ADMIN',
-      displayName: 'ผู้อำนวยการ',
+      id: 'user-seed-sa', organizationId: org.id,
+      email: 'sa@hospital.th', passwordHash: saPw,
+      role: 'SUPER_ADMIN', displayName: 'ผู้อำนวยการ สุดา',
+      phone: '081-999-8888', gender: 'FEMALE',
     },
   });
 
   const cm1 = await prisma.user.upsert({
-    where: { email: 'cm1@hospital.th' },
-    update: {},
+    where:  { email: 'cm1@hospital.th' },
+    update: { phone: '081-234-5678', gender: 'MALE' },
     create: {
-      id: 'user-seed-cm1',
-      organizationId: org.id,
-      email: 'cm1@hospital.th',
-      passwordHash: cmPw,
-      role: 'CASE_MANAGER',
-      displayName: 'นายสมชาย ดูแลดี',
+      id: 'user-seed-cm1', organizationId: org.id,
+      email: 'cm1@hospital.th', passwordHash: cmPw,
+      role: 'CASE_MANAGER', displayName: 'นายสมชาย ดูแลดี',
+      phone: '081-234-5678', gender: 'MALE',
     },
   });
 
   const cm2 = await prisma.user.upsert({
-    where: { email: 'cm2@hospital.th' },
-    update: {},
+    where:  { email: 'cm2@hospital.th' },
+    update: { phone: '089-876-5432', gender: 'FEMALE' },
     create: {
-      id: 'user-seed-cm2',
-      organizationId: org.id,
-      email: 'cm2@hospital.th',
-      passwordHash: cmPw,
-      role: 'CASE_MANAGER',
-      displayName: 'น.ส.มาลี ใจดี',
+      id: 'user-seed-cm2', organizationId: org.id,
+      email: 'cm2@hospital.th', passwordHash: cmPw,
+      role: 'CASE_MANAGER', displayName: 'น.ส.มาลี ใจดี',
+      phone: '089-876-5432', gender: 'FEMALE',
     },
   });
 
   const fw1 = await prisma.user.upsert({
-    where: { email: 'fw1@hospital.th' },
-    update: {},
+    where:  { email: 'fw1@hospital.th' },
+    update: { phone: '062-345-6789', gender: 'MALE' },
     create: {
-      id: 'user-seed-fw1',
-      organizationId: org.id,
-      email: 'fw1@hospital.th',
-      passwordHash: fwPw,
-      role: 'FIELD_WORKER',
-      displayName: 'นายประยุทธ ลงพื้นที่',
+      id: 'user-seed-fw1', organizationId: org.id,
+      email: 'fw1@hospital.th', passwordHash: fwPw,
+      role: 'FIELD_WORKER', displayName: 'นายประยุทธ ลงพื้นที่',
+      phone: '062-345-6789', gender: 'MALE',
     },
   });
 
-  console.log(`✓ Users: admin, sa, cm1, cm2, fw1`);
+  const mv1 = await prisma.user.upsert({
+    where:  { email: 'mv1@hospital.th' },
+    update: { phone: '065-111-2222', gender: 'FEMALE' },
+    create: {
+      id: 'user-seed-mv1', organizationId: org.id,
+      email: 'mv1@hospital.th', passwordHash: mvPw,
+      role: 'MEDICAL_VOLUNTEER', displayName: 'น.ส.รัตนา ใจเกื้อ',
+      phone: '065-111-2222', gender: 'FEMALE',
+    },
+  });
+
+  console.log(`✓ Users: admin, sa, cm1, cm2, fw1, mv1 (พร้อม phone + gender)`);
 
   // ── Patients ──────────────────────────────────────────────────────────────
   const patientsData = [
-    {
-      id: 'pat-seed-001', hn: 'HN000001',
-      name: 'นายสมศักดิ์ พลัดบ้าน', age: 52, gender: 'MALE' as const,
-      status: 'CRITICAL' as const, locationText: 'ใต้สะพานพระราม 4',
-      conditions: ['เบาหวาน', 'ความดันโลหิตสูง'],
-    },
-    {
-      id: 'pat-seed-002', hn: 'HN000002',
-      name: 'นางสาวอรุณี หาที่พัก', age: 38, gender: 'FEMALE' as const,
-      status: 'PENDING' as const, locationText: 'ตลาดนัดจตุจักร',
-      conditions: ['วัณโรค'],
-    },
-    {
-      id: 'pat-seed-003', hn: 'HN000003',
-      name: 'นายวิชัย ไร้ที่อยู่', age: 67, gender: 'MALE' as const,
-      status: 'STABLE' as const, locationText: 'สวนลุมพินี',
-      conditions: ['ข้ออักเสบ', 'ต้อกระจก'],
-    },
-    {
-      id: 'pat-seed-004', hn: 'HN000004',
-      name: 'นางมะลิ สีเงิน', age: 45, gender: 'FEMALE' as const,
-      status: 'STABLE' as const, locationText: 'หน้าห้างสรรพสินค้าบิ๊กซี รามคำแหง',
-      conditions: [],
-    },
-    {
-      id: 'pat-seed-005', hn: 'HN000005',
-      name: 'นายอานนท์ ทุกข์ยาก', age: 29, gender: 'MALE' as const,
-      status: 'CRITICAL' as const, locationText: 'บริเวณสถานีรถไฟหัวลำโพง',
-      conditions: ['ติดยาเสพติด', 'HIV'],
-    },
-    {
-      id: 'pat-seed-006', hn: 'HN000006',
-      name: 'นางรัตนา ชีวิตใหม่', age: 55, gender: 'FEMALE' as const,
-      status: 'PENDING' as const, locationText: 'ชุมชนแออัดคลองเตย',
-      conditions: ['เบาหวาน'],
-    },
-    {
-      id: 'pat-seed-007', hn: 'HN000007',
-      name: 'นายบุญมี ขาดรายได้', age: 73, gender: 'MALE' as const,
-      status: 'STABLE' as const, locationText: 'วัดโพธิ์ ท่าเตียน',
-      conditions: ['หัวใจ', 'ความดันโลหิตสูง'],
-    },
+    { id: 'pat-seed-001', hn: 'HN000001', name: 'นายสมศักดิ์ พลัดบ้าน',    age: 52, gender: 'MALE'   as const, status: 'CRITICAL' as const, locationText: 'ใต้สะพานพระราม 4',                    conditions: ['เบาหวาน', 'ความดันโลหิตสูง'], cmId: cm1.id },
+    { id: 'pat-seed-002', hn: 'HN000002', name: 'นางสาวอรุณี หาที่พัก',    age: 38, gender: 'FEMALE' as const, status: 'PENDING'  as const, locationText: 'ตลาดนัดจตุจักร',                     conditions: ['วัณโรค'],                      cmId: cm1.id },
+    { id: 'pat-seed-003', hn: 'HN000003', name: 'นายวิชัย ไร้ที่อยู่',     age: 67, gender: 'MALE'   as const, status: 'STABLE'   as const, locationText: 'สวนลุมพินี',                          conditions: ['ข้ออักเสบ', 'ต้อกระจก'],       cmId: cm2.id },
+    { id: 'pat-seed-004', hn: 'HN000004', name: 'นางมะลิ สีเงิน',         age: 45, gender: 'FEMALE' as const, status: 'STABLE'   as const, locationText: 'หน้าห้างบิ๊กซี รามคำแหง',            conditions: [],                              cmId: cm2.id },
+    { id: 'pat-seed-005', hn: 'HN000005', name: 'นายอานนท์ ทุกข์ยาก',    age: 29, gender: 'MALE'   as const, status: 'CRITICAL' as const, locationText: 'บริเวณสถานีรถไฟหัวลำโพง',           conditions: ['ติดยาเสพติด', 'HIV'],          cmId: cm1.id },
+    { id: 'pat-seed-006', hn: 'HN000006', name: 'นางรัตนา ชีวิตใหม่',     age: 55, gender: 'FEMALE' as const, status: 'PENDING'  as const, locationText: 'ชุมชนแออัดคลองเตย',                 conditions: ['เบาหวาน'],                     cmId: cm2.id },
+    { id: 'pat-seed-007', hn: 'HN000007', name: 'นายบุญมี ขาดรายได้',     age: 73, gender: 'MALE'   as const, status: 'STABLE'   as const, locationText: 'วัดโพธิ์ ท่าเตียน',                  conditions: ['หัวใจ', 'ความดันโลหิตสูง'],   cmId: cm2.id },
+    { id: 'pat-seed-008', hn: 'HN000008', name: 'นายธนากร ไม่มีบ้าน',    age: 19, gender: 'MALE'   as const, status: 'MISSING'  as const, locationText: 'บริเวณเยาวราช',                      conditions: ['ซึมเศร้า'],                    cmId: cm1.id },
   ];
 
   for (const p of patientsData) {
     await prisma.patient.upsert({
-      where: { hn: p.hn },
-      update: {},
+      where:  { hn: p.hn },
+      update: { status: p.status },
       create: {
-        id: p.id,
-        organizationId: org.id,
-        caseManagerId: cm1.id,
-        nameEnc: encryptName(p.name),
-        hn: p.hn,
-        age: p.age,
-        gender: p.gender,
-        status: p.status,
-        locationText: p.locationText,
-        conditions: p.conditions,
+        id: p.id, organizationId: org.id, caseManagerId: p.cmId,
+        nameEnc: encrypt(p.name), hn: p.hn, age: p.age,
+        gender: p.gender, status: p.status,
+        locationText: p.locationText, conditions: p.conditions,
       },
     });
   }
   console.log(`✓ Patients: ${patientsData.length} records`);
 
+  // ── Care Plan Items ───────────────────────────────────────────────────────
+  const carePlanData = [
+    // pat-001 เบาหวาน + ความดัน
+    { id: 'cp-001-1', patientId: 'pat-seed-001', title: 'ตรวจระดับน้ำตาลในเลือด',         frequency: 'ทุกสัปดาห์',  priority: 'HIGH', assigneeName: cm1.displayName, isDone: false },
+    { id: 'cp-001-2', patientId: 'pat-seed-001', title: 'จ่ายยา Metformin 500mg',          frequency: 'ทุกเดือน',    priority: 'HIGH', assigneeName: fw1.displayName, isDone: false },
+    { id: 'cp-001-3', patientId: 'pat-seed-001', title: 'วัดความดันโลหิต',                 frequency: 'ทุกสัปดาห์',  priority: 'MED',  assigneeName: mv1.displayName, isDone: false },
+    // pat-002 วัณโรค
+    { id: 'cp-002-1', patientId: 'pat-seed-002', title: 'ให้ยา Isoniazid + Rifampicin',   frequency: 'ทุกวัน',      priority: 'HIGH', assigneeName: cm1.displayName, isDone: false },
+    { id: 'cp-002-2', patientId: 'pat-seed-002', title: 'ติดตามอาการทางเดินหายใจ',        frequency: 'ทุกสัปดาห์',  priority: 'HIGH', assigneeName: mv1.displayName, isDone: false },
+    { id: 'cp-002-3', patientId: 'pat-seed-002', title: 'ส่งตรวจเสมหะ',                   frequency: 'ทุก 2 สัปดาห์', priority: 'MED', assigneeName: cm1.displayName, isDone: true },
+    // pat-003 ข้ออักเสบ + ต้อกระจก
+    { id: 'cp-003-1', patientId: 'pat-seed-003', title: 'จ่ายยาแก้ปวดข้อ',               frequency: 'ทุก 2 สัปดาห์', priority: 'MED', assigneeName: cm2.displayName, isDone: false },
+    { id: 'cp-003-2', patientId: 'pat-seed-003', title: 'ประสานส่งต่อผ่าตัดต้อกระจก',   frequency: 'ครั้งเดียว',   priority: 'LOW',  assigneeName: cm2.displayName, isDone: false },
+    // pat-004 ไม่มีโรคประจำตัว
+    { id: 'cp-004-1', patientId: 'pat-seed-004', title: 'ประเมินสุขภาพประจำเดือน',       frequency: 'ทุกเดือน',    priority: 'LOW',  assigneeName: cm2.displayName, isDone: false },
+    // pat-005 HIV + ยาเสพติด
+    { id: 'cp-005-1', patientId: 'pat-seed-005', title: 'ให้ยา Efavirenz',                frequency: 'ทุกวัน',      priority: 'HIGH', assigneeName: cm1.displayName, isDone: false },
+    { id: 'cp-005-2', patientId: 'pat-seed-005', title: 'นัดพบนักสังคมสงเคราะห์',        frequency: 'ทุก 2 สัปดาห์', priority: 'HIGH', assigneeName: cm1.displayName, isDone: false },
+    { id: 'cp-005-3', patientId: 'pat-seed-005', title: 'ตรวจ CD4',                      frequency: 'ทุก 3 เดือน',  priority: 'MED',  assigneeName: mv1.displayName, isDone: true },
+    // pat-006 เบาหวาน
+    { id: 'cp-006-1', patientId: 'pat-seed-006', title: 'ตรวจระดับน้ำตาล HbA1c',        frequency: 'ทุก 3 เดือน',  priority: 'HIGH', assigneeName: cm2.displayName, isDone: false },
+    { id: 'cp-006-2', patientId: 'pat-seed-006', title: 'จ่ายยา Metformin 500mg',        frequency: 'ทุกเดือน',    priority: 'HIGH', assigneeName: fw1.displayName, isDone: false },
+    // pat-007 หัวใจ + ความดัน
+    { id: 'cp-007-1', patientId: 'pat-seed-007', title: 'ตรวจ EKG',                     frequency: 'ทุก 3 เดือน',  priority: 'HIGH', assigneeName: mv1.displayName, isDone: true },
+    { id: 'cp-007-2', patientId: 'pat-seed-007', title: 'จ่ายยา Atenolol 50mg',         frequency: 'ทุกเดือน',    priority: 'HIGH', assigneeName: fw1.displayName, isDone: false },
+    { id: 'cp-007-3', patientId: 'pat-seed-007', title: 'วัดความดันโลหิต',              frequency: 'ทุกสัปดาห์',  priority: 'MED',  assigneeName: cm2.displayName, isDone: false },
+    // pat-008 ซึมเศร้า
+    { id: 'cp-008-1', patientId: 'pat-seed-008', title: 'ค้นหาผู้ป่วย',                 frequency: 'ทุกวัน',      priority: 'HIGH', assigneeName: cm1.displayName, isDone: false },
+    { id: 'cp-008-2', patientId: 'pat-seed-008', title: 'ประสานกรมสุขภาพจิต',          frequency: 'ครั้งเดียว',   priority: 'HIGH', assigneeName: admin.displayName, isDone: false },
+  ];
+
+  for (const cp of carePlanData) {
+    await prisma.carePlanItem.upsert({
+      where:  { id: cp.id },
+      update: { isDone: cp.isDone },
+      create: {
+        id: cp.id, patientId: cp.patientId,
+        title: cp.title, frequency: cp.frequency,
+        priority: cp.priority, assigneeName: cp.assigneeName,
+        isDone: cp.isDone,
+      },
+    });
+  }
+  console.log(`✓ Care plan items: ${carePlanData.length} records`);
+
+  // ── Alerts ────────────────────────────────────────────────────────────────
+  await prisma.alert.createMany({
+    skipDuplicates: true,
+    data: [
+      { id: 'alert-001', patientId: 'pat-seed-001', type: 'OVERDUE', daysMissed: 9,  sentAt: ago(2) },
+      { id: 'alert-002', patientId: 'pat-seed-002', type: 'OVERDUE', daysMissed: 14, sentAt: ago(5) },
+      { id: 'alert-003', patientId: 'pat-seed-005', type: 'SOS',     lat: 13.7400, lng: 100.5159, sentAt: ago(1) },
+      { id: 'alert-004', patientId: 'pat-seed-008', type: 'MISSING', daysMissed: 21, sentAt: ago(3) },
+      { id: 'alert-005', patientId: 'pat-seed-006', type: 'OVERDUE', daysMissed: 6,  sentAt: ago(1), resolvedAt: ago(0), resolvedBy: cm2.id },
+    ],
+  });
+  console.log(`✓ Alerts: 5 records (OVERDUE ×3, SOS ×1, MISSING ×1)`);
+
   // ── Form Templates ────────────────────────────────────────────────────────
   const form1 = await prisma.formTemplate.upsert({
-    where: { id: 'form-seed-001' },
+    where:  { id: 'form-seed-001' },
     update: {},
     create: {
-      id: 'form-seed-001',
-      organizationId: org.id,
-      createdById: admin.id,
+      id: 'form-seed-001', organizationId: org.id, createdById: admin.id,
       title: 'แบบประเมินสุขภาพเบื้องต้น',
       description: 'ใช้ประเมินสุขภาพผู้ป่วยในชุมชนครั้งแรก',
       fields: [
-        { id: 'f1', type: 'number', label: 'น้ำหนัก (กก.)', required: true, order: 0 },
-        { id: 'f2', type: 'number', label: 'ส่วนสูง (ซม.)', required: true, order: 1 },
-        { id: 'f3', type: 'number', label: 'ความดันโลหิต (Systolic)', required: false, order: 2 },
-        { id: 'f4', type: 'number', label: 'ความดันโลหิต (Diastolic)', required: false, order: 3 },
-        { id: 'f5', type: 'select', label: 'ระดับความเจ็บปวด', required: true, order: 4 },
-        { id: 'f6', type: 'textarea', label: 'อาการที่สังเกตพบ', required: false, order: 5 },
+        { id: 'f1', type: 'number',   label: 'น้ำหนัก (กก.)',                required: true,  order: 0 },
+        { id: 'f2', type: 'number',   label: 'ส่วนสูง (ซม.)',                required: true,  order: 1 },
+        { id: 'f3', type: 'number',   label: 'ความดันโลหิต (Systolic)',       required: false, order: 2 },
+        { id: 'f4', type: 'number',   label: 'ความดันโลหิต (Diastolic)',      required: false, order: 3 },
+        { id: 'f5', type: 'select',   label: 'ระดับความเจ็บปวด (1-10)',      required: true,  order: 4 },
+        { id: 'f6', type: 'textarea', label: 'อาการที่สังเกตพบ',              required: false, order: 5 },
       ],
     },
   });
 
   const form2 = await prisma.formTemplate.upsert({
-    where: { id: 'form-seed-002' },
+    where:  { id: 'form-seed-002' },
     update: {},
     create: {
-      id: 'form-seed-002',
-      organizationId: org.id,
-      createdById: cm1.id,
+      id: 'form-seed-002', organizationId: org.id, createdById: cm1.id,
       title: 'แบบประเมินความเสี่ยงและความต้องการ',
-      description: 'ประเมินความเสี่ยงและความต้องการขั้นพื้นฐานของผู้ป่วย',
+      description: 'ประเมินความเสี่ยงและความต้องการขั้นพื้นฐาน',
       fields: [
-        { id: 'g1', type: 'radio', label: 'มีที่พักอาศัยหรือไม่', required: true, order: 0 },
-        { id: 'g2', type: 'radio', label: 'มีรายได้ประจำหรือไม่', required: true, order: 1 },
-        { id: 'g3', type: 'scale', label: 'ระดับความปลอดภัยในพื้นที่ (1-5)', required: false, order: 2 },
-        { id: 'g4', type: 'text', label: 'ญาติผู้ใกล้ชิดที่ติดต่อได้', required: false, order: 3 },
-        { id: 'g5', type: 'textarea', label: 'ความต้องการเร่งด่วน', required: false, order: 4 },
+        { id: 'g1', type: 'radio',    label: 'มีที่พักอาศัยหรือไม่',          required: true,  order: 0 },
+        { id: 'g2', type: 'radio',    label: 'มีรายได้ประจำหรือไม่',          required: true,  order: 1 },
+        { id: 'g3', type: 'scale',    label: 'ระดับความปลอดภัยในพื้นที่ (1-5)', required: false, order: 2 },
+        { id: 'g4', type: 'text',     label: 'ญาติผู้ใกล้ชิดที่ติดต่อได้',   required: false, order: 3 },
+        { id: 'g5', type: 'textarea', label: 'ความต้องการเร่งด่วน',           required: false, order: 4 },
       ],
     },
   });
+  console.log(`✓ Form templates: 2 records`);
 
-  console.log(`✓ Form templates: ${form1.title}, ${form2.title}`);
+  // ── Events + Tasks + Submissions + Activities ─────────────────────────────
+  // helper: upsert task, return created id
+  async function mkTask(id: string, eventId: string, patientId: string, assigneeId: string,
+    formTemplateId: string | null, status: 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'NOT_FOUND',
+    createdAt: Date) {
+    return prisma.eventTask.upsert({
+      where:  { id },
+      update: { status },
+      create: { id, eventId, patientId, assigneeId, formTemplateId: formTemplateId ?? undefined, status, createdAt },
+    });
+  }
 
-  // ── Events ────────────────────────────────────────────────────────────────
-  const now = new Date();
-  const inDays = (d: number) => new Date(now.getTime() + d * 86400_000);
+  // helper: create submission
+  function answers1(weight: string, height: string, sys: string, dia: string, pain: string, note: string) {
+    return [
+      { fieldId: 'f1', value: encrypt(weight) },
+      { fieldId: 'f2', value: encrypt(height) },
+      { fieldId: 'f3', value: encrypt(sys)    },
+      { fieldId: 'f4', value: encrypt(dia)    },
+      { fieldId: 'f5', value: encrypt(pain)   },
+      { fieldId: 'f6', value: encrypt(note)   },
+    ];
+  }
+  function answers2(shelter: string, income: string, safety: string, contact: string, needs: string) {
+    return [
+      { fieldId: 'g1', value: encrypt(shelter)  },
+      { fieldId: 'g2', value: encrypt(income)   },
+      { fieldId: 'g3', value: encrypt(safety)   },
+      { fieldId: 'g4', value: encrypt(contact)  },
+      { fieldId: 'g5', value: encrypt(needs)    },
+    ];
+  }
 
-  const event1 = await prisma.event.upsert({
-    where: { id: 'evt-seed-001' },
+  async function mkSubmission(id: string, taskId: string, patientId: string, formId: string,
+    submitterId: string, ans: object[], submittedAt: Date) {
+    return prisma.submission.upsert({
+      where:  { id },
+      update: {},
+      create: { id, taskId, patientId, formTemplateId: formId, submittedById: submitterId, answers: ans, submittedAt },
+    });
+  }
+
+  // ── EVT-OLD-001: สำรวจผู้ป่วยใหม่ในชุมชน (45 วันที่แล้ว — ครบ) ──────────
+  const evtOld1 = await prisma.event.upsert({
+    where:  { id: 'evt-old-001' },
     update: {},
     create: {
-      id: 'evt-seed-001',
-      organizationId: org.id,
-      createdById: cm1.id,
+      id: 'evt-old-001', organizationId: org.id, createdById: cm1.id,
+      title: 'สำรวจผู้ป่วยใหม่ในชุมชน',
+      startDate: ago(45), endDate: ago(44), priority: 'URGENT',
+      note: 'สำรวจและประเมินผู้ป่วยรายใหม่ในพื้นที่คลองเตยและบริเวณใกล้เคียง',
+      createdAt: ago(50),
+    },
+  });
+  await mkTask('tk-o1-1', evtOld1.id, 'pat-seed-002', cm1.id, form2.id, 'DONE',        ago(50));
+  await mkTask('tk-o1-2', evtOld1.id, 'pat-seed-006', cm2.id, form2.id, 'DONE',        ago(50));
+  await mkTask('tk-o1-3', evtOld1.id, 'pat-seed-007', cm2.id, form1.id, 'DONE',        ago(50));
+  await mkTask('tk-o1-4', evtOld1.id, 'pat-seed-008', cm1.id, form2.id, 'NOT_FOUND',   ago(50));
+
+  await mkSubmission('sub-o1-1', 'tk-o1-1', 'pat-seed-002', form2.id, cm1.id,
+    answers2('ไม่มี', 'ไม่มี', '2', '-', 'ต้องการยาวัณโรคและที่พักฉุกเฉิน'), ago(44));
+  await mkSubmission('sub-o1-2', 'tk-o1-2', 'pat-seed-006', form2.id, cm2.id,
+    answers2('มี', 'ไม่มี', '3', 'ลูกสาว 081-000-1111', 'ยาเบาหวานหมด'), ago(44));
+  await mkSubmission('sub-o1-3', 'tk-o1-3', 'pat-seed-007', form1.id, cm2.id,
+    answers1('58', '162', '145', '88', '3', 'ปวดข้อเข่าและข้อมือ มองไม่ชัด'), ago(44));
+
+  // ── EVT-OLD-002: แจกยาและตรวจสุขภาพ กุมภาพันธ์ (30 วันที่แล้ว — ครบ) ──
+  const evtOld2 = await prisma.event.upsert({
+    where:  { id: 'evt-old-002' },
+    update: {},
+    create: {
+      id: 'evt-old-002', organizationId: org.id, createdById: cm1.id,
+      title: 'แจกยาและตรวจสุขภาพประจำเดือน (กุมภาพันธ์)',
+      startDate: ago(30), endDate: ago(29), priority: 'URGENT',
+      note: 'เน้นผู้ป่วยโรคเรื้อรัง จ่ายยาและตรวจสัญญาณชีพ',
+      createdAt: ago(35),
+    },
+  });
+  await mkTask('tk-o2-1', evtOld2.id, 'pat-seed-001', fw1.id,  form1.id, 'DONE',     ago(35));
+  await mkTask('tk-o2-2', evtOld2.id, 'pat-seed-003', fw1.id,  form1.id, 'DONE',     ago(35));
+  await mkTask('tk-o2-3', evtOld2.id, 'pat-seed-004', cm1.id,  form1.id, 'DONE',     ago(35));
+  await mkTask('tk-o2-4', evtOld2.id, 'pat-seed-006', cm2.id,  form1.id, 'NOT_FOUND',ago(35));
+  await mkTask('tk-o2-5', evtOld2.id, 'pat-seed-007', mv1.id,  form1.id, 'DONE',     ago(35));
+
+  await mkSubmission('sub-o2-1', 'tk-o2-1', 'pat-seed-001', form1.id, fw1.id,
+    answers1('65', '168', '158', '96', '6', 'ผู้ป่วยมีอาการปวดศีรษะและเวียนหัว ความดันสูง'), ago(29));
+  await mkSubmission('sub-o2-2', 'tk-o2-2', 'pat-seed-003', form1.id, fw1.id,
+    answers1('60', '170', '128', '80', '4', 'ปวดข้อเข่าทั้งสองข้าง เดินลำบาก'), ago(29));
+  await mkSubmission('sub-o2-3', 'tk-o2-3', 'pat-seed-004', form1.id, cm1.id,
+    answers1('62', '158', '118', '74', '1', 'ไม่มีอาการผิดปกติ'), ago(29));
+  await mkSubmission('sub-o2-5', 'tk-o2-5', 'pat-seed-007', form1.id, mv1.id,
+    answers1('55', '165', '148', '90', '5', 'เหนื่อยง่าย แน่นหน้าอกเล็กน้อย'), ago(29));
+
+  // ── EVT-OLD-003: ติดตามผู้ป่วยวัณโรค (21 วันที่แล้ว — ครบ) ──────────────
+  const evtOld3 = await prisma.event.upsert({
+    where:  { id: 'evt-old-003' },
+    update: {},
+    create: {
+      id: 'evt-old-003', organizationId: org.id, createdById: cm1.id,
+      title: 'ติดตามผู้ป่วยวัณโรคและ HIV',
+      startDate: ago(21), endDate: ago(20), priority: 'CRITICAL',
+      note: 'ติดตามการรับยาวัณโรคและ ARV อย่างต่อเนื่อง สำคัญมาก',
+      createdAt: ago(25),
+    },
+  });
+  await mkTask('tk-o3-1', evtOld3.id, 'pat-seed-002', cm1.id, form1.id, 'DONE', ago(25));
+  await mkTask('tk-o3-2', evtOld3.id, 'pat-seed-005', fw1.id, form2.id, 'DONE', ago(25));
+
+  await mkSubmission('sub-o3-1', 'tk-o3-1', 'pat-seed-002', form1.id, cm1.id,
+    answers1('50', '160', '108', '68', '3', 'อาการดีขึ้น รับยาต่อเนื่อง ไอลดลง'), ago(20));
+  await mkSubmission('sub-o3-2', 'tk-o3-2', 'pat-seed-005', form2.id, fw1.id,
+    answers2('ไม่มี', 'ไม่มี', '1', '-', 'ต้องการที่พักและยา ARV เร่งด่วน'), ago(20));
+
+  // ── EVT-OLD-004: แจกยาและตรวจสุขภาพ มีนาคม (14 วันที่แล้ว — ครบ) ───────
+  const evtOld4 = await prisma.event.upsert({
+    where:  { id: 'evt-old-004' },
+    update: {},
+    create: {
+      id: 'evt-old-004', organizationId: org.id, createdById: cm2.id,
+      title: 'แจกยาและตรวจสุขภาพประจำเดือน (มีนาคม)',
+      startDate: ago(14), endDate: ago(13), priority: 'URGENT',
+      note: 'จ่ายยาประจำเดือน ตรวจระดับน้ำตาลและความดัน',
+      createdAt: ago(18),
+    },
+  });
+  await mkTask('tk-o4-1', evtOld4.id, 'pat-seed-001', fw1.id,  form1.id, 'DONE',       ago(18));
+  await mkTask('tk-o4-2', evtOld4.id, 'pat-seed-003', cm2.id,  form1.id, 'DONE',       ago(18));
+  await mkTask('tk-o4-3', evtOld4.id, 'pat-seed-005', cm1.id,  form2.id, 'DONE',       ago(18));
+  await mkTask('tk-o4-4', evtOld4.id, 'pat-seed-007', mv1.id,  form1.id, 'DONE',       ago(18));
+  await mkTask('tk-o4-5', evtOld4.id, 'pat-seed-006', cm2.id,  form1.id, 'IN_PROGRESS',ago(18));
+
+  await mkSubmission('sub-o4-1', 'tk-o4-1', 'pat-seed-001', form1.id, fw1.id,
+    answers1('64', '168', '162', '98', '7', 'ความดันยังสูง เพิ่มขนาดยา'), ago(13));
+  await mkSubmission('sub-o4-2', 'tk-o4-2', 'pat-seed-003', form1.id, cm2.id,
+    answers1('59', '170', '130', '82', '3', 'อาการคงที่ ปวดข้อลดลง'), ago(13));
+  await mkSubmission('sub-o4-3', 'tk-o4-3', 'pat-seed-005', form2.id, cm1.id,
+    answers2('ไม่มี', 'ไม่มี', '1', '-', 'ต้องการยา ARV ด่วน และบำบัดยาเสพติด'), ago(13));
+  await mkSubmission('sub-o4-4', 'tk-o4-4', 'pat-seed-007', form1.id, mv1.id,
+    answers1('54', '165', '152', '92', '5', 'แน่นหน้าอกบ่อยขึ้น ส่งต่อแพทย์'), ago(13));
+
+  // ── EVT-OLD-005: เยี่ยมผู้ป่วยฉุกเฉิน SOS (7 วันที่แล้ว — ส่วนใหญ่ครบ) ─
+  const evtOld5 = await prisma.event.upsert({
+    where:  { id: 'evt-old-005' },
+    update: {},
+    create: {
+      id: 'evt-old-005', organizationId: org.id, createdById: cm1.id,
+      title: 'เยี่ยมผู้ป่วยฉุกเฉิน — ตามสัญญาณ SOS',
+      startDate: ago(7), endDate: ago(7), priority: 'CRITICAL',
+      note: 'ผู้ป่วย HN000005 ส่งสัญญาณ SOS บริเวณหัวลำโพง',
+      createdAt: ago(7),
+    },
+  });
+  await mkTask('tk-o5-1', evtOld5.id, 'pat-seed-005', cm1.id, form2.id, 'DONE',       ago(7));
+  await mkTask('tk-o5-2', evtOld5.id, 'pat-seed-001', fw1.id, form1.id, 'DONE',       ago(7));
+  await mkTask('tk-o5-3', evtOld5.id, 'pat-seed-008', cm1.id, null,     'NOT_FOUND',  ago(7));
+
+  await mkSubmission('sub-o5-1', 'tk-o5-1', 'pat-seed-005', form2.id, cm1.id,
+    answers2('ไม่มี', 'ไม่มี', '1', '-', 'พบผู้ป่วยนอนหมดสติ ส่งรพ.ด่วน'), ago(7));
+  await mkSubmission('sub-o5-2', 'tk-o5-2', 'pat-seed-001', form1.id, fw1.id,
+    answers1('63', '168', '160', '97', '8', 'ผู้ป่วยมีอาการรุนแรง วิงเวียนมาก'), ago(7));
+
+  // ── EVT-CURR-001: ลงพื้นที่เยี่ยมผู้ป่วยวิกฤต (วันนี้ — กำลังดำเนินการ) ─
+  const evtCurr1 = await prisma.event.upsert({
+    where:  { id: 'evt-curr-001' },
+    update: {},
+    create: {
+      id: 'evt-curr-001', organizationId: org.id, createdById: cm1.id,
       title: 'ลงพื้นที่เยี่ยมผู้ป่วยวิกฤต',
-      startDate: inDays(1),
-      endDate: inDays(1),
-      priority: 'CRITICAL',
+      startDate: fwd(0), endDate: fwd(1), priority: 'CRITICAL',
       note: 'เน้นผู้ป่วยที่มีอาการรุนแรง ต้องเตรียมยาและอุปกรณ์ฉุกเฉิน',
     },
   });
+  await mkTask('tk-c1-1', evtCurr1.id, 'pat-seed-001', fw1.id,  form1.id, 'IN_PROGRESS', ago(0));
+  await mkTask('tk-c1-2', evtCurr1.id, 'pat-seed-005', cm1.id,  form2.id, 'PENDING',     ago(0));
+  await mkTask('tk-c1-3', evtCurr1.id, 'pat-seed-002', mv1.id,  form1.id, 'PENDING',     ago(0));
 
-  const event2 = await prisma.event.upsert({
-    where: { id: 'evt-seed-002' },
+  // ── EVT-CURR-002: ติดตามผู้ป่วยกลุ่มเบาหวาน (สัปดาห์นี้ — รอดำเนินการ) ─
+  const evtCurr2 = await prisma.event.upsert({
+    where:  { id: 'evt-curr-002' },
     update: {},
     create: {
-      id: 'evt-seed-002',
-      organizationId: org.id,
-      createdById: cm1.id,
+      id: 'evt-curr-002', organizationId: org.id, createdById: cm2.id,
       title: 'ติดตามผู้ป่วยกลุ่มเบาหวาน',
-      startDate: inDays(3),
-      endDate: inDays(5),
-      priority: 'URGENT',
-      note: 'เจาะเลือดและแจกยาประจำเดือน',
+      startDate: fwd(2), endDate: fwd(4), priority: 'URGENT',
+      note: 'เจาะเลือดและแจกยาประจำเดือน เน้น pat-001 และ pat-006',
     },
   });
+  await mkTask('tk-c2-1', evtCurr2.id, 'pat-seed-001', cm1.id, form1.id, 'PENDING', ago(0));
+  await mkTask('tk-c2-2', evtCurr2.id, 'pat-seed-006', cm2.id, form1.id, 'PENDING', ago(0));
+  await mkTask('tk-c2-3', evtCurr2.id, 'pat-seed-004', fw1.id, form2.id, 'PENDING', ago(0));
 
-  const event3 = await prisma.event.upsert({
-    where: { id: 'evt-seed-003' },
+  // ── EVT-FUT-001: เยี่ยมผู้ป่วยประจำเดือน เมษายน (+7 วัน) ───────────────
+  const evtFut1 = await prisma.event.upsert({
+    where:  { id: 'evt-fut-001' },
     update: {},
     create: {
-      id: 'evt-seed-003',
-      organizationId: org.id,
-      createdById: cm2.id,
-      title: 'เยี่ยมผู้ป่วยประจำเดือน',
-      startDate: inDays(7),
-      endDate: inDays(8),
-      priority: 'NORMAL',
+      id: 'evt-fut-001', organizationId: org.id, createdById: cm2.id,
+      title: 'เยี่ยมผู้ป่วยประจำเดือน (เมษายน)',
+      startDate: fwd(7), endDate: fwd(8), priority: 'NORMAL',
+      note: 'เยี่ยมผู้ป่วยกลุ่ม STABLE ทุกราย จ่ายยาและประเมินสุขภาพ',
     },
   });
+  await mkTask('tk-f1-1', evtFut1.id, 'pat-seed-003', cm2.id, form1.id, 'PENDING', ago(0));
+  await mkTask('tk-f1-2', evtFut1.id, 'pat-seed-004', cm1.id, form2.id, 'PENDING', ago(0));
+  await mkTask('tk-f1-3', evtFut1.id, 'pat-seed-007', fw1.id, form1.id, 'PENDING', ago(0));
+  await mkTask('tk-f1-4', evtFut1.id, 'pat-seed-006', mv1.id, form1.id, 'PENDING', ago(0));
 
-  console.log(`✓ Events: 3 records`);
-
-  // ── Event Tasks ───────────────────────────────────────────────────────────
-  await prisma.eventTask.upsert({
-    where: { id: 'task-seed-001' },
+  // ── EVT-FUT-002: ฝึกอบรมอาสาสมัครใหม่ (+14 วัน) ─────────────────────────
+  const evtFut2 = await prisma.event.upsert({
+    where:  { id: 'evt-fut-002' },
     update: {},
     create: {
-      id: 'task-seed-001',
-      eventId: event1.id,
-      patientId: 'pat-seed-001',
-      assigneeId: fw1.id,
-      formTemplateId: form1.id,
-      status: 'PENDING',
+      id: 'evt-fut-002', organizationId: org.id, createdById: admin.id,
+      title: 'ฝึกอบรมอาสาสมัครและทีมภาคสนาม',
+      startDate: fwd(14), endDate: fwd(15), priority: 'NORMAL',
+      note: 'อบรมการประเมินสุขภาพเบื้องต้น การใช้แอปพลิเคชัน LIFF และการกรอกแบบฟอร์ม',
     },
   });
+  // ไม่มี patient tasks — เป็น event ฝึกอบรม
+  console.log(`✓ Events: 9 records (5 past / 2 current / 2 future)`);
+  void evtFut2;
 
-  await prisma.eventTask.upsert({
-    where: { id: 'task-seed-002' },
-    update: {},
-    create: {
-      id: 'task-seed-002',
-      eventId: event1.id,
-      patientId: 'pat-seed-005',
-      assigneeId: fw1.id,
-      formTemplateId: form1.id,
-      status: 'PENDING',
-    },
-  });
-
-  await prisma.eventTask.upsert({
-    where: { id: 'task-seed-003' },
-    update: {},
-    create: {
-      id: 'task-seed-003',
-      eventId: event2.id,
-      patientId: 'pat-seed-001',
-      assigneeId: cm1.id,
-      formTemplateId: form2.id,
-      status: 'IN_PROGRESS',
-    },
-  });
-
-  await prisma.eventTask.upsert({
-    where: { id: 'task-seed-004' },
-    update: {},
-    create: {
-      id: 'task-seed-004',
-      eventId: event3.id,
-      patientId: 'pat-seed-003',
-      assigneeId: cm2.id,
-      status: 'PENDING',
-    },
-  });
-
-  console.log(`✓ Event tasks: 4 records`);
+  const totalTasks = 4+5+2+5+3  + 3+3  + 4+0;
+  console.log(`✓ Event tasks: ${totalTasks} records`);
 
   // ── Activities ────────────────────────────────────────────────────────────
   await prisma.activity.createMany({
     skipDuplicates: true,
     data: [
-      { id: 'act-001', actorId: cm1.id, patientId: 'pat-seed-001', type: 'CHECK_IN',      payload: { note: 'ผู้ป่วยอาการทรงตัว ให้ยาและนัดติดตาม' }, createdAt: inDays(-5) },
-      { id: 'act-002', actorId: cm1.id, patientId: 'pat-seed-001', type: 'STATUS_CHANGE',  payload: { from: 'PENDING', to: 'CRITICAL' },               createdAt: inDays(-3) },
-      { id: 'act-003', actorId: fw1.id,  patientId: 'pat-seed-002', type: 'CHECK_IN',      payload: { note: 'พบผู้ป่วยบริเวณตลาด ส่งต่อพยาบาล' },      createdAt: inDays(-7) },
-      { id: 'act-004', actorId: cm2.id,  patientId: 'pat-seed-003', type: 'NOTE',           payload: { note: 'ผู้ป่วยขอยาลดปวดข้อ' },                  createdAt: inDays(-2) },
-      { id: 'act-005', actorId: cm1.id,  patientId: 'pat-seed-005', type: 'ASSIGN',         payload: { assignee: fw1.displayName },                     createdAt: inDays(-1) },
+      // ── Past activities ──
+      { id: 'act-001', actorId: cm1.id, patientId: 'pat-seed-001', eventId: evtOld2.id, taskId: 'tk-o2-1', type: 'CHECK_IN',     payload: { note: 'พบผู้ป่วย ความดันสูงมาก แจกยาและนัดติดตาม' }, createdAt: ago(30) },
+      { id: 'act-002', actorId: cm1.id, patientId: 'pat-seed-001', type: 'STATUS_CHANGE', payload: { from: 'PENDING', to: 'CRITICAL' }, createdAt: ago(28) },
+      { id: 'act-003', actorId: fw1.id,  patientId: 'pat-seed-002', eventId: evtOld1.id, taskId: 'tk-o1-1', type: 'FORM_SUBMIT',  payload: { formTitle: 'แบบประเมินความเสี่ยงฯ' },               createdAt: ago(44) },
+      { id: 'act-004', actorId: cm2.id,  patientId: 'pat-seed-003', eventId: evtOld2.id, taskId: 'tk-o2-2', type: 'CHECK_IN',     payload: { note: 'ผู้ป่วยขอยาลดปวดข้อ อาการทรงตัว' },         createdAt: ago(29) },
+      { id: 'act-005', actorId: cm1.id,  patientId: 'pat-seed-005', type: 'ASSIGN',      payload: { assignee: fw1.displayName },                                                                  createdAt: ago(21) },
+      { id: 'act-006', actorId: cm1.id,  patientId: 'pat-seed-005', eventId: evtOld5.id, taskId: 'tk-o5-1', type: 'SOS',         payload: { lat: 13.7400, lng: 100.5159, note: 'พบผู้ป่วยหมดสติ ส่ง รพ.ด่วน' }, createdAt: ago(7) },
+      { id: 'act-007', actorId: cm1.id,  patientId: 'pat-seed-005', type: 'STATUS_CHANGE', payload: { from: 'STABLE', to: 'CRITICAL' }, createdAt: ago(6) },
+      { id: 'act-008', actorId: cm2.id,  patientId: 'pat-seed-006', type: 'NOTE',         payload: { note: 'ผู้ป่วยไม่อยู่บ้าน ทิ้งยาและนัดหมายใหม่' },                                         createdAt: ago(14) },
+      { id: 'act-009', actorId: mv1.id,  patientId: 'pat-seed-007', eventId: evtOld4.id, taskId: 'tk-o4-4', type: 'FORM_SUBMIT', payload: { formTitle: 'แบบประเมินสุขภาพเบื้องต้น' },            createdAt: ago(13) },
+      { id: 'act-010', actorId: cm1.id,  patientId: 'pat-seed-008', type: 'NOTE',         payload: { note: 'ค้นหาผู้ป่วย HN000008 บริเวณเยาวราช ไม่พบ' },                                       createdAt: ago(5) },
+      { id: 'act-011', actorId: cm1.id,  patientId: 'pat-seed-008', type: 'STATUS_CHANGE', payload: { from: 'PENDING', to: 'MISSING' }, createdAt: ago(4) },
+      // ── Today / current ──
+      { id: 'act-012', actorId: fw1.id,  patientId: 'pat-seed-001', eventId: evtCurr1.id, taskId: 'tk-c1-1', type: 'CHECK_IN',  payload: { note: 'เริ่มลงพื้นที่ ค้นหาผู้ป่วยใต้สะพานพระราม 4' }, createdAt: ago(0) },
+      { id: 'act-013', actorId: admin.id, type: 'LOGIN',            payload: { ip: '127.0.0.1' },                                                                                                  createdAt: ago(0) },
     ],
   });
-
-  console.log(`✓ Activities: 5 records`);
+  console.log(`✓ Activities: 13 records`);
 
   // ── Inventory ─────────────────────────────────────────────────────────────
-  // Helper: date relative to today
-  const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
-
-  // 12 items (8 drugs + 4 supplies)
   const invItems = [
-    { id: 'inv-item-001', name: 'Metformin 500mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 50 },
-    { id: 'inv-item-002', name: 'Amlodipine 5mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 30 },
-    { id: 'inv-item-003', name: 'Paracetamol 500mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 100 },
-    { id: 'inv-item-004', name: 'Omeprazole 20mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 20 },
-    { id: 'inv-item-005', name: 'Isoniazid 300mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 15 },
-    { id: 'inv-item-006', name: 'Rifampicin 600mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 15 },
-    { id: 'inv-item-007', name: 'Efavirenz 600mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 10 },
-    { id: 'inv-item-008', name: 'Atenolol 50mg', unit: 'เม็ด', category: 'DRUG', lowStockThreshold: 20 },
-    { id: 'inv-item-009', name: 'ถุงมือไนไตรล์ M', unit: 'ถุง', category: 'SUPPLY', lowStockThreshold: 10 },
-    { id: 'inv-item-010', name: 'หน้ากาก N95', unit: 'ชิ้น', category: 'SUPPLY', lowStockThreshold: 20 },
-    { id: 'inv-item-011', name: 'แอลกอฮอล์ 70% 450ml', unit: 'ขวด', category: 'SUPPLY', lowStockThreshold: 5 },
-    { id: 'inv-item-012', name: 'ชุดเจาะเลือดปลายนิ้ว', unit: 'กล่อง', category: 'SUPPLY', lowStockThreshold: 5 },
+    { id: 'inv-item-001', name: 'Metformin 500mg',          unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 50  },
+    { id: 'inv-item-002', name: 'Amlodipine 5mg',           unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 30  },
+    { id: 'inv-item-003', name: 'Paracetamol 500mg',        unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 100 },
+    { id: 'inv-item-004', name: 'Omeprazole 20mg',          unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 20  },
+    { id: 'inv-item-005', name: 'Isoniazid 300mg',          unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 15  },
+    { id: 'inv-item-006', name: 'Rifampicin 600mg',         unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 15  },
+    { id: 'inv-item-007', name: 'Efavirenz 600mg',          unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 10  },
+    { id: 'inv-item-008', name: 'Atenolol 50mg',            unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 20  },
+    { id: 'inv-item-009', name: 'ถุงมือไนไตรล์ M',          unit: 'ถุง',    category: 'SUPPLY', lowStockThreshold: 10  },
+    { id: 'inv-item-010', name: 'หน้ากาก N95',              unit: 'ชิ้น',   category: 'SUPPLY', lowStockThreshold: 20  },
+    { id: 'inv-item-011', name: 'แอลกอฮอล์ 70% 450ml',     unit: 'ขวด',    category: 'SUPPLY', lowStockThreshold: 5   },
+    { id: 'inv-item-012', name: 'ชุดเจาะเลือดปลายนิ้ว',   unit: 'กล่อง',  category: 'SUPPLY', lowStockThreshold: 5   },
   ] as const;
 
-  // Transaction blueprint per item:
-  // [daysAgo, type, qty, meta?]
-  type TxBlueprint = {
-    d: number; type: 'IN_PURCHASE' | 'IN_DONATION' | 'OUT_PRESCRIPTION' | 'OUT_SUPPLY' | 'ADJ_APPROVED';
-    qty: number; receiptNo?: string; donorName?: string; reason?: string;
-    patientId?: string; actorId?: string;
-  };
+  type TxBP = { d: number; type: 'IN_PURCHASE'|'IN_DONATION'|'OUT_PRESCRIPTION'|'OUT_SUPPLY'|'ADJ_APPROVED'; qty: number; receiptNo?: string; donorName?: string; reason?: string; patientId?: string; actorId?: string };
+  const pats = ['pat-seed-001','pat-seed-002','pat-seed-003','pat-seed-004','pat-seed-005','pat-seed-006','pat-seed-007'];
 
-  const patients = ['pat-seed-001','pat-seed-002','pat-seed-003','pat-seed-004','pat-seed-005','pat-seed-006','pat-seed-007'];
-
-  // Build blueprints for each item (deterministic, no random)
-  function drugBlueprints(
-    purchaseQtys: [number, number, number],  // initial, month-1, month-2
-    weeklyDispense: number,
-    adjDay?: number, adjQty?: number,
-  ): TxBlueprint[] {
-    const txs: TxBlueprint[] = [];
-
-    // Initial purchase ~92 days ago
-    txs.push({ d: 92, type: 'IN_PURCHASE', qty: purchaseQtys[0], receiptNo: 'RX-2026-001', actorId: 'user-seed-admin' });
-    // Month-1 restock ~61 days ago
-    txs.push({ d: 61, type: 'IN_PURCHASE', qty: purchaseQtys[1], receiptNo: 'RX-2026-002', actorId: 'user-seed-admin' });
-    // Month-2 restock ~30 days ago
-    txs.push({ d: 30, type: 'IN_PURCHASE', qty: purchaseQtys[2], receiptNo: 'RX-2026-003', actorId: 'user-seed-admin' });
-
-    // Weekly dispensing (every 3-4 days, 13 dispenses over 3 months)
-    const dispenseDays = [89,86,82,78,74,70,66,62,57,52,46,38,30,23,16,10,5,2];
-    dispenseDays.forEach((d, i) => {
-      const pid = patients[i % patients.length];
-      txs.push({ d, type: 'OUT_PRESCRIPTION', qty: weeklyDispense, patientId: pid, actorId: 'user-seed-cm1' });
+  function drugBP(pq: [number,number,number], wd: number, adjDay?: number, adjQty?: number): TxBP[] {
+    const txs: TxBP[] = [];
+    txs.push({ d:92,  type:'IN_PURCHASE', qty:pq[0], receiptNo:'RX-2026-001', actorId:'user-seed-admin' });
+    txs.push({ d:61,  type:'IN_PURCHASE', qty:pq[1], receiptNo:'RX-2026-002', actorId:'user-seed-admin' });
+    txs.push({ d:30,  type:'IN_PURCHASE', qty:pq[2], receiptNo:'RX-2026-003', actorId:'user-seed-admin' });
+    [89,86,82,78,74,70,66,62,57,52,46,38,30,23,16,10,5,2].forEach((d,i) => {
+      txs.push({ d, type:'OUT_PRESCRIPTION', qty:wd, patientId: pats[i%pats.length], actorId:'user-seed-cm1' });
     });
-
-    // Optional ADJ correction
-    if (adjDay !== undefined && adjQty !== undefined) {
-      txs.push({ d: adjDay, type: 'ADJ_APPROVED', qty: adjQty, reason: 'นับสต็อกปลายเดือน', actorId: 'user-seed-admin' });
-    }
-
-    return txs.sort((a, b) => b.d - a.d); // oldest first
+    if (adjDay !== undefined && adjQty !== undefined)
+      txs.push({ d:adjDay, type:'ADJ_APPROVED', qty:adjQty, reason:'นับสต็อกปลายเดือน', actorId:'user-seed-admin' });
+    return txs.sort((a,b) => b.d - a.d);
   }
 
-  function supplyBlueprints(
-    initQty: number, restockQty: number, dispenseQty: number, donationDay?: number, donationQty?: number,
-  ): TxBlueprint[] {
-    const txs: TxBlueprint[] = [];
-    txs.push({ d: 92, type: 'IN_PURCHASE', qty: initQty, receiptNo: 'RX-2026-001', actorId: 'user-seed-admin' });
-    txs.push({ d: 58, type: 'IN_PURCHASE', qty: restockQty, receiptNo: 'RX-2026-004', actorId: 'user-seed-admin' });
-    if (donationDay) txs.push({ d: donationDay, type: 'IN_DONATION', qty: donationQty!, donorName: 'มูลนิธิกรุงเทพ', actorId: 'user-seed-admin' });
-
-    const dispenseDays = [88,80,72,63,55,45,36,28,21,14,7,3];
-    dispenseDays.forEach((d, i) => {
-      txs.push({ d, type: 'OUT_SUPPLY', qty: dispenseQty, actorId: 'user-seed-fw1' });
+  function supplyBP(iq: number, rq: number, dq: number, donDay?: number, donQty?: number): TxBP[] {
+    const txs: TxBP[] = [];
+    txs.push({ d:92, type:'IN_PURCHASE', qty:iq,  receiptNo:'RX-2026-001', actorId:'user-seed-admin' });
+    txs.push({ d:58, type:'IN_PURCHASE', qty:rq,  receiptNo:'RX-2026-004', actorId:'user-seed-admin' });
+    if (donDay) txs.push({ d:donDay, type:'IN_DONATION', qty:donQty!, donorName:'มูลนิธิกรุงเทพ', actorId:'user-seed-admin' });
+    [88,80,72,63,55,45,36,28,21,14,7,3].forEach(d => {
+      txs.push({ d, type:'OUT_SUPPLY', qty:dq, actorId:'user-seed-fw1' });
     });
-
-    return txs.sort((a, b) => b.d - a.d);
+    return txs.sort((a,b) => b.d - a.d);
   }
 
-  const blueprintMap: Record<string, TxBlueprint[]> = {
-    'inv-item-001': drugBlueprints([500, 300, 250], 15, 45, -5),   // Metformin
-    'inv-item-002': drugBlueprints([300, 200, 150], 10, 35, -3),   // Amlodipine
-    'inv-item-003': drugBlueprints([1000, 600, 500], 25, 70, -8),  // Paracetamol
-    'inv-item-004': drugBlueprints([200, 120, 100], 8, 20),        // Omeprazole
-    'inv-item-005': drugBlueprints([150, 80, 60], 5),              // Isoniazid
-    'inv-item-006': drugBlueprints([150, 80, 60], 5),              // Rifampicin
-    'inv-item-007': drugBlueprints([120, 60, 50], 4, 20, -2),      // Efavirenz
-    'inv-item-008': drugBlueprints([250, 150, 120], 8, 25),        // Atenolol
-    'inv-item-009': supplyBlueprints(80, 40, 5, 40, 20),           // ถุงมือ
-    'inv-item-010': supplyBlueprints(100, 50, 7, 35, 30),          // N95
-    'inv-item-011': supplyBlueprints(40, 20, 2, 25, 10),           // แอลกอฮอล์
-    'inv-item-012': supplyBlueprints(30, 15, 2),                   // ชุดเจาะเลือด
+  const blueprintMap: Record<string, TxBP[]> = {
+    'inv-item-001': drugBP([500,300,250], 15, 45, -5),
+    'inv-item-002': drugBP([300,200,150], 10, 35, -3),
+    'inv-item-003': drugBP([1000,600,500], 25, 70, -8),
+    'inv-item-004': drugBP([200,120,100],  8, 20),
+    'inv-item-005': drugBP([150,80,60],    5),
+    'inv-item-006': drugBP([150,80,60],    5),
+    'inv-item-007': drugBP([120,60,50],    4, 20, -2),
+    'inv-item-008': drugBP([250,150,120],  8, 25),
+    'inv-item-009': supplyBP(80, 40, 5, 40, 20),
+    'inv-item-010': supplyBP(100,50, 7, 35, 30),
+    'inv-item-011': supplyBP(40, 20, 2, 25, 10),
+    'inv-item-012': supplyBP(30, 15, 2),
   };
 
-  // Compute final currentStock for each item by replaying transactions
   const computedStock: Record<string, number> = {};
   for (const item of invItems) {
-    const txs = blueprintMap[item.id] ?? [];
     let stock = 0;
-    for (const tx of [...txs].reverse()) { // chronological order
+    for (const tx of [...(blueprintMap[item.id] ?? [])].reverse()) {
       if (tx.type === 'IN_PURCHASE' || tx.type === 'IN_DONATION') stock += tx.qty;
       else if (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') stock -= tx.qty;
       else if (tx.type === 'ADJ_APPROVED') stock += tx.qty;
@@ -437,16 +545,13 @@ async function main() {
     computedStock[item.id] = Math.max(stock, 0);
   }
 
-  // Upsert items with computed stock
   for (const item of invItems) {
     await prisma.inventoryItem.upsert({
-      where: { id: item.id },
+      where:  { id: item.id },
       update: { currentStock: computedStock[item.id] },
       create: {
-        id: item.id,
-        organizationId: org.id,
-        name: item.name,
-        unit: item.unit,
+        id: item.id, organizationId: org.id,
+        name: item.name, unit: item.unit,
         category: item.category as any,
         lowStockThreshold: item.lowStockThreshold,
         currentStock: computedStock[item.id],
@@ -455,26 +560,22 @@ async function main() {
   }
   console.log(`✓ Inventory items: ${invItems.length} records`);
 
-  // Insert transactions (skip if already seeded)
   let txCount = 0;
   for (const item of invItems) {
-    const txs = (blueprintMap[item.id] ?? []).reverse(); // chronological
+    const txs = [...(blueprintMap[item.id] ?? [])].reverse();
     let running = 0;
     for (let i = 0; i < txs.length; i++) {
       const tx = txs[i];
       if (tx.type === 'IN_PURCHASE' || tx.type === 'IN_DONATION') running += tx.qty;
       else if (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') running -= tx.qty;
       else if (tx.type === 'ADJ_APPROVED') running += tx.qty;
-
       const txId = `tx-seed-${item.id}-${i.toString().padStart(3,'0')}`;
       const qtyStored = (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') ? -tx.qty : tx.qty;
-
       await prisma.stockTransaction.upsert({
-        where: { id: txId },
+        where:  { id: txId },
         update: {},
         create: {
-          id: txId,
-          itemId: item.id,
+          id: txId, itemId: item.id,
           actorId: tx.actorId ?? 'user-seed-admin',
           type: tx.type as any,
           quantity: qtyStored,
@@ -484,7 +585,7 @@ async function main() {
           donorName: tx.donorName,
           reason: tx.reason,
           unitCost: tx.type === 'IN_PURCHASE' ? 2.5 : undefined,
-          createdAt: daysAgo(tx.d < 0 ? 0 : tx.d),
+          createdAt: ago(tx.d < 0 ? 0 : tx.d),
         },
       });
       txCount++;
@@ -492,43 +593,47 @@ async function main() {
   }
   console.log(`✓ Stock transactions: ${txCount} records`);
 
-  // Two pending AdjRequests (large qty → needs SA approval)
   await prisma.adjRequest.upsert({
-    where: { id: 'adj-seed-001' },
+    where:  { id: 'adj-seed-001' },
     update: {},
     create: {
-      id: 'adj-seed-001',
-      itemId: 'inv-item-003',
-      requestedById: 'user-seed-admin',
-      quantity: -50,
-      reason: 'ยาหมดอายุจากล็อตเดือนมีนาคม',
-      status: 'PENDING',
-      createdAt: daysAgo(3),
+      id: 'adj-seed-001', itemId: 'inv-item-003',
+      requestedById: 'user-seed-admin', quantity: -50,
+      reason: 'ยาหมดอายุจากล็อตเดือนกุมภาพันธ์', status: 'PENDING',
+      createdAt: ago(3),
     },
   });
-
   await prisma.adjRequest.upsert({
-    where: { id: 'adj-seed-002' },
+    where:  { id: 'adj-seed-002' },
     update: {},
     create: {
-      id: 'adj-seed-002',
-      itemId: 'inv-item-010',
-      requestedById: 'user-seed-admin',
-      quantity: -30,
-      reason: 'ตรวจพบหน้ากากชำรุดจากการจัดเก็บ',
-      status: 'PENDING',
-      createdAt: daysAgo(1),
+      id: 'adj-seed-002', itemId: 'inv-item-010',
+      requestedById: 'user-seed-admin', quantity: -30,
+      reason: 'ตรวจพบหน้ากากชำรุดจากการจัดเก็บ', status: 'PENDING',
+      createdAt: ago(1),
     },
   });
-  console.log(`✓ Adj requests: 2 pending records`);
+  await prisma.adjRequest.upsert({
+    where:  { id: 'adj-seed-003' },
+    update: {},
+    create: {
+      id: 'adj-seed-003', itemId: 'inv-item-007',
+      requestedById: 'user-seed-cm1', quantity: -8,
+      reason: 'ยา ARV หักออกจากสต็อกที่ส่งผู้ป่วย HN000005',
+      status: 'APPROVED', reviewedById: 'user-seed-sa',
+      reviewNote: 'อนุมัติ ตรวจสอบแล้ว', createdAt: ago(10),
+    },
+  });
+  console.log(`✓ Adj requests: 3 records (2 pending, 1 approved)`);
 
   console.log('\n✅ Seed complete!\n');
-  console.log('Default credentials:');
-  console.log('  admin@hospital.th   / Admin1234!     (ADMIN)');
-  console.log('  cm1@hospital.th     / CaseManager1!  (CASE_MANAGER)');
-  console.log('  cm2@hospital.th     / CaseManager1!  (CASE_MANAGER)');
-  console.log('  sa@hospital.th      / SuperAdmin1!   (SUPER_ADMIN)');
-  console.log('  fw1@hospital.th     / FieldWork1!    (FIELD_WORKER)');
+  console.log('Credentials:');
+  console.log('  admin@hospital.th  / Admin1234!     (ADMIN)');
+  console.log('  sa@hospital.th     / SuperAdmin1!   (SUPER_ADMIN)');
+  console.log('  cm1@hospital.th    / CaseManager1!  (CASE_MANAGER)');
+  console.log('  cm2@hospital.th    / CaseManager1!  (CASE_MANAGER)');
+  console.log('  fw1@hospital.th    / FieldWork1!    (FIELD_WORKER)');
+  console.log('  mv1@hospital.th    / MedVol1234!    (MEDICAL_VOLUNTEER)');
 }
 
 main()
