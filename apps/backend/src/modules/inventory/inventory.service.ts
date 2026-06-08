@@ -92,11 +92,26 @@ export class InventoryService {
     });
   }
 
+  async getLots(itemId: string, orgId: string) {
+    await this.findItemOrThrow(itemId, orgId);
+    return this.prisma.inventoryLot.findMany({
+      where: { itemId },
+      include: {
+        actor: { select: { displayName: true } },
+        expiredBy: { select: { displayName: true } },
+      },
+      orderBy: { expiryDate: 'asc' },
+    });
+  }
+
   async getTransactionHistory(itemId: string, orgId: string) {
     await this.findItemOrThrow(itemId, orgId);
     return this.prisma.stockTransaction.findMany({
       where: { itemId },
-      include: { actor: { select: { displayName: true } } },
+      include: {
+        actor: { select: { displayName: true } },
+        lot: { select: { expiryDate: true } },
+      },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });

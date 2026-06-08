@@ -53,6 +53,25 @@ export class InventoryController {
     return this.inventory.reviewAdj(id, user.sub, user.orgId, dto);
   }
 
+  @Get('expiring')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  getExpiring(@CurrentUser() user: JwtPayload) {
+    return this.inventory.getExpiringLots(user.orgId);
+  }
+
+  @Post('lots/:lotId/expire')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  expireLot(@Param('lotId') lotId: string, @CurrentUser() user: JwtPayload) {
+    return this.inventory.expireLot(lotId, user.sub, user.orgId);
+  }
+
+  @Get(':id/lots')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  getLots(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.inventory.getLots(id, user.orgId);
+  }
+
   @Get(':id/transactions')
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   getTransactionHistory(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
