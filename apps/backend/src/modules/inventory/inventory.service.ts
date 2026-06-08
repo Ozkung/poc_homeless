@@ -155,21 +155,47 @@ export class InventoryService {
     if (item.currentStock - qty < 0) {
       throw new BadRequestException(`สต็อกไม่พอ (มี ${item.currentStock} หน่วย)`);
     }
+
+    const lots = await this.prisma.inventoryLot.findMany({
+      where: { itemId, isExpired: false, remaining: { gt: 0 } },
+      orderBy: { expiryDate: 'asc' },
+    });
+
     const newStock = item.currentStock - qty;
 
-    await this.prisma.$transaction([
-      this.prisma.inventoryItem.update({ where: { id: itemId }, data: { currentStock: newStock } }),
-      this.prisma.stockTransaction.create({
-        data: {
-          itemId, actorId: ctx.actorId,
-          type: ctx.type,
-          quantity: -qty,
-          balanceAfter: newStock,
-          patientId: ctx.patientId,
-          eventId: ctx.eventId,
-        },
-      }),
-    ]);
+    await this.prisma.$transaction(async (tx) => {
+      let toDeduct = qty;
+      let runningBalance = item.currentStock;
+
+      for (const lot of lots) {
+        if (toDeduct === 0) break;
+        const take = Math.min(lot.remaining, toDeduct);
+        runningBalance -= take;
+
+        await tx.inventoryLot.update({
+          where: { id: lot.id },
+          data: { remaining: lot.remaining - take },
+        });
+        await tx.stockTransaction.create({
+          data: {
+            itemId,
+            actorId: ctx.actorId,
+            type: ctx.type,
+            quantity: -take,
+            balanceAfter: runningBalance,
+            patientId: ctx.patientId,
+            eventId: ctx.eventId,
+            lotId: lot.id,
+          },
+        });
+        toDeduct -= take;
+      }
+
+      await tx.inventoryItem.update({
+        where: { id: itemId },
+        data: { currentStock: newStock },
+      });
+    });
 
     if (newStock <= item.lowStockThreshold) {
       const admins = await this.prisma.user.findMany({

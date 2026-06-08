@@ -96,27 +96,58 @@ describe('InventoryService', () => {
     });
   });
 
-  describe('deduct', () => {
-    it('decreases currentStock atomically and creates OUT transaction', async () => {
+  describe('deduct (FIFO)', () => {
+    it('deducts from single lot when qty fits in one lot', async () => {
       mockPrisma.inventoryItem.findFirst.mockResolvedValue(
         { id: 'item1', currentStock: 80, name: 'Metformin', organizationId: 'org1', lowStockThreshold: 10 },
       );
+      mockPrisma.inventoryLot.findMany.mockResolvedValue([
+        { id: 'lot1', remaining: 80, expiryDate: new Date(Date.now() + 60 * 86_400_000) },
+      ]);
+      mockPrisma.inventoryLot.update.mockResolvedValue({});
       mockPrisma.inventoryItem.update.mockResolvedValue({ id: 'item1', currentStock: 70 });
-      mockPrisma.stockTransaction.create.mockResolvedValue({ id: 'tx2' });
+      mockPrisma.stockTransaction.create.mockResolvedValue({ id: 'tx1' });
       mockPrisma.user.findMany.mockResolvedValue([]);
 
       await service.deduct('item1', 10, {
-        actorId: 'user1', type: 'OUT_PRESCRIPTION',
-        patientId: 'p1', eventId: 'e1', orgId: 'org1',
+        actorId: 'user1', type: 'OUT_PRESCRIPTION', patientId: 'p1', orgId: 'org1',
       });
 
-      expect(mockPrisma.inventoryItem.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { currentStock: 70 } }),
+      expect(mockPrisma.inventoryLot.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { remaining: 70 } }),
       );
       expect(mockPrisma.stockTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ quantity: -10, balanceAfter: 70 }),
+          data: expect.objectContaining({ quantity: -10, balanceAfter: 70, lotId: 'lot1' }),
         }),
+      );
+    });
+
+    it('spans two lots when qty exceeds first lot remaining (FIFO)', async () => {
+      mockPrisma.inventoryItem.findFirst.mockResolvedValue(
+        { id: 'item1', currentStock: 130, name: 'Metformin', organizationId: 'org1', lowStockThreshold: 10 },
+      );
+      mockPrisma.inventoryLot.findMany.mockResolvedValue([
+        { id: 'lot1', remaining: 30, expiryDate: new Date(Date.now() + 5 * 86_400_000) },
+        { id: 'lot2', remaining: 100, expiryDate: new Date(Date.now() + 60 * 86_400_000) },
+      ]);
+      mockPrisma.inventoryLot.update.mockResolvedValue({});
+      mockPrisma.inventoryItem.update.mockResolvedValue({ id: 'item1', currentStock: 80 });
+      mockPrisma.stockTransaction.create.mockResolvedValue({ id: 'tx1' });
+      mockPrisma.user.findMany.mockResolvedValue([]);
+
+      await service.deduct('item1', 50, {
+        actorId: 'user1', type: 'OUT_PRESCRIPTION', orgId: 'org1',
+      });
+
+      // lot1 (30) fully consumed, lot2 partially consumed (20 taken)
+      expect(mockPrisma.inventoryLot.update).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.stockTransaction.create).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.inventoryLot.update).toHaveBeenNthCalledWith(1,
+        expect.objectContaining({ where: { id: 'lot1' }, data: { remaining: 0 } }),
+      );
+      expect(mockPrisma.inventoryLot.update).toHaveBeenNthCalledWith(2,
+        expect.objectContaining({ where: { id: 'lot2' }, data: { remaining: 80 } }),
       );
     });
 
