@@ -65,7 +65,7 @@ export default async function ReportsPage() {
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 20 }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
         {kpis.map((kpi) => (
           <Card key={kpi.label} styles={{ body: { padding: 24 } }}>
             <div style={{ fontSize: 10, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>

@@ -103,11 +103,12 @@ export default async function DashboardPage() {
       <AlertSection alerts={alerts} />
 
       {/* Bento grid */}
-      <div style={{ display: 'flex', gap: 14 }}>
+      <div className="flex flex-col md:flex-row gap-4">
 
         {/* Hero card — 2 cols × 2 rows */}
         <Card
-          style={{ gridColumn: 'span 2', gridRow: 'span 2', borderTop: '3px solid #1677ff', width: '70%' }}
+          className="w-full md:w-[70%]"
+          style={{ borderTop: '3px solid #1677ff' }}
           styles={{ body: { padding: 24 } }}
         >
           <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
@@ -144,7 +145,7 @@ export default async function DashboardPage() {
             <SeverityChart critical={critical} pending={pending} stable={stable} />
           </div>
         </Card>
-        <div style={{ display: 'flex', flexDirection: 'column',justifyContent: 'space-between', gap: 14, width: '30%' }}>
+        <div className="flex flex-col justify-between gap-4 w-full md:w-[30%]">
           {/* Critical — 1×1 */}
           <Card style={{ borderTop: '3px solid #ff4d4f' }} styles={{ body: { padding: 24 } }}>
             <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
@@ -194,7 +195,7 @@ export default async function DashboardPage() {
 
       {/* Age Cluster chart — full 3-col span */}
       <Card
-        style={{ gridColumn: 'span 3', borderTop: '3px solid #722ed1', marginTop: 14 }}
+        style={{ borderTop: '3px solid #722ed1', marginTop: 14 }}
         styles={{ body: { padding: 24 } }}
       >
         <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>
