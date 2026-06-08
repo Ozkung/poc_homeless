@@ -478,120 +478,108 @@ async function main() {
 
   // ── Inventory ─────────────────────────────────────────────────────────────
   const invItems = [
-    { id: 'inv-item-001', name: 'Metformin 500mg',          unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 50  },
-    { id: 'inv-item-002', name: 'Amlodipine 5mg',           unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 30  },
-    { id: 'inv-item-003', name: 'Paracetamol 500mg',        unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 100 },
-    { id: 'inv-item-004', name: 'Omeprazole 20mg',          unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 20  },
-    { id: 'inv-item-005', name: 'Isoniazid 300mg',          unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 15  },
-    { id: 'inv-item-006', name: 'Rifampicin 600mg',         unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 15  },
-    { id: 'inv-item-007', name: 'Efavirenz 600mg',          unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 10  },
-    { id: 'inv-item-008', name: 'Atenolol 50mg',            unit: 'เม็ด',    category: 'DRUG',   lowStockThreshold: 20  },
-    { id: 'inv-item-009', name: 'ถุงมือไนไตรล์ M',          unit: 'ถุง',    category: 'SUPPLY', lowStockThreshold: 10  },
-    { id: 'inv-item-010', name: 'หน้ากาก N95',              unit: 'ชิ้น',   category: 'SUPPLY', lowStockThreshold: 20  },
-    { id: 'inv-item-011', name: 'แอลกอฮอล์ 70% 450ml',     unit: 'ขวด',    category: 'SUPPLY', lowStockThreshold: 5   },
-    { id: 'inv-item-012', name: 'ชุดเจาะเลือดปลายนิ้ว',   unit: 'กล่อง',  category: 'SUPPLY', lowStockThreshold: 5   },
+    { id: 'inv-item-001', name: 'Metformin 500mg',          unit: 'เม็ด',   category: 'DRUG',   lowStockThreshold: 50  },
+    { id: 'inv-item-002', name: 'Amlodipine 5mg',           unit: 'เม็ด',   category: 'DRUG',   lowStockThreshold: 30  },
+    { id: 'inv-item-003', name: 'Paracetamol 500mg',        unit: 'เม็ด',   category: 'DRUG',   lowStockThreshold: 100 },
+    { id: 'inv-item-004', name: 'Omeprazole 20mg',          unit: 'เม็ด',   category: 'DRUG',   lowStockThreshold: 20  },
+    { id: 'inv-item-005', name: 'Isoniazid 300mg',          unit: 'เม็ด',   category: 'DRUG',   lowStockThreshold: 15  },
+    { id: 'inv-item-006', name: 'Rifampicin 600mg',         unit: 'เม็ด',   category: 'DRUG',   lowStockThreshold: 15  },
+    { id: 'inv-item-007', name: 'Efavirenz 600mg',          unit: 'เม็ด',   category: 'DRUG',   lowStockThreshold: 10  },
+    { id: 'inv-item-008', name: 'Atenolol 50mg',            unit: 'เม็ด',   category: 'DRUG',   lowStockThreshold: 20  },
+    { id: 'inv-item-009', name: 'ถุงมือไนไตรล์ M',          unit: 'ถุง',   category: 'SUPPLY', lowStockThreshold: 10  },
+    { id: 'inv-item-010', name: 'หน้ากาก N95',              unit: 'ชิ้น',  category: 'SUPPLY', lowStockThreshold: 20  },
+    { id: 'inv-item-011', name: 'แอลกอฮอล์ 70% 450ml',     unit: 'ขวด',   category: 'SUPPLY', lowStockThreshold: 5   },
+    { id: 'inv-item-012', name: 'ชุดเจาะเลือดปลายนิ้ว',   unit: 'กล่อง', category: 'SUPPLY', lowStockThreshold: 5   },
   ] as const;
 
-  type TxBP = { d: number; type: 'IN_PURCHASE'|'IN_DONATION'|'OUT_PRESCRIPTION'|'OUT_SUPPLY'|'ADJ_APPROVED'; qty: number; receiptNo?: string; donorName?: string; reason?: string; patientId?: string; actorId?: string };
-  const pats = ['pat-seed-001','pat-seed-002','pat-seed-003','pat-seed-004','pat-seed-005','pat-seed-006','pat-seed-007'];
-
-  function drugBP(pq: [number,number,number], wd: number, adjDay?: number, adjQty?: number): TxBP[] {
-    const txs: TxBP[] = [];
-    txs.push({ d:92,  type:'IN_PURCHASE', qty:pq[0], receiptNo:'RX-2026-001', actorId:'user-seed-admin' });
-    txs.push({ d:61,  type:'IN_PURCHASE', qty:pq[1], receiptNo:'RX-2026-002', actorId:'user-seed-admin' });
-    txs.push({ d:30,  type:'IN_PURCHASE', qty:pq[2], receiptNo:'RX-2026-003', actorId:'user-seed-admin' });
-    [89,86,82,78,74,70,66,62,57,52,46,38,30,23,16,10,5,2].forEach((d,i) => {
-      txs.push({ d, type:'OUT_PRESCRIPTION', qty:wd, patientId: pats[i%pats.length], actorId:'user-seed-cm1' });
-    });
-    if (adjDay !== undefined && adjQty !== undefined)
-      txs.push({ d:adjDay, type:'ADJ_APPROVED', qty:adjQty, reason:'นับสต็อกปลายเดือน', actorId:'user-seed-admin' });
-    return txs.sort((a,b) => b.d - a.d);
-  }
-
-  function supplyBP(iq: number, rq: number, dq: number, donDay?: number, donQty?: number): TxBP[] {
-    const txs: TxBP[] = [];
-    txs.push({ d:92, type:'IN_PURCHASE', qty:iq,  receiptNo:'RX-2026-001', actorId:'user-seed-admin' });
-    txs.push({ d:58, type:'IN_PURCHASE', qty:rq,  receiptNo:'RX-2026-004', actorId:'user-seed-admin' });
-    if (donDay) txs.push({ d:donDay, type:'IN_DONATION', qty:donQty!, donorName:'มูลนิธิกรุงเทพ', actorId:'user-seed-admin' });
-    [88,80,72,63,55,45,36,28,21,14,7,3].forEach(d => {
-      txs.push({ d, type:'OUT_SUPPLY', qty:dq, actorId:'user-seed-fw1' });
-    });
-    return txs.sort((a,b) => b.d - a.d);
-  }
-
-  const blueprintMap: Record<string, TxBP[]> = {
-    'inv-item-001': drugBP([500,300,250], 15, 45, -5),
-    'inv-item-002': drugBP([300,200,150], 10, 35, -3),
-    'inv-item-003': drugBP([1000,600,500], 25, 70, -8),
-    'inv-item-004': drugBP([200,120,100],  8, 20),
-    'inv-item-005': drugBP([150,80,60],    5),
-    'inv-item-006': drugBP([150,80,60],    5),
-    'inv-item-007': drugBP([120,60,50],    4, 20, -2),
-    'inv-item-008': drugBP([250,150,120],  8, 25),
-    'inv-item-009': supplyBP(80, 40, 5, 40, 20),
-    'inv-item-010': supplyBP(100,50, 7, 35, 30),
-    'inv-item-011': supplyBP(40, 20, 2, 25, 10),
-    'inv-item-012': supplyBP(30, 15, 2),
+  // Lot definitions: some lots are near-expiry for demo purposes
+  // daysToExpiry: positive = future, items with small values will trigger 30-day alert
+  const lotDefs: Record<string, Array<{
+    suffix: string; qty: number; remaining: number;
+    daysToExpiry: number; receiptNo: string;
+  }>> = {
+    'inv-item-001': [ // Metformin — lot A near expiry
+      { suffix: 'A', qty: 200, remaining: 45,  daysToExpiry: 20,  receiptNo: 'RX-2026-002' },
+      { suffix: 'B', qty: 250, remaining: 120, daysToExpiry: 180, receiptNo: 'RX-2026-003' },
+    ],
+    'inv-item-002': [
+      { suffix: 'A', qty: 300, remaining: 95,  daysToExpiry: 90,  receiptNo: 'RX-2026-002' },
+    ],
+    'inv-item-003': [ // Paracetamol — lot A very near expiry (8 days)
+      { suffix: 'A', qty: 500, remaining: 28,  daysToExpiry: 8,   receiptNo: 'RX-2026-002' },
+      { suffix: 'B', qty: 600, remaining: 220, daysToExpiry: 270, receiptNo: 'RX-2026-003' },
+    ],
+    'inv-item-004': [
+      { suffix: 'A', qty: 200, remaining: 72,  daysToExpiry: 120, receiptNo: 'RX-2026-002' },
+    ],
+    'inv-item-005': [
+      { suffix: 'A', qty: 150, remaining: 40,  daysToExpiry: 60,  receiptNo: 'RX-2026-002' },
+    ],
+    'inv-item-006': [
+      { suffix: 'A', qty: 150, remaining: 38,  daysToExpiry: 60,  receiptNo: 'RX-2026-002' },
+    ],
+    'inv-item-007': [ // Efavirenz — near expiry (25 days)
+      { suffix: 'A', qty: 120, remaining: 22,  daysToExpiry: 25,  receiptNo: 'RX-2026-002' },
+    ],
+    'inv-item-008': [
+      { suffix: 'A', qty: 250, remaining: 88,  daysToExpiry: 150, receiptNo: 'RX-2026-003' },
+    ],
+    'inv-item-009': [
+      { suffix: 'A', qty: 80,  remaining: 36,  daysToExpiry: 365, receiptNo: 'RX-2026-001' },
+    ],
+    'inv-item-010': [
+      { suffix: 'A', qty: 100, remaining: 43,  daysToExpiry: 730, receiptNo: 'RX-2026-001' },
+    ],
+    'inv-item-011': [
+      { suffix: 'A', qty: 40,  remaining: 14,  daysToExpiry: 180, receiptNo: 'RX-2026-001' },
+    ],
+    'inv-item-012': [
+      { suffix: 'A', qty: 30,  remaining: 9,   daysToExpiry: 365, receiptNo: 'RX-2026-001' },
+    ],
   };
 
-  const computedStock: Record<string, number> = {};
+  // Upsert items and their lots
   for (const item of invItems) {
-    let stock = 0;
-    for (const tx of [...(blueprintMap[item.id] ?? [])].reverse()) {
-      if (tx.type === 'IN_PURCHASE' || tx.type === 'IN_DONATION') stock += tx.qty;
-      else if (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') stock -= tx.qty;
-      else if (tx.type === 'ADJ_APPROVED') stock += tx.qty;
-    }
-    computedStock[item.id] = Math.max(stock, 0);
-  }
+    const defs = lotDefs[item.id] ?? [];
+    const totalRemaining = defs.reduce((s, d) => s + d.remaining, 0);
 
-  for (const item of invItems) {
     await prisma.inventoryItem.upsert({
       where:  { id: item.id },
-      update: { currentStock: computedStock[item.id] },
+      update: { currentStock: totalRemaining },
       create: {
         id: item.id, organizationId: org.id,
         name: item.name, unit: item.unit,
         category: item.category as any,
         lowStockThreshold: item.lowStockThreshold,
-        currentStock: computedStock[item.id],
+        currentStock: totalRemaining,
       },
     });
-  }
-  console.log(`✓ Inventory items: ${invItems.length} records`);
 
-  let txCount = 0;
-  for (const item of invItems) {
-    const txs = [...(blueprintMap[item.id] ?? [])].reverse();
-    let running = 0;
-    for (let i = 0; i < txs.length; i++) {
-      const tx = txs[i];
-      if (tx.type === 'IN_PURCHASE' || tx.type === 'IN_DONATION') running += tx.qty;
-      else if (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') running -= tx.qty;
-      else if (tx.type === 'ADJ_APPROVED') running += tx.qty;
-      const txId = `tx-seed-${item.id}-${i.toString().padStart(3,'0')}`;
-      const qtyStored = (tx.type === 'OUT_PRESCRIPTION' || tx.type === 'OUT_SUPPLY') ? -tx.qty : tx.qty;
-      await prisma.stockTransaction.upsert({
-        where:  { id: txId },
-        update: {},
-        create: {
-          id: txId, itemId: item.id,
-          actorId: tx.actorId ?? 'user-seed-admin',
-          type: tx.type as any,
-          quantity: qtyStored,
-          balanceAfter: running,
-          patientId: tx.patientId,
-          receiptNo: tx.receiptNo,
-          donorName: tx.donorName,
-          reason: tx.reason,
-          unitCost: tx.type === 'IN_PURCHASE' ? 2.5 : undefined,
-          createdAt: ago(tx.d < 0 ? 0 : tx.d),
-        },
-      });
-      txCount++;
+    for (const def of defs) {
+      const lotId = `lot-seed-${item.id}-${def.suffix}`;
+      const expiry = new Date(Date.now() + def.daysToExpiry * 86_400_000);
+      const existingLot = await prisma.inventoryLot.findUnique({ where: { id: lotId } });
+      if (!existingLot) {
+        const lot = await prisma.inventoryLot.create({
+          data: {
+            id: lotId, itemId: item.id, actorId: 'user-seed-admin',
+            quantity: def.qty, remaining: def.remaining,
+            expiryDate: expiry, receiptNo: def.receiptNo, unitCost: 2.5,
+          },
+        });
+        await prisma.stockTransaction.create({
+          data: {
+            itemId: item.id, actorId: 'user-seed-admin',
+            type: 'IN_PURCHASE', quantity: def.qty,
+            balanceAfter: def.qty, lotId: lot.id,
+            receiptNo: def.receiptNo, unitCost: 2.5,
+            createdAt: ago(90),
+          },
+        });
+      }
     }
   }
-  console.log(`✓ Stock transactions: ${txCount} records`);
+  console.log(`✓ Inventory items: ${invItems.length} records with lots`);
 
   await prisma.adjRequest.upsert({
     where:  { id: 'adj-seed-001' },
