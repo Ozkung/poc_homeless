@@ -97,6 +97,7 @@ export default function FormsPage() {
           rowKey="id"
           loading={loading}
           size="middle"
+          scroll={{ x: 600 }}
           pagination={{ pageSize: 20, showSizeChanger: false }}
           locale={{ emptyText: 'ยังไม่มีแบบฟอร์ม' }}
         />

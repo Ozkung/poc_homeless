@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -8,8 +8,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // I1: reset drawer when resizing back to desktop
+  useEffect(() => {
+    if (!isMobile) setSidebarOpen(false);
+  }, [isMobile]);
+
   return (
-    <div className={`${isMobile ? 'flex flex-col h-screen bg-[#f0f2f5]' : 'flex h-screen bg-[#f0f2f5]'}`}>
+    <div className={`flex h-screen bg-[#f0f2f5] ${isMobile ? 'flex-col' : ''}`}>
       {/* Mobile header */}
       {isMobile && (
         <header style={{

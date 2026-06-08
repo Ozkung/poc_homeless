@@ -367,13 +367,14 @@ export default function InventoryPage() {
         open={expiryModalOpen}
         onCancel={() => setExpiryModalOpen(false)}
         footer={null}
-        width={isMobile ? undefined : 700}
+        width={isMobile ? '100%' : 700}
       >
         <Table
           dataSource={expiringLots}
           rowKey="lotId"
           size="small"
           pagination={false}
+          scroll={{ x: 500 }}
           columns={[
             { title: 'ชื่อยา', dataIndex: 'itemName', key: 'itemName', render: (v) => <span style={{ fontWeight: 600 }}>{v}</span> },
             { title: 'คงเหลือ', dataIndex: 'remaining', key: 'remaining', width: 90,
@@ -415,6 +416,7 @@ export default function InventoryPage() {
           rowKey="id"
           size="small"
           loading={txLoading}
+          scroll={{ x: 550 }}
           pagination={{ pageSize: 20 }}
           columns={[
             {

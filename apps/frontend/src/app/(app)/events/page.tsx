@@ -317,7 +317,7 @@ export default function EventsPage() {
         {/* Day cells */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)' }}>
           {Array.from({ length: startPadding }).map((_, i) => (
-            <div key={`pad-${i}`} style={{ minHeight: 80, borderBottom: '1px solid #fafafa', borderRight: '1px solid #fafafa' }} />
+            <div key={`pad-${i}`} style={{ minHeight: isMobile ? 48 : 80, borderBottom: '1px solid #fafafa', borderRight: '1px solid #fafafa' }} />
           ))}
 
           {daysInMonth.map((day) => {
