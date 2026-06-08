@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import Redis from 'ioredis';
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { UpdateMeDto } from './dto/update-me.dto';
 
 @Injectable()
 export class AuthService {
@@ -102,5 +103,61 @@ export class AuthService {
     if (expiry.endsWith('h')) return parseInt(expiry) * 3600;
     if (expiry.endsWith('m')) return parseInt(expiry) * 60;
     return parseInt(expiry);
+  }
+
+  async getMe(userId: string, orgId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, organizationId: orgId },
+      select: {
+        id: true, email: true, displayName: true, role: true,
+        phone: true, gender: true, avatarUrl: true,
+        lineUserId: true, isActive: true, createdAt: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async updateMe(userId: string, orgId: string, dto: UpdateMeDto) {
+    const user = await this.prisma.user.findFirst({ where: { id: userId, organizationId: orgId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const { email, currentPassword, ...rest } = dto;
+    const updateData: Record<string, unknown> = { ...rest };
+
+    if (email) {
+      if (!currentPassword) throw new BadRequestException('กรุณายืนยันรหัสผ่านก่อนเปลี่ยน email');
+      const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!valid) throw new UnauthorizedException('รหัสผ่านไม่ถูกต้อง');
+      updateData.email = email;
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: updateData as any,
+      select: { id: true, email: true, displayName: true, phone: true, gender: true, avatarUrl: true, role: true },
+    });
+  }
+
+  async changePassword(userId: string, orgId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({ where: { id: userId, organizationId: orgId } });
+    if (!user) throw new NotFoundException('User not found');
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) throw new UnauthorizedException('รหัสผ่านไม่ถูกต้อง');
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  }
+
+  async unlinkLine(userId: string, orgId: string) {
+    await this.prisma.user.findFirst({ where: { id: userId, organizationId: orgId } });
+    await this.prisma.user.update({ where: { id: userId }, data: { lineUserId: null } });
+  }
+
+  async saveAvatarUrl(userId: string, orgId: string, avatarUrl: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      select: { id: true, avatarUrl: true },
+    });
   }
 }
