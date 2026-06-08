@@ -149,12 +149,8 @@ export class AuthService {
   }
 
   async unlinkLine(userId: string, orgId: string) {
-<<<<<<< Updated upstream
-    await this.prisma.user.findFirst({ where: { id: userId, organizationId: orgId } });
-=======
     const user = await this.prisma.user.findFirst({ where: { id: userId, organizationId: orgId } });
     if (!user) throw new NotFoundException('User not found');
->>>>>>> Stashed changes
     await this.prisma.user.update({ where: { id: userId }, data: { lineUserId: null } });
   }
 
