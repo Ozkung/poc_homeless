@@ -47,6 +47,38 @@ export class UsersService {
     });
   }
 
+  async createFW(supervisorId: string, orgId: string, dto: CreateUserDto) {
+    const hash = await bcrypt.hash(dto.password, 12);
+    return this.prisma.user.create({
+      data: {
+        organizationId: orgId,
+        email: dto.email,
+        passwordHash: hash,
+        role: 'FIELD_WORKER',
+        displayName: dto.displayName,
+        supervisorId,
+      },
+      select: { id: true, email: true, displayName: true, role: true, supervisorId: true },
+    });
+  }
+
+  async getMyFW(supervisorId: string, orgId: string) {
+    return this.prisma.user.findMany({
+      where: { supervisorId, organizationId: orgId, isActive: true },
+      select: { id: true, displayName: true, email: true, role: true },
+    });
+  }
+
+  async transferFW(fwId: string, newSupervisorId: string, orgId: string) {
+    const fw = await this.prisma.user.findFirst({ where: { id: fwId, organizationId: orgId, role: 'FIELD_WORKER' } });
+    if (!fw) throw new NotFoundException('FIELD_WORKER not found');
+    return this.prisma.user.update({
+      where: { id: fwId },
+      data: { supervisorId: newSupervisorId },
+      select: { id: true, displayName: true, supervisorId: true },
+    });
+  }
+
   async update(id: string, orgId: string, actorId: string, dto: UpdateUserDto) {
     await this.findOne(id, orgId);
     if (dto.role !== undefined && id === actorId) {

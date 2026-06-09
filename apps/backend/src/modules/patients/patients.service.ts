@@ -12,8 +12,12 @@ export class PatientsService {
     private notifications: NotificationsService,
   ) {}
 
-  async findAll(orgId: string) {
-    const patients = await this.prisma.patient.findMany({ where: { organizationId: orgId } });
+  async findAll(orgId: string, role?: string, userId?: string) {
+    let where: any = { organizationId: orgId };
+    if (role === 'FIELD_WORKER' && userId) {
+      where = { organizationId: orgId, eventTasks: { some: { assigneeId: userId } } };
+    }
+    const patients = await this.prisma.patient.findMany({ where });
     return patients.map((p) => this.decrypt(p));
   }
 

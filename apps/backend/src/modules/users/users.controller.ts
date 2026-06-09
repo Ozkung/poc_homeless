@@ -29,6 +29,29 @@ export class UsersController {
     return this.users.create({ ...dto, orgId: user.orgId });
   }
 
+  @Get('my-fw')
+  @Roles(UserRole.CASE_MANAGER)
+  getMyFW(@CurrentUser() user: JwtPayload) {
+    return this.users.getMyFW(user.sub, user.orgId);
+  }
+
+  @Post('fw')
+  @Roles(UserRole.CASE_MANAGER)
+  @HttpCode(HttpStatus.CREATED)
+  createFW(@Body() dto: CreateUserDto, @CurrentUser() user: JwtPayload) {
+    return this.users.createFW(user.sub, user.orgId, dto);
+  }
+
+  @Patch(':id/transfer')
+  @Roles(UserRole.SUPER_ADMIN)
+  transferFW(
+    @Param('id') id: string,
+    @Body('supervisorId') supervisorId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.users.transferFW(id, supervisorId, user.orgId);
+  }
+
   @Patch(':id')
   @Roles(UserRole.SUPER_ADMIN)
   update(

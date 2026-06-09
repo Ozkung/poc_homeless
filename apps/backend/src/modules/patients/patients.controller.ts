@@ -9,13 +9,13 @@ import { SosDto } from './dto/sos.dto';
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN)
+@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.FIELD_WORKER, UserRole.MEDICAL_VOLUNTEER)
 export class PatientsController {
   constructor(private patients: PatientsService) {}
 
   @Get()
   findAll(@CurrentUser() user: JwtPayload) {
-    return this.patients.findAll(user.orgId);
+    return this.patients.findAll(user.orgId, user.role, user.sub);
   }
 
   @Get(':id')
