@@ -59,7 +59,7 @@ export default function TaskStackedArea({ months, series }: Props) {
       verticalAlign: 'bottom',
       itemStyle: { fontSize: '10px', fontWeight: '400', color: '#666' },
       symbolRadius: 2,
-      margin: 6,
+      margin: 24,
     },
     tooltip: {
       shared: true,
