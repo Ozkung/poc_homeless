@@ -45,7 +45,7 @@ export default function NewPatientPage() {
       });
       if (res.ok) {
         message.success('เพิ่มผู้ป่วยเรียบร้อย');
-        router.push('/patients');
+        router.push("/cm/patients"));
       } else {
         message.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
       }
@@ -60,7 +60,7 @@ export default function NewPatientPage() {
     <div>
       {/* Breadcrumb */}
       <div style={{ marginBottom: 20 }}>
-        <Link href="/patients" style={{ fontSize: 12, color: '#aaa' }}>← ผู้ป่วย</Link>
+        <Link href="/cm/patients" style={{ fontSize: 12, color: '#aaa' }}>← ผู้ป่วย</Link>
       </div>
 
       {/* Page header */}
@@ -135,7 +135,7 @@ export default function NewPatientPage() {
           </Form.Item>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-            <Button onClick={() => router.push('/patients')}>ยกเลิก</Button>
+            <Button onClick={() => router.push("/cm/patients"))}>ยกเลิก</Button>
             <Button type="primary" htmlType="submit" loading={saving}>
               บันทึกผู้ป่วย
             </Button>

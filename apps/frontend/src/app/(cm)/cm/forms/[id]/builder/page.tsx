@@ -244,7 +244,7 @@ export default function FormEditPage() {
         body: JSON.stringify({ title, fields }),
       });
       if (res.ok) {
-        router.push('/forms');
+        router.push('/cm/forms');
       } else {
         message.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
       }
@@ -327,7 +327,7 @@ export default function FormEditPage() {
             )}
 
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <Button onClick={() => router.push('/forms')}>ยกเลิก</Button>
+              <Button onClick={() => router.push('/cm/forms')}>ยกเลิก</Button>
               <Button type="primary" onClick={handleSave} loading={saving}>
                 บันทึกแบบฟอร์ม
               </Button>

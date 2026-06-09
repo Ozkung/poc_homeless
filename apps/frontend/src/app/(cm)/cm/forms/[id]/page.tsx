@@ -102,7 +102,7 @@ export default function FormViewPage() {
           </Title>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/forms')}>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/cm/forms')}>
             กลับ
           </Button>
           <Button type="primary" icon={<EditOutlined />} onClick={() => router.push(`/forms/${id}/builder`)}>

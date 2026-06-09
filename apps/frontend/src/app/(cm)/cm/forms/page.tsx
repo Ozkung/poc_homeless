@@ -61,11 +61,11 @@ export default function FormsPage() {
       render: (_, r) => (
         <div style={{ display: 'flex', gap: 8 }}>
           <Tooltip title="ดูตัวอย่าง">
-            <Link href={`/forms/${r.id}`}>
+            <Link href={`/cm/forms/${r.id}`}>
               <Button size="small" icon={<Eye size={13} />} />
             </Link>
           </Tooltip>
-          <Link href={`/forms/${r.id}/builder`}>
+          <Link href={`/cm/forms/${r.id}/builder`}>
             <Button size="small">แก้ไข</Button>
           </Link>
           <Popconfirm
@@ -92,7 +92,7 @@ export default function FormsPage() {
             แบบฟอร์ม
           </Title>
         </div>
-        <Link href="/forms/new">
+        <Link href="/cm/forms/new">
           <Button type="primary">+ สร้างแบบฟอร์ม</Button>
         </Link>
       </div>

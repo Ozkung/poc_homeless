@@ -56,7 +56,7 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
       <div style={{ padding: 40, textAlign: 'center' }}>
         <span style={{ color: '#888' }}>ไม่พบข้อมูลผู้ป่วย</span>
         <div style={{ marginTop: 12 }}>
-          <Link href="/patients">← กลับรายชื่อผู้ป่วย</Link>
+          <Link href="/cm/patients">← กลับรายชื่อผู้ป่วย</Link>
         </div>
       </div>
     );
@@ -79,7 +79,7 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     <div>
       {/* Breadcrumb */}
       <div style={{ marginBottom: 20 }}>
-        <Link href="/patients" style={{ fontSize: 12, color: '#aaa' }}>← ผู้ป่วย</Link>
+        <Link href="/cm/patients" style={{ fontSize: 12, color: '#aaa' }}>← ผู้ป่วย</Link>
       </div>
 
       {/* Header */}

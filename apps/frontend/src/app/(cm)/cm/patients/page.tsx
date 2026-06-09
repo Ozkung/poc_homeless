@@ -99,7 +99,7 @@ export default function PatientsPage() {
             รายชื่อผู้ป่วย
           </Title>
         </div>
-        <Link href="/patients/new">
+        <Link href="/cm/patients/new">
           <Button type="primary">+ เพิ่มผู้ป่วย</Button>
         </Link>
       </div>

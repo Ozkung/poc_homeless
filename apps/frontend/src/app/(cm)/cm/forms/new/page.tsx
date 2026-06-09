@@ -210,7 +210,7 @@ export default function FormBuilderPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.accessToken}` },
         body: JSON.stringify({ title, fields }),
       });
-      if (res.ok) router.push('/forms');
+      if (res.ok) router.push('/cm/forms');
       else message.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
     } catch {
       message.error('เกิดข้อผิดพลาด กรุณาลองใหม่');
@@ -279,7 +279,7 @@ export default function FormBuilderPage() {
           )}
 
           <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-            <Button onClick={() => router.push('/forms')}>ยกเลิก</Button>
+            <Button onClick={() => router.push('/cm/forms')}>ยกเลิก</Button>
             <Button type="primary" onClick={handleSave} loading={saving}>บันทึกแบบฟอร์ม</Button>
           </div>
         </div>
