@@ -54,32 +54,32 @@ export class InventoryController {
   }
 
   @Get('expiring')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   getExpiring(@CurrentUser() user: JwtPayload) {
     return this.inventory.getExpiringLots(user.orgId);
   }
 
   @Post('lots/:lotId/expire')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   @HttpCode(HttpStatus.NO_CONTENT)
   expireLot(@Param('lotId') lotId: string, @CurrentUser() user: JwtPayload) {
     return this.inventory.expireLot(lotId, user.sub, user.orgId);
   }
 
   @Get(':id/lots')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   getLots(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.inventory.getLots(id, user.orgId);
   }
 
   @Get(':id/transactions')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   getTransactionHistory(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.inventory.getTransactionHistory(id, user.orgId);
   }
 
   @Post(':id/stock-in')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   @HttpCode(HttpStatus.CREATED)
   stockIn(@Param('id') id: string, @Body() dto: StockInDto, @CurrentUser() user: JwtPayload) {
     return this.inventory.stockIn(id, user.orgId, user.sub, dto);
@@ -96,7 +96,7 @@ export class InventoryController {
   }
 
   @Post(':id/adj-request')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   @HttpCode(HttpStatus.CREATED)
   requestAdj(@Param('id') id: string, @Body() dto: AdjRequestDto, @CurrentUser() user: JwtPayload) {
     return this.inventory.requestAdj(id, user.orgId, user.sub, dto);
