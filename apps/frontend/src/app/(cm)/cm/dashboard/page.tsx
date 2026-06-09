@@ -1,18 +1,13 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Row, Col, Statistic, Table, Tag } from 'antd';
 import { useSession } from 'next-auth/react';
-import Highcharts from 'highcharts';
+import dynamic from 'next/dynamic';
 
-if (typeof window !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require('highcharts/modules/streamgraph')(Highcharts);
-}
-
-interface MonthlyTaskStatus {
-  months: string[];
-  series: { name: string; data: number[] }[];
-}
+const TaskStreamgraph = dynamic(
+  () => import('@/components/charts/TaskStreamgraph'),
+  { ssr: false, loading: () => <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: 12 }}>กำลังโหลดกราฟ...</div> },
+);
 
 interface CMStats {
   myPatientsCount: number;
@@ -21,93 +16,7 @@ interface CMStats {
   statusImproved: number;
   zoneCards: { zoneId: string; zoneName: string; count: number }[];
   recentActions: { createdAt: string; type: string; actor: { displayName: string }; patient: { hn: string } | null }[];
-  monthlyTaskStatus: MonthlyTaskStatus;
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  DONE:        '#52c41a',
-  IN_PROGRESS: '#1677ff',
-  PENDING:     '#faad14',
-  NOT_FOUND:   '#d9d9d9',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  DONE:        'เสร็จแล้ว',
-  IN_PROGRESS: 'กำลังดำเนินการ',
-  PENDING:     'รอดำเนินการ',
-  NOT_FOUND:   'ไม่พบผู้ป่วย',
-};
-
-function StreamgraphChart({ data }: { data: MonthlyTaskStatus }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<Highcharts.Chart | null>(null);
-
-  useEffect(() => {
-    if (!containerRef.current || !data?.months?.length) return;
-
-    const thaiMonths = data.months.map((m) => {
-      const [y, mo] = m.split('-');
-      const d = new Date(Number(y), Number(mo) - 1, 1);
-      return d.toLocaleDateString('th-TH', { month: 'short', year: '2-digit' });
-    });
-
-    const series = data.series.map((s) => ({
-      name: STATUS_LABEL[s.name] ?? s.name,
-      data: s.data,
-      color: STATUS_COLOR[s.name] ?? '#ccc',
-    }));
-
-    if (chartRef.current) {
-      chartRef.current.destroy();
-    }
-
-    chartRef.current = Highcharts.chart(containerRef.current, {
-      chart: {
-        type: 'streamgraph',
-        backgroundColor: 'transparent',
-        height: 200,
-        margin: [10, 10, 30, 10],
-        style: { fontFamily: 'inherit' },
-      },
-      title: { text: undefined },
-      xAxis: {
-        categories: thaiMonths,
-        labels: { style: { fontSize: '10px', color: '#999' } },
-        lineColor: 'transparent',
-        tickColor: 'transparent',
-      },
-      yAxis: {
-        visible: false,
-        startOnTick: false,
-        endOnTick: false,
-      },
-      legend: {
-        enabled: true,
-        align: 'center',
-        verticalAlign: 'bottom',
-        itemStyle: { fontSize: '10px', fontWeight: '400', color: '#666' },
-        symbolRadius: 4,
-        margin: 4,
-      },
-      tooltip: {
-        shared: true,
-        headerFormat: '<b>{point.key}</b><br/>',
-        pointFormat: '<span style="color:{point.color}">●</span> {series.name}: <b>{point.y}</b><br/>',
-      },
-      plotOptions: {
-        series: {
-          lineWidth: 0,
-          marker: { enabled: false },
-        },
-      },
-      series: series as any,
-      credits: { enabled: false },
-    });
-
-    return () => { chartRef.current?.destroy(); chartRef.current = null; };
-  }, [data]);
-
-  return <div ref={containerRef} />;
+  monthlyTaskStatus: { months: string[]; series: { name: string; data: number[] }[] };
 }
 
 export default function CMDashboard() {
@@ -151,7 +60,10 @@ export default function CMDashboard() {
         <Col span={12}>
           <Card title="Task Status — 6 เดือน" styles={{ body: { paddingBottom: 8 } }}>
             {stats?.monthlyTaskStatus ? (
-              <StreamgraphChart data={stats.monthlyTaskStatus} />
+              <TaskStreamgraph
+                months={stats.monthlyTaskStatus.months}
+                series={stats.monthlyTaskStatus.series}
+              />
             ) : (
               <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
                 กำลังโหลด...
