@@ -27,7 +27,7 @@ export default function CMUsersPage() {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(values),
     });
-    if (res.ok) { message.success('เพิ่ม FIELD_WORKER สำเร็จ'); setModalOpen(false); form.resetFields(); load(); }
+    if (res.ok) { message.success('เพิ่ม CARE_GIVER สำเร็จ'); setModalOpen(false); form.resetFields(); load(); }
     else message.error('เกิดข้อผิดพลาด');
   };
 
@@ -35,17 +35,17 @@ export default function CMUsersPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>ทีมของฉัน</h1>
-        <Button type="primary" onClick={() => setModalOpen(true)}>+ เพิ่ม FIELD_WORKER</Button>
+        <Button type="primary" onClick={() => setModalOpen(true)}>+ เพิ่ม CARE_GIVER</Button>
       </div>
       <Table
         dataSource={fws} rowKey="id" size="small"
         columns={[
           { title: 'ชื่อ', dataIndex: 'displayName' },
           { title: 'อีเมล', dataIndex: 'email' },
-          { title: 'Role', render: () => <Tag color="orange">FIELD_WORKER</Tag> },
+          { title: 'Role', render: () => <Tag color="orange">CARE_GIVER</Tag> },
         ]}
       />
-      <Modal title="เพิ่ม FIELD_WORKER" open={modalOpen} onOk={handleCreate} onCancel={() => setModalOpen(false)} okText="สร้าง">
+      <Modal title="เพิ่ม CARE_GIVER" open={modalOpen} onOk={handleCreate} onCancel={() => setModalOpen(false)} okText="สร้าง">
         <Form form={form} layout="vertical">
           <Form.Item name="displayName" label="ชื่อ" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="email" label="อีเมล" rules={[{ required: true, type: 'email' }]}><Input /></Form.Item>

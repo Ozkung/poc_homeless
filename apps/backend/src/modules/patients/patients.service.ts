@@ -14,7 +14,7 @@ export class PatientsService {
 
   async findAll(orgId: string, role?: string, userId?: string) {
     let where: any = { organizationId: orgId };
-    if (role === 'FIELD_WORKER' && userId) {
+    if (role === 'CARE_GIVER' && userId) {
       where = { organizationId: orgId, eventTasks: { some: { assigneeId: userId } } };
     }
     const patients = await this.prisma.patient.findMany({ where });

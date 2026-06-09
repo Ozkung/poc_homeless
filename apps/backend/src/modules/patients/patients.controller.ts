@@ -9,7 +9,7 @@ import { SosDto } from './dto/sos.dto';
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.FIELD_WORKER, UserRole.MEDICAL_VOLUNTEER)
+@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER)
 export class PatientsController {
   constructor(private patients: PatientsService) {}
 

@@ -31,7 +31,7 @@ export class DashboardController {
   }
 
   @Get('fw')
-  @Roles(UserRole.FIELD_WORKER)
+  @Roles(UserRole.CARE_GIVER)
   getFW(@CurrentUser() user: JwtPayload, @Query('from') from?: string, @Query('to') to?: string) {
     const { fromDate, toDate } = parseDateRange(from, to);
     return this.dashboard.getFWStats(user.sub, user.orgId, fromDate, toDate);

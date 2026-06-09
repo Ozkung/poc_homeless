@@ -5,7 +5,7 @@ const ROLE_PREFIX: Record<string, string> = {
   SUPER_ADMIN:       'admin',
   ADMIN:             'admin',
   CASE_MANAGER:      'cm',
-  FIELD_WORKER:      'fw',
+  CARE_GIVER:      'fw',
   MEDICAL_VOLUNTEER: 'medvol',
 };
 

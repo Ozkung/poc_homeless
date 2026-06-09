@@ -22,7 +22,7 @@ export default function FWShell({ children }: { children: React.ReactNode }) {
   ];
 
   const selectedKey = navItems.find((i) => i && pathname.startsWith((i as any).key))?.key as string ?? '/fw/dashboard';
-  const userName: string = (session as any)?.displayName ?? 'Field Worker';
+  const userName: string = (session as any)?.displayName ?? 'Care Giver';
   const initials = userName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -30,7 +30,7 @@ export default function FWShell({ children }: { children: React.ReactNode }) {
       <aside style={{ width: 220, background: '#fff', borderRight: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', height: '100vh', flexShrink: 0 }}>
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #f5f5f5' }}>
           <Text strong>Homeless Mobile Clinic</Text>
-          <div style={{ fontSize: 10, color: '#d97706' }}>FIELD WORKER</div>
+          <div style={{ fontSize: 10, color: '#d97706' }}>CARE GIVER</div>
         </div>
         <Menu mode="inline" selectedKeys={[selectedKey]} items={navItems} onClick={({ key }) => router.push(key)} style={{ flex: 1, border: 'none', paddingTop: 8 }} />
         <div style={{ padding: 12, borderTop: '1px solid #f5f5f5' }}>

@@ -45,7 +45,7 @@ export default function AdminDashboard() {
   }, [token]);
 
   const cms = users.filter((u) => u.role === 'CASE_MANAGER');
-  const fws = users.filter((u) => u.role === 'FIELD_WORKER');
+  const fws = users.filter((u) => u.role === 'CARE_GIVER');
 
   const handleTransfer = async () => {
     if (!selectedFW || !targetCM) return;
@@ -55,7 +55,7 @@ export default function AdminDashboard() {
       body: JSON.stringify({ supervisorId: targetCM }),
     });
     if (res.ok) {
-      message.success('โยกย้าย FIELD_WORKER สำเร็จ');
+      message.success('โยกย้าย CARE_GIVER สำเร็จ');
       setTransferModal(false);
       fetch('/api/users', { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json()).then((d) => setUsers(Array.isArray(d) ? d : []));
@@ -97,18 +97,18 @@ export default function AdminDashboard() {
           </Card>
         </Col>
       </Row>
-      <Card title="⇄ โยกย้าย FIELD_WORKER" extra={<Button type="primary" onClick={() => setTransferModal(true)}>เลือก & โยกย้าย</Button>}>
+      <Card title="⇄ โยกย้าย CARE_GIVER" extra={<Button type="primary" onClick={() => setTransferModal(true)}>เลือก & โยกย้าย</Button>}>
         <Table
           dataSource={fws} rowKey="id" size="small" pagination={{ pageSize: 5 }}
           columns={[
-            { title: 'FIELD_WORKER', dataIndex: 'displayName' },
+            { title: 'CARE_GIVER', dataIndex: 'displayName' },
             { title: 'สังกัด CM', dataIndex: 'supervisorId', render: (id) => cms.find((c) => c.id === id)?.displayName ?? '-' },
           ]}
         />
       </Card>
-      <Modal title="โยกย้าย FIELD_WORKER" open={transferModal} onOk={handleTransfer} onCancel={() => setTransferModal(false)} okText="ยืนยัน">
+      <Modal title="โยกย้าย CARE_GIVER" open={transferModal} onOk={handleTransfer} onCancel={() => setTransferModal(false)} okText="ยืนยัน">
         <div style={{ marginBottom: 12 }}>
-          <div style={{ marginBottom: 4 }}>เลือก FIELD_WORKER</div>
+          <div style={{ marginBottom: 4 }}>เลือก CARE_GIVER</div>
           <Select style={{ width: '100%' }} placeholder="เลือก FW" onChange={setSelectedFW} options={fws.map((f) => ({ value: f.id, label: f.displayName }))} />
         </div>
         <div>

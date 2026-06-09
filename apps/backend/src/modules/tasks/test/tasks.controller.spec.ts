@@ -10,7 +10,7 @@ const mockTasksService = {
 const mockSubmissionsService = {
   create: jest.fn().mockResolvedValue({ id: 'sub1' }),
 };
-const mockUser = { sub: 'u1', email: 'a@b.com', role: 'FIELD_WORKER', orgId: 'o1' };
+const mockUser = { sub: 'u1', email: 'a@b.com', role: 'CARE_GIVER', orgId: 'o1' };
 
 describe('TasksController POST /:id/submit', () => {
   let controller: TasksController;

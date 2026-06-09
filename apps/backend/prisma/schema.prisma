@@ -11,7 +11,7 @@ datasource db {
 enum UserRole {
   ADMIN
   CASE_MANAGER
-  FIELD_WORKER
+  CARE_GIVER
   SUPER_ADMIN
   MEDICAL_VOLUNTEER
 }

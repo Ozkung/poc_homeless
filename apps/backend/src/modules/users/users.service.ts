@@ -54,7 +54,7 @@ export class UsersService {
         organizationId: orgId,
         email: dto.email,
         passwordHash: hash,
-        role: 'FIELD_WORKER',
+        role: 'CARE_GIVER',
         displayName: dto.displayName,
         supervisorId,
       },
@@ -70,8 +70,8 @@ export class UsersService {
   }
 
   async transferFW(fwId: string, newSupervisorId: string, orgId: string) {
-    const fw = await this.prisma.user.findFirst({ where: { id: fwId, organizationId: orgId, role: 'FIELD_WORKER' } });
-    if (!fw) throw new NotFoundException('FIELD_WORKER not found');
+    const fw = await this.prisma.user.findFirst({ where: { id: fwId, organizationId: orgId, role: 'CARE_GIVER' } });
+    if (!fw) throw new NotFoundException('CARE_GIVER not found');
     return this.prisma.user.update({
       where: { id: fwId },
       data: { supervisorId: newSupervisorId },

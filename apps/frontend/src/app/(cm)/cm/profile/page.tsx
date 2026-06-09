@@ -141,7 +141,7 @@ export default function ProfilePage() {
   }
 
   const initials = me?.displayName?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? '??';
-  const roleLabel: Record<string, string> = { ADMIN: 'ผู้ดูแลระบบ', SUPER_ADMIN: 'ผู้อำนวยการ', CASE_MANAGER: 'เคสแมเนเจอร์', FIELD_WORKER: 'อาสาสมัคร', MEDICAL_VOLUNTEER: 'อาสาพยาบาล' };
+  const roleLabel: Record<string, string> = { ADMIN: 'ผู้ดูแลระบบ', SUPER_ADMIN: 'ผู้อำนวยการ', CASE_MANAGER: 'เคสแมเนเจอร์', CARE_GIVER: 'อาสาสมัคร', MEDICAL_VOLUNTEER: 'อาสาพยาบาล' };
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>

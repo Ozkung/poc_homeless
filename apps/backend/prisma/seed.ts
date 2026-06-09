@@ -36,7 +36,7 @@ async function main() {
   // ── Users (with phone + gender) ───────────────────────────────────────────
   const [adminPw, saPw, cmPw, fwPw, mvPw] = await Promise.all([
     hash('Admin1234!'), hash('SuperAdmin1!'), hash('CaseManager1!'),
-    hash('FieldWork1!'),  hash('MedVol1234!'),
+    hash('CareGiv1!'),  hash('MedVol1234!'),
   ]);
 
   const admin = await prisma.user.upsert({
@@ -89,13 +89,13 @@ async function main() {
     create: {
       id: 'user-seed-fw1', organizationId: org.id,
       email: 'fw1@hospital.th', passwordHash: fwPw,
-      role: 'FIELD_WORKER', displayName: 'นายประยุทธ ลงพื้นที่',
+      role: 'CARE_GIVER', displayName: 'นายประยุทธ ลงพื้นที่',
       phone: '062-345-6789', gender: 'MALE',
       supervisorId: 'user-seed-cm1',
     },
   });
 
-  const [fw2Pw, fw3Pw] = await Promise.all([hash('FieldWork2!'), hash('FieldWork3!')]);
+  const [fw2Pw, fw3Pw] = await Promise.all([hash('CareGiv2!'), hash('CareGiv3!')]);
 
   const fw2 = await prisma.user.upsert({
     where:  { email: 'fw2@hospital.th' },
@@ -103,7 +103,7 @@ async function main() {
     create: {
       id: 'user-seed-fw2', organizationId: org.id,
       email: 'fw2@hospital.th', passwordHash: fw2Pw,
-      role: 'FIELD_WORKER', displayName: 'น.ส.วิภา ช่วยเหลือ',
+      role: 'CARE_GIVER', displayName: 'น.ส.วิภา ช่วยเหลือ',
       phone: '062-456-7890', gender: 'FEMALE',
       supervisorId: 'user-seed-cm1',
     },
@@ -115,7 +115,7 @@ async function main() {
     create: {
       id: 'user-seed-fw3', organizationId: org.id,
       email: 'fw3@hospital.th', passwordHash: fw3Pw,
-      role: 'FIELD_WORKER', displayName: 'นายสุรชัย ดูแล',
+      role: 'CARE_GIVER', displayName: 'นายสุรชัย ดูแล',
       phone: '062-567-8901', gender: 'MALE',
       supervisorId: 'user-seed-cm2',
     },
@@ -672,7 +672,7 @@ async function main() {
   console.log('  sa@hospital.th     / SuperAdmin1!   (SUPER_ADMIN)');
   console.log('  cm1@hospital.th    / CaseManager1!  (CASE_MANAGER)');
   console.log('  cm2@hospital.th    / CaseManager1!  (CASE_MANAGER)');
-  console.log('  fw1@hospital.th    / FieldWork1!    (FIELD_WORKER)');
+  console.log('  fw1@hospital.th    / CareGiv1!    (CARE_GIVER)');
   console.log('  mv1@hospital.th    / MedVol1234!    (MEDICAL_VOLUNTEER)');
 }
 

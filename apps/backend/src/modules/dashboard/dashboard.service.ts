@@ -23,7 +23,7 @@ export class DashboardService {
       select: { role: true },
     });
     const activeCM = users.filter((u) => u.role === 'CASE_MANAGER').length;
-    const activeFW = users.filter((u) => u.role === 'FIELD_WORKER').length;
+    const activeFW = users.filter((u) => u.role === 'CARE_GIVER').length;
 
     const patientsWithZone = await this.prisma.patient.findMany({
       where: { organizationId: orgId },
@@ -54,7 +54,7 @@ export class DashboardService {
     });
 
     const subordinates = await this.prisma.user.findMany({
-      where: { supervisorId: cmId, role: 'FIELD_WORKER', isActive: true },
+      where: { supervisorId: cmId, role: 'CARE_GIVER', isActive: true },
       select: { id: true, displayName: true },
     });
 
