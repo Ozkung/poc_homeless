@@ -9,7 +9,7 @@ const ROLE_PREFIX: Record<string, string> = {
   MEDICAL_VOLUNTEER: 'medvol',
 };
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname } = req.nextUrl;
 
