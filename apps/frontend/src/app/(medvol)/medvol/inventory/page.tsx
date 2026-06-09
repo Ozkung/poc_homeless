@@ -10,6 +10,8 @@ export default function MedVolInventoryPage() {
   const [adjRequests, setAdjRequests] = useState<any[]>([]);
   const [stockInModal, setStockInModal] = useState<string | null>(null);
   const [adjModal, setAdjModal] = useState<string | null>(null);
+  const [historyModal, setHistoryModal] = useState<string | null>(null);
+  const [historyData, setHistoryData] = useState<any[]>([]);
   const [stockForm] = Form.useForm();
   const [adjForm] = Form.useForm();
 
@@ -47,6 +49,14 @@ export default function MedVolInventoryPage() {
     else message.error('เกิดข้อผิดพลาด');
   };
 
+  const openHistory = async (itemId: string) => {
+    setHistoryModal(itemId);
+    const res = await fetch(`/api/inventory/${itemId}/transactions`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setHistoryData(await res.json());
+  };
+
   const handleReviewAdj = async (id: string, approved: boolean) => {
     const res = await fetch(`/api/inventory/adj-requests/${id}`, {
       method: 'PATCH',
@@ -76,13 +86,10 @@ export default function MedVolInventoryPage() {
           {
             title: 'Actions',
             render: (_, r) => (
-              <span>
-                <Button size="small" type="primary" onClick={() => setStockInModal(r.id)} style={{ marginRight: 8 }}>
-                  รับเข้า
-                </Button>
-                <Button size="small" onClick={() => { setAdjModal(r.id); }}>
-                  ADJ
-                </Button>
+              <span style={{ display: 'flex', gap: 6 }}>
+                <Button size="small" type="primary" onClick={() => setStockInModal(r.id)}>รับเข้า</Button>
+                <Button size="small" onClick={() => setAdjModal(r.id)}>ADJ</Button>
+                <Button size="small" onClick={() => openHistory(r.id)}>ประวัติ</Button>
               </span>
             ),
           },
@@ -151,6 +158,29 @@ export default function MedVolInventoryPage() {
             <Input.TextArea rows={3} placeholder="เช่น ยาหมดอายุ, ชำรุด, ตรวจนับผิดพลาด" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title={`ประวัติการเคลื่อนไหว — ${items.find((i) => i.id === historyModal)?.name ?? ''}`}
+        open={!!historyModal}
+        onCancel={() => { setHistoryModal(null); setHistoryData([]); }}
+        footer={null}
+        width={700}
+      >
+        <Table
+          dataSource={historyData} rowKey="id" size="small" pagination={{ pageSize: 10 }}
+          columns={[
+            { title: 'วันที่', dataIndex: 'createdAt', render: (v) => new Date(v).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) },
+            { title: 'ประเภท', dataIndex: 'type', render: (t) => {
+              const color: Record<string, string> = { IN_PURCHASE: 'green', IN_DONATION: 'cyan', OUT_PRESCRIPTION: 'orange', OUT_SUPPLY: 'orange', ADJ_APPROVED: 'blue', OUT_EXPIRED: 'red' };
+              const label: Record<string, string> = { IN_PURCHASE: 'รับซื้อ', IN_DONATION: 'บริจาค', OUT_PRESCRIPTION: 'จ่ายยา', OUT_SUPPLY: 'เบิกใช้', ADJ_APPROVED: 'ปรับ', OUT_EXPIRED: 'หมดอายุ' };
+              return <Tag color={color[t] ?? 'default'}>{label[t] ?? t}</Tag>;
+            }},
+            { title: 'จำนวน', dataIndex: 'quantity', render: (v, r: any) => <span style={{ color: r.type?.startsWith('IN') ? '#52c41a' : '#ff4d4f' }}>{r.type?.startsWith('IN') ? `+${v}` : `-${v}`}</span> },
+            { title: 'คงเหลือ', dataIndex: 'balanceAfter' },
+            { title: 'ผู้ดำเนินการ', render: (_, r: any) => r.actor?.displayName ?? '-' },
+          ]}
+        />
       </Modal>
     </div>
   );
