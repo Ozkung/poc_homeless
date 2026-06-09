@@ -20,6 +20,7 @@ import { AlertsModule } from './modules/alerts/alerts.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { ZonesModule } from './modules/zones/zones.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { ZonesModule } from './modules/zones/zones.module';
     InventoryModule,
     ReportsModule,
     ZonesModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
