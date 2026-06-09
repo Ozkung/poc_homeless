@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography, Drawer } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, Package, UserCircle, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, UserCircle, BarChart3 } from 'lucide-react';
 import type { MenuProps } from 'antd';
 
 const { Text } = Typography;
@@ -18,25 +18,20 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const role: string = (session as any)?.role ?? '';
   const navItems: MenuProps['items'] = [
-    { key: '/dashboard', label: 'Dashboard',    icon: <LayoutDashboard size={ICON_SIZE} /> },
-    { key: '/patients',  label: 'ผู้ป่วย',      icon: <Users size={ICON_SIZE} /> },
-    { key: '/events',    label: 'แผนการเยี่ยม', icon: <CalendarDays size={ICON_SIZE} /> },
-    { key: '/forms',     label: 'แบบฟอร์ม',     icon: <FileText size={ICON_SIZE} /> },
-    { key: '/reports',   label: 'รายงาน',        icon: <BarChart3 size={ICON_SIZE} /> },
-    ...(role === 'ADMIN' || role === 'SUPER_ADMIN'
-      ? [{ key: '/inventory', label: 'คลังยา', icon: <Package size={ICON_SIZE} /> }]
-      : []),
-    ...(role === 'SUPER_ADMIN'
-      ? [{ key: '/users', label: 'ผู้ใช้งาน', icon: <Users size={ICON_SIZE} /> }]
-      : []),
+    { key: '/cm/dashboard', label: 'Dashboard',    icon: <LayoutDashboard size={ICON_SIZE} /> },
+    { key: '/cm/patients',  label: 'ผู้ป่วย',      icon: <Users size={ICON_SIZE} /> },
+    { key: '/cm/events',    label: 'แผนการเยี่ยม', icon: <CalendarDays size={ICON_SIZE} /> },
+    { key: '/cm/forms',     label: 'แบบฟอร์ม',     icon: <FileText size={ICON_SIZE} /> },
+    { key: '/cm/reports',   label: 'รายงาน',        icon: <BarChart3 size={ICON_SIZE} /> },
+    { key: '/cm/users',     label: 'ทีมของฉัน',     icon: <Users size={ICON_SIZE} /> },
   ];
 
   const selectedKey = (navItems ?? []).find(
     (item) => item != null && pathname.startsWith((item as { key: string }).key),
-  )?.key as string ?? '/dashboard';
+  )?.key as string ?? '/cm/dashboard';
 
+  const role: string = (session as any)?.role ?? '';
   const userName: string = (session as any)?.displayName ?? (session as any)?.user?.name ?? 'ผู้ใช้งาน';
   const initials = userName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
 
@@ -72,7 +67,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       <div style={{ padding: 12, borderTop: '1px solid #f5f5f5' }}>
         <div
           style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#fafafa', borderRadius: 8, marginBottom: 8, cursor: 'pointer' }}
-          onClick={() => { router.push('/profile'); onMobileClose?.(); }}
+          onClick={() => { router.push('/cm/profile'); onMobileClose?.(); }}
         >
           <Avatar size={28} style={{ background: '#1677ff', fontSize: 11, fontWeight: 700 }}>
             {initials}
