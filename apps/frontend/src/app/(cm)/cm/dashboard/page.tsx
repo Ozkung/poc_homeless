@@ -1,211 +1,83 @@
-export const dynamic = 'force-dynamic';
+'use client';
+import { useEffect, useState } from 'react';
+import { Card, Row, Col, Statistic, Table, Tag } from 'antd';
+import { useSession } from 'next-auth/react';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth.config';
-import { Card, Statistic, Tag, Progress } from 'antd';
-import SeverityChart from '@/components/charts/SeverityChart';
-import AgeClusterChart, { type AgeBand } from '@/components/charts/AgeClusterChart';
-import AlertSection from '@/components/dashboard/AlertSection';
-
-const API_URL = process.env.API_URL ?? 'http://localhost:3001';
-
-interface Patient {
-  id: string; name: string; hn: string;
-  status: 'CRITICAL' | 'PENDING' | 'STABLE';
-  locationText?: string; age?: number;
+interface CMStats {
+  myPatientsCount: number;
+  myFWCount: number;
+  taskSuccessRate: number;
+  statusImproved: number;
+  zoneCards: { zoneId: string; zoneName: string; count: number }[];
+  recentActions: { createdAt: string; type: string; actor: { displayName: string }; patient: { hn: string } | null }[];
 }
 
-async function fetchPatients(token: string): Promise<Patient[]> {
-  try {
-    const res = await fetch(`${API_URL}/patients`, {
-      headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
-    });
-    return res.ok ? res.json() : [];
-  } catch { return []; }
-}
+export default function CMDashboard() {
+  const { data: session } = useSession();
+  const token = (session as any)?.accessToken;
+  const [stats, setStats] = useState<CMStats | null>(null);
 
-async function fetchAlerts(token: string) {
-  try {
-    const res = await fetch(`${API_URL}/alerts`, {
-      headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
-    });
-    return res.ok ? res.json() : [];
-  } catch { return []; }
-}
+  useEffect(() => {
+    if (!token) return;
+    fetch('/api/dashboard/cm', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json()).then(setStats);
+  }, [token]);
 
-async function fetchEventCount(token: string): Promise<number> {
-  try {
-    const now = new Date();
-    const res = await fetch(`${API_URL}/events?month=${now.getMonth() + 1}&year=${now.getFullYear()}`, {
-      headers: { Authorization: `Bearer ${token}` }, cache: 'no-store',
-    });
-    if (!res.ok) return 0;
-    const data = await res.json();
-    return Array.isArray(data) ? data.length : 0;
-  } catch { return 0; }
-}
-
-function computeAgeBands(patients: Patient[]): AgeBand[] {
-  const bands: Record<string, { critical: number; pending: number; stable: number }> = {
-    '<20': { critical: 0, pending: 0, stable: 0 },
-    '20–40': { critical: 0, pending: 0, stable: 0 },
-    '40–60': { critical: 0, pending: 0, stable: 0 },
-    '60+': { critical: 0, pending: 0, stable: 0 },
-    'ไม่ระบุ': { critical: 0, pending: 0, stable: 0 },
+  const activityTypeColor: Record<string, string> = {
+    FORM_SUBMIT: 'blue', CHECK_IN: 'green', SOS: 'red', STATUS_CHANGE: 'orange', NOTE: 'default',
   };
-
-  for (const p of patients) {
-    const key =
-      p.age == null ? 'ไม่ระบุ'
-        : p.age < 20 ? '<20'
-          : p.age < 40 ? '20–40'
-            : p.age < 60 ? '40–60'
-              : '60+';
-
-    const field = p.status === 'CRITICAL' ? 'critical' : p.status === 'PENDING' ? 'pending' : 'stable';
-    bands[key][field]++;
-  }
-
-  return Object.entries(bands)
-    .filter(([, v]) => v.critical + v.pending + v.stable > 0)
-    .map(([label, v]) => ({ label, ...v }));
-}
-
-export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-  const token = session?.accessToken ?? '';
-
-  const [patients, eventCount, alerts] = await Promise.all([
-    fetchPatients(token),
-    fetchEventCount(token),
-    fetchAlerts(token),
-  ]);
-
-  const critical = patients.filter((p) => p.status === 'CRITICAL').length;
-  const pending = patients.filter((p) => p.status === 'PENDING').length;
-  const stable = patients.filter((p) => p.status === 'STABLE').length;
-  const tracked = stable + pending;
-  const pct = patients.length > 0 ? Math.round((tracked / patients.length) * 100) : 0;
-  const ageBands = computeAgeBands(patients);
 
   return (
     <div>
-      {/* Page header */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
-          Overview
-        </div>
-        <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: -1, color: '#111' }}>
-          Dashboard
-        </h2>
-      </div>
+      <h1 style={{ marginBottom: 24, fontSize: 22, fontWeight: 700 }}>Dashboard ของฉัน</h1>
 
-      <AlertSection alerts={alerts} />
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={6}><Card><Statistic title="ผู้ป่วยในมือ" value={stats?.myPatientsCount ?? '-'} /></Card></Col>
+        <Col span={6}><Card><Statistic title="FIELD_WORKER" value={stats?.myFWCount ?? '-'} suffix="คน" /></Card></Col>
+        <Col span={6}><Card><Statistic title="Task Success" value={stats ? `${stats.taskSuccessRate}%` : '-'} valueStyle={{ color: '#52c41a' }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="Status Improved" value={stats?.statusImproved ?? '-'} suffix="คน" valueStyle={{ color: '#52c41a' }} /></Card></Col>
+      </Row>
 
-      {/* Bento grid */}
-      <div className="flex flex-col md:flex-row gap-4">
-
-        {/* Hero card — 2 cols × 2 rows */}
-        <Card
-          className="w-full md:w-[70%]"
-          style={{ borderTop: '3px solid #1677ff' }}
-          styles={{ body: { padding: 24 } }}
-        >
-          <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
-            ภาพรวมผู้ป่วย
-          </span>
-          <div style={{ marginTop: 8 }}>
-            <Statistic
-              value={patients.length}
-              valueStyle={{ fontSize: 52, fontWeight: 800, lineHeight: 1 }}
-            />
-            <span style={{ fontSize: 12, color: '#888' }}>ผู้ป่วยทั้งหมดในระบบ</span>
-          </div>
-          <Progress
-            percent={pct}
-            showInfo={false}
-            strokeColor="#1677ff"
-            trailColor="#f0f0f0"
-            style={{ margin: '16px 0 4px' }}
-          />
-          <span style={{ fontSize: 11, color: '#888' }}>
-            ติดตามแล้ว {tracked} ราย · {pct}%
-          </span>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
-            <Tag color="error">● {critical} วิกฤต</Tag>
-            <Tag color="warning">● {pending} รอดำเนินการ</Tag>
-            <Tag color="success">● {stable} ปกติ</Tag>
-          </div>
-
-          {/* Severity chart — replaces "recent patients" section */}
-          <div style={{ borderTop: '1px solid #f5f5f5', margin: '20px -24px 0', padding: '16px 24px 0' }}>
-            <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>
-              วิเคราะห์ตามความร้ายแรง
-            </div>
-            <SeverityChart critical={critical} pending={pending} stable={stable} />
-          </div>
-        </Card>
-        <div className="flex flex-col justify-between gap-4 w-full md:w-[30%]">
-          {/* Critical — 1×1 */}
-          <Card style={{ borderTop: '3px solid #ff4d4f' }} styles={{ body: { padding: 24 } }}>
-            <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
-              ผู้ป่วยวิกฤต
-            </span>
-            <div style={{ marginTop: 8 }}>
-              <Statistic
-                value={critical}
-                valueStyle={{ fontSize: 44, fontWeight: 800, color: '#ff4d4f', lineHeight: 1 }}
-              />
-              <span style={{ fontSize: 12, color: '#888' }}>ต้องการความช่วยเหลือเร่งด่วน</span>
-            </div>
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={12}>
+          <Card title="ผู้ป่วยแยกตาม Zone">
+            {(stats?.zoneCards ?? []).map((z) => (
+              <div key={z.zoneId} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
+                <span style={{ fontWeight: 600 }}>{z.zoneName}</span>
+                <span>{z.count} คน</span>
+              </div>
+            ))}
+            {!stats?.zoneCards?.length && <div style={{ color: '#999', padding: '16px 0' }}>ยังไม่มีผู้ป่วยใน Zone</div>}
           </Card>
-
-          {/* Events — 1×1 */}
-          <Card style={{ borderTop: '3px solid #faad14' }} styles={{ body: { padding: 24 } }}>
-            <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
-              กิจกรรมเดือนนี้
-            </span>
-            <div style={{ marginTop: 8 }}>
-              <Statistic
-                value={eventCount}
-                valueStyle={{ fontSize: 44, fontWeight: 800, color: '#faad14', lineHeight: 1 }}
-              />
-              <span style={{ fontSize: 12, color: '#888' }}>
-                {new Date().toLocaleString('th-TH', { month: 'long', year: 'numeric' })}
-              </span>
+        </Col>
+        <Col span={12}>
+          <Card title="Cumulative Success Rate — 6 เดือน">
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 80, marginBottom: 8 }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div style={{ background: '#52c41a', width: '100%', height: `${30 + i * 8}px`, borderRadius: '3px 3px 0 0', opacity: 0.6 + i * 0.07 }} />
+                  <div style={{ fontSize: 10, color: '#999' }}>{['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.'][i]}</div>
+                </div>
+              ))}
             </div>
+            <div style={{ fontSize: 11, color: '#999', textAlign: 'center' }}>Task ✓ + Status Improved</div>
           </Card>
+        </Col>
+      </Row>
 
-          {/* Stable — 1×1 */}
-          <Card style={{ borderTop: '3px solid #52c41a' }} styles={{ body: { padding: 24 } }}>
-            <span style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase' }}>
-              ผู้ป่วยปกติ
-            </span>
-            <div style={{ marginTop: 8 }}>
-              <Statistic
-                value={stable}
-                valueStyle={{ fontSize: 44, fontWeight: 800, color: '#52c41a', lineHeight: 1 }}
-              />
-              <span style={{ fontSize: 12, color: '#888' }}>สถานะเสถียร</span>
-            </div>
-          </Card>
-        </div>
-
-      </div>
-
-      {/* Age Cluster chart — full 3-col span */}
-      <Card
-        style={{ borderTop: '3px solid #722ed1', marginTop: 14 }}
-        styles={{ body: { padding: 24 } }}
-      >
-        <div style={{ fontSize: 10, color: '#888', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>
-          Cluster ผู้ป่วยตามช่วงอายุ
-        </div>
-        {ageBands.length === 0 ? (
-          <span style={{ fontSize: 12, color: '#bbb' }}>ยังไม่มีข้อมูลผู้ป่วย</span>
-        ) : (
-          <AgeClusterChart bands={ageBands} />
-        )}
+      <Card title="Recent Actions — ทีมของฉัน">
+        <Table
+          dataSource={stats?.recentActions ?? []}
+          rowKey={(_, i) => String(i)}
+          size="small"
+          pagination={{ pageSize: 10 }}
+          columns={[
+            { title: 'เวลา', dataIndex: 'createdAt', render: (v) => new Date(v).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) },
+            { title: 'FW', render: (_, r) => r.actor.displayName },
+            { title: 'HN', render: (_, r) => r.patient?.hn ?? '-' },
+            { title: 'Action', dataIndex: 'type', render: (t) => <Tag color={activityTypeColor[t] ?? 'default'}>{t}</Tag> },
+          ]}
+        />
       </Card>
     </div>
   );
