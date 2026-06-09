@@ -201,11 +201,17 @@ export default function EventsPage() {
     if (!session?.accessToken) return;
     const headers = { Authorization: `Bearer ${session.accessToken}` };
     Promise.all([
-      fetch(`${API_URL}/users`, { headers }).then((r) => r.ok ? r.json() : []),
+      fetch(`${API_URL}/users/my-fw`, { headers }).then((r) => r.ok ? r.json() : []),
       fetch(`${API_URL}/forms`, { headers }).then((r) => r.ok ? r.json() : []),
       fetch(`${API_URL}/patients`, { headers }).then((r) => r.ok ? r.json() : []),
-    ]).then(([u, f, p]) => {
-      setUsers(Array.isArray(u) ? u : []);
+    ]).then(([fw, f, p]) => {
+      // decode sub จาก JWT เพื่อ prepend ตัว CM เอง (CM ทำงานเหมือน FW ได้)
+      let cmId = '';
+      try { cmId = JSON.parse(atob(session!.accessToken!.split('.')[1])).sub; } catch { /* noop */ }
+      const cmSelf = cmId
+        ? [{ id: cmId, displayName: `${(session as any).displayName ?? session?.user?.name ?? 'ฉัน'} (ฉัน)` }]
+        : [];
+      setUsers([...cmSelf, ...(Array.isArray(fw) ? fw : [])]);
       setFormTemplates(Array.isArray(f) ? f : []);
       setAllPatients(Array.isArray(p) ? p : []);
     }).catch(() => {});
