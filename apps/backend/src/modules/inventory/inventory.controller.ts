@@ -20,7 +20,7 @@ export class InventoryController {
   constructor(private inventory: InventoryService) {}
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   listItems(@CurrentUser() user: JwtPayload, @Query('category') category?: string) {
     return this.inventory.listItems(user.orgId, category);
   }
@@ -32,19 +32,19 @@ export class InventoryController {
   }
 
   @Get('low-stock')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   getLowStock(@CurrentUser() user: JwtPayload) {
     return this.inventory.getLowStockItems(user.orgId);
   }
 
   @Get('adj-requests')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   getPendingAdj(@CurrentUser() user: JwtPayload) {
     return this.inventory.getPendingAdj(user.orgId);
   }
 
   @Patch('adj-requests/:id')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   reviewAdj(
     @Param('id') id: string,
     @Body() dto: ReviewAdjDto,
