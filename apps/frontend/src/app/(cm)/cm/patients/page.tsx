@@ -47,7 +47,7 @@ const columns: ColumnsType<Patient> = [
   {
     title: '', key: 'action', width: 110,
     render: (_, r) => (
-      <Link href={`/patients/${r.id}`}>
+      <Link href={`/cm/patients/${r.id}`}>
         <Button size="small" type="link">ดูโปรไฟล์ →</Button>
       </Link>
     ),
