@@ -91,6 +91,13 @@ export class DashboardService {
 
     const zoneCards = this.buildZoneCards(myPatients);
 
+    // Monthly task status breakdown for streamgraph (last 6 months)
+    const allTasks = await this.prisma.eventTask.findMany({
+      where: { patientId: { in: patientIds }, createdAt: { gte: since6m } },
+      select: { status: true, createdAt: true },
+    });
+    const monthlyTaskStatus = this.buildMonthlyTaskStatus(allTasks, since6m);
+
     return {
       myPatientsCount: myPatients.length,
       myFWCount: subordinates.length,
@@ -98,6 +105,39 @@ export class DashboardService {
       statusImproved: statusImproved.length,
       zoneCards,
       recentActions,
+      monthlyTaskStatus,
+    };
+  }
+
+  private buildMonthlyTaskStatus(
+    tasks: { status: string; createdAt: Date }[],
+    since: Date,
+  ) {
+    const months: { label: string; year: number; month: number }[] = [];
+    const cursor = new Date(since.getFullYear(), since.getMonth(), 1);
+    const now = new Date();
+    while (cursor <= now) {
+      months.push({ label: `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`, year: cursor.getFullYear(), month: cursor.getMonth() });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    const statuses = ['PENDING', 'IN_PROGRESS', 'DONE', 'NOT_FOUND'] as const;
+    const result: Record<string, Record<string, number>> = {};
+    for (const m of months) {
+      result[m.label] = { PENDING: 0, IN_PROGRESS: 0, DONE: 0, NOT_FOUND: 0 };
+    }
+    for (const task of tasks) {
+      const d = new Date(task.createdAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (result[key]) result[key][task.status] = (result[key][task.status] ?? 0) + 1;
+    }
+
+    return {
+      months: months.map((m) => m.label),
+      series: statuses.map((s) => ({
+        name: s,
+        data: months.map((m) => result[m.label][s] ?? 0),
+      })),
     };
   }
 
