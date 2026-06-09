@@ -1,22 +1,13 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import Highcharts from 'highcharts';
-
-// Load streamgraph module once per session
-let moduleLoaded = false;
-function ensureModule() {
-  if (!moduleLoaded) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('highcharts/modules/streamgraph')(Highcharts);
-    moduleLoaded = true;
-  }
-}
+import HighchartsReact from 'highcharts-react-official';
 
 const STATUS_COLOR: Record<string, string> = {
   DONE:        '#52c41a',
   IN_PROGRESS: '#1677ff',
   PENDING:     '#faad14',
-  NOT_FOUND:   '#d9d9d9',
+  NOT_FOUND:   '#bfbfbf',
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -31,62 +22,72 @@ interface Props {
   series: { name: string; data: number[] }[];
 }
 
-export default function TaskStreamgraph({ months, series }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<Highcharts.Chart | null>(null);
+export default function TaskStackedArea({ months, series }: Props) {
+  const chartRef = useRef<HighchartsReact.RefObject>(null);
 
-  useEffect(() => {
-    if (!containerRef.current || !months.length) return;
-    ensureModule();
+  const thaiMonths = months.map((m) => {
+    const [y, mo] = m.split('-');
+    return new Date(Number(y), Number(mo) - 1, 1)
+      .toLocaleDateString('th-TH', { month: 'short', year: '2-digit' });
+  });
 
-    const thaiMonths = months.map((m) => {
-      const [y, mo] = m.split('-');
-      return new Date(Number(y), Number(mo) - 1, 1)
-        .toLocaleDateString('th-TH', { month: 'short', year: '2-digit' });
-    });
-
-    chartRef.current?.destroy();
-    chartRef.current = Highcharts.chart(containerRef.current, {
-      chart: {
-        type: 'streamgraph',
-        backgroundColor: 'transparent',
-        height: 200,
-        margin: [10, 10, 40, 10],
-        style: { fontFamily: 'inherit' },
-      },
+  const options: Highcharts.Options = {
+    chart: {
+      type: 'area',
+      backgroundColor: 'transparent',
+      height: 200,
+      margin: [10, 10, 40, 30],
+      style: { fontFamily: 'inherit' },
+      animation: false,
+    },
+    title: { text: undefined },
+    xAxis: {
+      categories: thaiMonths,
+      labels: { style: { fontSize: '10px', color: '#999' } },
+      lineColor: '#f0f0f0',
+      tickColor: '#f0f0f0',
+    },
+    yAxis: {
       title: { text: undefined },
-      xAxis: {
-        categories: thaiMonths,
-        labels: { style: { fontSize: '10px', color: '#999' } },
-        lineColor: 'transparent',
-        tickColor: 'transparent',
+      labels: { style: { fontSize: '10px', color: '#999' } },
+      gridLineColor: '#f5f5f5',
+      stackLabels: { enabled: false },
+    },
+    legend: {
+      enabled: true,
+      align: 'center',
+      verticalAlign: 'bottom',
+      itemStyle: { fontSize: '10px', fontWeight: '400', color: '#666' },
+      symbolRadius: 2,
+      margin: 6,
+    },
+    tooltip: {
+      shared: true,
+      headerFormat: '<b>{point.key}</b><br/>',
+      pointFormat: '<span style="color:{point.color}">●</span> {series.name}: <b>{point.y}</b><br/>',
+    },
+    plotOptions: {
+      area: {
+        stacking: 'normal',
+        lineWidth: 1,
+        marker: { enabled: false },
+        fillOpacity: 0.8,
       },
-      yAxis: { visible: false, startOnTick: false, endOnTick: false },
-      legend: {
-        enabled: true,
-        align: 'center',
-        verticalAlign: 'bottom',
-        itemStyle: { fontSize: '10px', fontWeight: '400', color: '#666' },
-        symbolRadius: 4,
-        margin: 4,
-      },
-      tooltip: {
-        shared: true,
-        headerFormat: '<b>{point.key}</b><br/>',
-        pointFormat: '<span style="color:{point.color}">●</span> {series.name}: <b>{point.y}</b><br/>',
-      },
-      plotOptions: { series: { lineWidth: 0, marker: { enabled: false } } },
-      series: series.map((s) => ({
-        type: 'streamgraph' as const,
-        name: STATUS_LABEL[s.name] ?? s.name,
-        data: s.data,
-        color: STATUS_COLOR[s.name] ?? '#ccc',
-      })),
-      credits: { enabled: false },
-    });
+    },
+    series: series.map((s) => ({
+      type: 'area' as const,
+      name: STATUS_LABEL[s.name] ?? s.name,
+      data: s.data,
+      color: STATUS_COLOR[s.name] ?? '#ccc',
+    })),
+    credits: { enabled: false },
+  };
 
-    return () => { chartRef.current?.destroy(); chartRef.current = null; };
-  }, [months, series]);
-
-  return <div ref={containerRef} />;
+  return (
+    <HighchartsReact
+      highcharts={Highcharts}
+      options={options}
+      ref={chartRef}
+    />
+  );
 }
