@@ -29,7 +29,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     <div style={{ display: 'flex', height: '100vh', background: '#f0f2f5' }}>
       <aside style={{ width: 220, background: '#fff', borderRight: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', height: '100vh', flexShrink: 0 }}>
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #f5f5f5' }}>
-          <Text strong>HomeMed Connect</Text>
+          <Text strong>Homeless Mobile Clinic</Text>
           <div style={{ fontSize: 10, color: '#7c3aed' }}>SUPER ADMIN</div>
         </div>
         <Menu mode="inline" selectedKeys={[selectedKey]} items={navItems} onClick={({ key }) => router.push(key)} style={{ flex: 1, border: 'none', paddingTop: 8 }} />

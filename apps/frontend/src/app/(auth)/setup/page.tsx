@@ -73,11 +73,11 @@ export default function SetupPage() {
             <Home size={20} color="white" strokeWidth={2.5} />
           </div>
           <div>
-            <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 9, color: '#1677ff', textTransform: 'uppercase', letterSpacing: '2.5px', lineHeight: 1, marginBottom: 2 }}>
-              HomeMed
+            <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 8, color: '#1677ff', textTransform: 'uppercase', letterSpacing: '1.5px', lineHeight: 1, marginBottom: 2 }}>
+              Homeless Mobile Clinic
             </div>
-            <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 20, fontWeight: 800, color: '#111', lineHeight: 1 }}>
-              Connect
+            <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 18, fontWeight: 800, color: '#111', lineHeight: 1 }}>
+              by AUTRA
             </div>
           </div>
         </div>

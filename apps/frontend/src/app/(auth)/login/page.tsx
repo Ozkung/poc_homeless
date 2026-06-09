@@ -77,18 +77,18 @@ export default function LoginPage() {
                 marginBottom: 2,
               }}
             >
-              HomeMed
+              Homeless Mobile Clinic
             </div>
             <div
               style={{
                 fontFamily: "'Sarabun',sans-serif",
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: 800,
                 color: '#111',
                 lineHeight: 1,
               }}
             >
-              Connect
+              by AUTRA
             </div>
           </div>
         </div>

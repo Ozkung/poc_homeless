@@ -3,7 +3,7 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'HomeMed Connect',
+  title: 'Homeless Mobile Clinic by AUTRA',
   description: 'ระบบดูแลผู้ป่วยไร้บ้านในชุมชน',
 };
 

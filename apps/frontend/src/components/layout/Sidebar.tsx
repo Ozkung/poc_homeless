@@ -49,8 +49,8 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           </svg>
         </div>
         <div>
-          <div style={{ fontSize: 9, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', lineHeight: 1, marginBottom: 2 }}>HomeMed</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#111', lineHeight: 1 }}>Connect</div>
+          <div style={{ fontSize: 8, color: '#1677ff', letterSpacing: 1.5, textTransform: 'uppercase', lineHeight: 1, marginBottom: 2 }}>Homeless Mobile Clinic</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#111', lineHeight: 1 }}>by AUTRA</div>
         </div>
       </div>
 
