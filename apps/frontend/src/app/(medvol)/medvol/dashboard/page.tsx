@@ -1,7 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Statistic, List, Button, Tag, message } from 'antd';
+import { DatePicker } from 'antd';
 import { useSession } from 'next-auth/react';
+import dayjs, { Dayjs } from 'dayjs';
+
+const { RangePicker } = DatePicker;
 
 interface MedVolStats {
   itemCount: number;
@@ -17,14 +21,17 @@ export default function MedVolDashboard() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [stats, setStats] = useState<MedVolStats | null>(null);
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(30, 'day'), dayjs()]);
 
   const load = () => {
     if (!token) return;
-    fetch('/api/dashboard/medvol', { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json()).then(setStats);
+    const [from, to] = dateRange;
+    fetch(`/api/dashboard/medvol?from=${from.toISOString()}&to=${to.toISOString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((r) => r.json()).then(setStats);
   };
 
-  useEffect(() => { load(); }, [token]);
+  useEffect(() => { load(); }, [token, dateRange]);
 
   const handleApprove = async (id: string, approved: boolean) => {
     const res = await fetch(`/api/inventory/adj-requests/${id}/review`, {
@@ -40,12 +47,19 @@ export default function MedVolDashboard() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24, fontSize: 22, fontWeight: 700 }}>Medical Volunteer Dashboard</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Medical Volunteer Dashboard</h1>
+        <RangePicker
+          value={dateRange}
+          onChange={(v) => v && setDateRange(v as [Dayjs, Dayjs])}
+          format="DD MMM YYYY"
+        />
+      </div>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={6}><Card><Statistic title="รายการสินค้า" value={stats?.itemCount ?? '-'} suffix="ชนิด" /></Card></Col>
         <Col span={6}><Card><Statistic title="Stock ใกล้หมด" value={stats?.lowStockCount ?? '-'} valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
-        <Col span={6}><Card><Statistic title="Request รออนุมัติ" value={stats?.pendingRequestCount ?? '-'} valueStyle={{ color: '#faad14' }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="Request รออนุมัติ (ช่วงนี้)" value={stats?.pendingRequestCount ?? '-'} valueStyle={{ color: '#faad14' }} /></Card></Col>
         <Col span={6}><Card><Statistic title="ผู้ป่วยทั้งหมด" value={stats?.totalPatients ?? '-'} /></Card></Col>
       </Row>
 
@@ -73,7 +87,7 @@ export default function MedVolDashboard() {
               <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><div style={{ fontSize: 22, fontWeight: 700, color: '#ff4d4f' }}>{stats?.patientStatus.critical ?? '-'}</div><div style={{ fontSize: 11 }}>CRITICAL</div></Card></Col>
             </Row>
           </Card>
-          <Card title="Request รออนุมัติ">
+          <Card title="Request รออนุมัติ (ช่วงนี้)">
             <List
               size="small"
               dataSource={stats?.pendingRequestsList ?? []}

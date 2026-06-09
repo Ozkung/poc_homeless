@@ -47,7 +47,7 @@ export class DashboardService {
     };
   }
 
-  async getCMStats(cmId: string, orgId: string) {
+  async getCMStats(cmId: string, orgId: string, from: Date, to: Date) {
     const myPatients = await this.prisma.patient.findMany({
       where: { caseManagerId: cmId, organizationId: orgId },
       select: { id: true, status: true, zoneId: true, zone: { select: { name: true } }, age: true, conditions: true },
@@ -59,19 +59,17 @@ export class DashboardService {
     });
 
     const patientIds = myPatients.map((p) => p.id);
-    const since6m = new Date();
-    since6m.setMonth(since6m.getMonth() - 6);
 
     const [totalTasks, doneTasks] = await Promise.all([
-      this.prisma.eventTask.count({ where: { patientId: { in: patientIds }, createdAt: { gte: since6m } } }),
-      this.prisma.eventTask.count({ where: { patientId: { in: patientIds }, status: 'DONE', createdAt: { gte: since6m } } }),
+      this.prisma.eventTask.count({ where: { patientId: { in: patientIds }, createdAt: { gte: from, lte: to } } }),
+      this.prisma.eventTask.count({ where: { patientId: { in: patientIds }, status: 'DONE', createdAt: { gte: from, lte: to } } }),
     ]);
 
     const statusImproved = await this.prisma.activity.findMany({
       where: {
         type: 'STATUS_CHANGE',
         patientId: { in: patientIds },
-        createdAt: { gte: since6m },
+        createdAt: { gte: from, lte: to },
         payload: { path: ['newStatus'], equals: 'STABLE' },
       },
       select: { patientId: true },
@@ -79,7 +77,7 @@ export class DashboardService {
     });
 
     const recentActions = await this.prisma.activity.findMany({
-      where: { patientId: { in: patientIds } },
+      where: { patientId: { in: patientIds }, createdAt: { gte: from, lte: to } },
       orderBy: { createdAt: 'desc' },
       take: 20,
       select: {
@@ -91,12 +89,11 @@ export class DashboardService {
 
     const zoneCards = this.buildZoneCards(myPatients);
 
-    // Monthly task status breakdown for streamgraph (last 6 months)
     const allTasks = await this.prisma.eventTask.findMany({
-      where: { patientId: { in: patientIds }, createdAt: { gte: since6m } },
+      where: { patientId: { in: patientIds }, createdAt: { gte: from, lte: to } },
       select: { status: true, createdAt: true },
     });
-    const monthlyTaskStatus = this.buildMonthlyTaskStatus(allTasks, since6m);
+    const monthlyTaskStatus = this.buildMonthlyTaskStatus(allTasks, from, to);
 
     return {
       myPatientsCount: myPatients.length,
@@ -111,12 +108,13 @@ export class DashboardService {
 
   private buildMonthlyTaskStatus(
     tasks: { status: string; createdAt: Date }[],
-    since: Date,
+    from: Date,
+    to: Date,
   ) {
     const months: { label: string; year: number; month: number }[] = [];
-    const cursor = new Date(since.getFullYear(), since.getMonth(), 1);
-    const now = new Date();
-    while (cursor <= now) {
+    const cursor = new Date(from.getFullYear(), from.getMonth(), 1);
+    const end = new Date(to.getFullYear(), to.getMonth(), 1);
+    while (cursor <= end) {
       months.push({ label: `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`, year: cursor.getFullYear(), month: cursor.getMonth() });
       cursor.setMonth(cursor.getMonth() + 1);
     }
@@ -153,7 +151,7 @@ export class DashboardService {
     return Array.from(zoneMap.values());
   }
 
-  async getFWStats(fwId: string, orgId: string) {
+  async getFWStats(fwId: string, orgId: string, from: Date, to: Date) {
     const assignedPatients = await this.prisma.patient.findMany({
       where: { organizationId: orgId, eventTasks: { some: { assigneeId: fwId } } },
       select: { id: true, age: true, conditions: true, hn: true },
@@ -170,13 +168,12 @@ export class DashboardService {
       select: { id: true, status: true, event: { select: { title: true } }, patient: { select: { hn: true } } },
     });
 
-    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const submittedToday = await this.prisma.activity.findMany({
-      where: { patientId: { in: patientIds }, type: 'FORM_SUBMIT', createdAt: { gte: since24h } },
+    const submittedInRange = await this.prisma.activity.findMany({
+      where: { patientId: { in: patientIds }, type: 'FORM_SUBMIT', createdAt: { gte: from, lte: to } },
       select: { patientId: true },
       distinct: ['patientId'],
     });
-    const submittedIds = new Set(submittedToday.map((a) => a.patientId));
+    const submittedIds = new Set(submittedInRange.map((a) => a.patientId));
 
     const medicationAdherence = {
       total: patientIds.length,
@@ -184,11 +181,9 @@ export class DashboardService {
       list: assignedPatients.map((p) => ({ hn: p.hn, reported: submittedIds.has(p.id) })),
     };
 
-    const since1m = new Date();
-    since1m.setMonth(since1m.getMonth() - 1);
     const [mTasks, mDone] = await Promise.all([
-      this.prisma.eventTask.count({ where: { assigneeId: fwId, createdAt: { gte: since1m } } }),
-      this.prisma.eventTask.count({ where: { assigneeId: fwId, status: 'DONE', createdAt: { gte: since1m } } }),
+      this.prisma.eventTask.count({ where: { assigneeId: fwId, createdAt: { gte: from, lte: to } } }),
+      this.prisma.eventTask.count({ where: { assigneeId: fwId, status: 'DONE', createdAt: { gte: from, lte: to } } }),
     ]);
 
     return {
@@ -228,20 +223,20 @@ export class DashboardService {
       .map(([condition, count]) => ({ condition, count }));
   }
 
-  async getMedVolStats(orgId: string) {
+  async getMedVolStats(orgId: string, from: Date, to: Date) {
     const [itemCount, lowStockItems, pendingRequests, patients] = await Promise.all([
       this.prisma.inventoryItem.count({ where: { organizationId: orgId, isActive: true } }),
       this.prisma.inventoryItem.findMany({
         where: { organizationId: orgId, isActive: true },
         select: { id: true, name: true, unit: true, currentStock: true, lowStockThreshold: true },
       }),
-      this.prisma.adjRequest.count({ where: { item: { organizationId: orgId }, status: 'PENDING' } }),
+      this.prisma.adjRequest.count({ where: { item: { organizationId: orgId }, status: 'PENDING', createdAt: { gte: from, lte: to } } }),
       this.prisma.patient.groupBy({ by: ['status'], where: { organizationId: orgId }, _count: true }),
     ]);
 
     const lowStock = lowStockItems.filter((i) => i.currentStock <= i.lowStockThreshold);
     const pendingRequestsList = await this.prisma.adjRequest.findMany({
-      where: { item: { organizationId: orgId }, status: 'PENDING' },
+      where: { item: { organizationId: orgId }, status: 'PENDING', createdAt: { gte: from, lte: to } },
       take: 10,
       select: {
         id: true, quantity: true, reason: true,

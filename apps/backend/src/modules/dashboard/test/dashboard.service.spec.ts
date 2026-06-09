@@ -38,7 +38,7 @@ describe('DashboardService', () => {
     mockPrisma.eventTask.findMany.mockResolvedValue([]);
     mockPrisma.eventTask.count.mockResolvedValue(0);
     mockPrisma.activity.findMany.mockResolvedValue([]);
-    const result = await service.getFWStats('user1', 'org1');
+    const result = await service.getFWStats('user1', 'org1', new Date('2026-01-01'), new Date('2026-06-09'));
     expect(result).toHaveProperty('medicationAdherence');
     expect(result).toHaveProperty('ageDistribution');
     expect(result).toHaveProperty('topConditions');

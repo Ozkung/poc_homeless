@@ -1,7 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Statistic, Tag, List } from 'antd';
+import { DatePicker } from 'antd';
 import { useSession } from 'next-auth/react';
+import dayjs, { Dayjs } from 'dayjs';
+
+const { RangePicker } = DatePicker;
 
 interface FWStats {
   myPatientsCount: number;
@@ -17,25 +21,35 @@ export default function FWDashboard() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [stats, setStats] = useState<FWStats | null>(null);
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(30, 'day'), dayjs()]);
 
   useEffect(() => {
     if (!token) return;
-    fetch('/api/dashboard/fw', { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json()).then(setStats);
-  }, [token]);
+    const [from, to] = dateRange;
+    fetch(`/api/dashboard/fw?from=${from.toISOString()}&to=${to.toISOString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((r) => r.json()).then(setStats);
+  }, [token, dateRange]);
 
   const maxCondCount = Math.max(...(stats?.topConditions.map((c) => c.count) ?? [1]));
   const maxAge = Math.max(...(stats?.ageDistribution.map((a) => a.count) ?? [1]));
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24, fontSize: 22, fontWeight: 700 }}>Dashboard ของฉัน</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Dashboard ของฉัน</h1>
+        <RangePicker
+          value={dateRange}
+          onChange={(v) => v && setDateRange(v as [Dayjs, Dayjs])}
+          format="DD MMM YYYY"
+        />
+      </div>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={6}><Card><Statistic title="ผู้ป่วยของฉัน" value={stats?.myPatientsCount ?? '-'} /></Card></Col>
         <Col span={6}><Card><Statistic title="งานวันนี้ (ค้างอยู่)" value={stats?.todayPending ?? '-'} valueStyle={{ color: stats?.todayPending ? '#faad14' : undefined }} /></Card></Col>
-        <Col span={6}><Card><Statistic title="กินยาครบ" value={stats ? `${stats.medicationAdherence.reported}/${stats.medicationAdherence.total}` : '-'} /></Card></Col>
-        <Col span={6}><Card><Statistic title="Task Success (เดือนนี้)" value={stats ? `${stats.taskSuccessRate}%` : '-'} valueStyle={{ color: '#52c41a' }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="รายงานยา (ช่วงนี้)" value={stats ? `${stats.medicationAdherence.reported}/${stats.medicationAdherence.total}` : '-'} /></Card></Col>
+        <Col span={6}><Card><Statistic title="Task Success" value={stats ? `${stats.taskSuccessRate}%` : '-'} valueStyle={{ color: '#52c41a' }} /></Card></Col>
       </Row>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
@@ -45,7 +59,7 @@ export default function FWDashboard() {
               size="small"
               dataSource={stats?.medicationAdherence.list ?? []}
               renderItem={(item) => (
-                <List.Item extra={<Tag color={item.reported ? 'green' : 'red'}>{item.reported ? 'กินครบ' : 'ยังไม่รายงาน'}</Tag>}>
+                <List.Item extra={<Tag color={item.reported ? 'green' : 'red'}>{item.reported ? 'รายงานแล้ว' : 'ยังไม่รายงาน'}</Tag>}>
                   {item.hn}
                 </List.Item>
               )}

@@ -1,8 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Statistic, Table, Tag } from 'antd';
+import { DatePicker } from 'antd';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
+import dayjs, { Dayjs } from 'dayjs';
+
+const { RangePicker } = DatePicker;
 
 const TaskStreamgraph = dynamic(
   () => import('@/components/charts/TaskStreamgraph'),
@@ -23,12 +27,15 @@ export default function CMDashboard() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [stats, setStats] = useState<CMStats | null>(null);
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(30, 'day'), dayjs()]);
 
   useEffect(() => {
     if (!token) return;
-    fetch('/api/dashboard/cm', { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json()).then(setStats);
-  }, [token]);
+    const [from, to] = dateRange;
+    fetch(`/api/dashboard/cm?from=${from.toISOString()}&to=${to.toISOString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((r) => r.json()).then(setStats);
+  }, [token, dateRange]);
 
   const activityTypeColor: Record<string, string> = {
     FORM_SUBMIT: 'blue', CHECK_IN: 'green', SOS: 'red', STATUS_CHANGE: 'orange', NOTE: 'default',
@@ -36,7 +43,14 @@ export default function CMDashboard() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 24, fontSize: 22, fontWeight: 700 }}>Dashboard ของฉัน</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Dashboard ของฉัน</h1>
+        <RangePicker
+          value={dateRange}
+          onChange={(v) => v && setDateRange(v as [Dayjs, Dayjs])}
+          format="DD MMM YYYY"
+        />
+      </div>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={6}><Card><Statistic title="ผู้ป่วยในมือ" value={stats?.myPatientsCount ?? '-'} /></Card></Col>
@@ -58,7 +72,7 @@ export default function CMDashboard() {
           </Card>
         </Col>
         <Col span={12}>
-          <Card title="Task Status — 6 เดือน" styles={{ body: { paddingBottom: 8 } }}>
+          <Card title="Task Status" styles={{ body: { paddingBottom: 8 } }}>
             {stats?.monthlyTaskStatus ? (
               <TaskStreamgraph
                 months={stats.monthlyTaskStatus.months}
