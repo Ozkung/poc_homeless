@@ -60,15 +60,30 @@ services:
     depends_on:
       - backend
 
+  liff:
+    build:
+      context: .
+      dockerfile: apps/liff/Dockerfile
+      args:
+        VITE_API_URL: https://line5566.duckdns.org/api
+        VITE_LIFF_ID: ${VITE_LIFF_ID}
+    expose:
+      - '80'
+    depends_on:
+      - backend
+
   nginx:
     image: nginx:alpine
     ports:
       - '80:80'
+      - '443:443'
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
       - frontend
       - backend
+      - liff
 
 volumes:
   pgdata:
