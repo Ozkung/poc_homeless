@@ -202,7 +202,7 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
       >
         {viewItem && (
           <div style={{ fontFamily: "'Sarabun', sans-serif" }}>
-            <Divider orientation="left" style={{ fontSize: 12 }}>ข้อมูลเบื้องต้น</Divider>
+            <Divider style={{ fontSize: 12, margin: '12px 0 8px' }}>ข้อมูลเบื้องต้น</Divider>
             <InfoRow label="วันที่ประเมิน" value={viewItem.assessmentDate ? new Date(viewItem.assessmentDate).toLocaleDateString('th-TH') : undefined} />
             <InfoRow label="สถานะ" value={viewItem.status} />
             <InfoRow label="สถานที่พบ" value={viewItem.locationFound} />
@@ -210,12 +210,12 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
             <InfoRow label="Care Setting" value={viewItem.careSetting} />
             <InfoRow label="Referral Source" value={viewItem.referralSource} />
 
-            <Divider orientation="left" style={{ fontSize: 12 }}>สิทธิและหน่วยบริการ</Divider>
+            <Divider style={{ fontSize: 12, margin: '12px 0 8px' }}>สิทธิและหน่วยบริการ</Divider>
             <InfoRow label="สิทธิรักษาพยาบาล" value={viewItem.healthcareRight} />
             <InfoRow label="หน่วยบริการปฐมภูมิ" value={viewItem.primaryCareUnit} />
             <InfoRow label="หน่วยบริการรับส่งต่อ" value={viewItem.referralUnit} />
 
-            <Divider orientation="left" style={{ fontSize: 12 }}>โรคประจำตัว</Divider>
+            <Divider style={{ fontSize: 12, margin: '12px 0 8px' }}>โรคประจำตัว</Divider>
             <TagRow label="กลุ่มโรคเรื้อรัง (NCDs)" values={viewItem.ncdConditions} />
             <TagRow label="กลุ่มโรคติดต่อ" values={viewItem.infectiousConditions} />
             <TagRow label="สุขภาพจิตและระบบประสาท" values={viewItem.mentalConditions} />
@@ -224,7 +224,7 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
             {viewItem.conditionNote && <InfoRow label="โรคประจำตัว (ระบุ)" value={viewItem.conditionNote} />}
             {viewItem.mentalConditionNote && <InfoRow label="โรคทางจิต (ระบุ)" value={viewItem.mentalConditionNote} />}
 
-            <Divider orientation="left" style={{ fontSize: 12 }}>เป้าหมายการช่วยเหลือ</Divider>
+            <Divider style={{ fontSize: 12, margin: '12px 0 8px' }}>เป้าหมายการช่วยเหลือ</Divider>
             <InfoRow label="เป้าหมาย" value={viewItem.helpGoal} />
             <Row gutter={16}>
               <Col span={12}><TagRow label="เป้าหมายทางการแพทย์" values={viewItem.medicalGoals} /></Col>
@@ -235,7 +235,7 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
 
             {viewItem.notes && (
               <>
-                <Divider orientation="left" style={{ fontSize: 12 }}>Notes</Divider>
+                <Divider style={{ fontSize: 12, margin: '12px 0 8px' }}>Notes</Divider>
                 <Text style={{ fontSize: 12 }}>{viewItem.notes}</Text>
               </>
             )}
