@@ -21,6 +21,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { ZonesModule } from './modules/zones/zones.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { DoctorModule } from './modules/doctor/doctor.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     ReportsModule,
     ZonesModule,
     DashboardModule,
+    DoctorModule,
   ],
 })
 export class AppModule {}

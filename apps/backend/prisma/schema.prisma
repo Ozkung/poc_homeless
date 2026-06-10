@@ -14,6 +14,7 @@ enum UserRole {
   CARE_GIVER
   SUPER_ADMIN
   MEDICAL_VOLUNTEER
+  DOCTOR
 }
 
 enum Gender {
@@ -82,8 +83,9 @@ model Organization {
   patients     Patient[]
   formTemplates FormTemplate[]
   events       Event[]
-  inventoryItems InventoryItem[]
-  zones        Zone[]
+  inventoryItems  InventoryItem[]
+  zones           Zone[]
+  doctorSchedules DoctorSchedule[]
 }
 
 model Zone {
@@ -128,6 +130,10 @@ model User {
   adjRequestsReviewed  AdjRequest[]       @relation("AdjReviewer")
   lotsReceived         InventoryLot[]     @relation("LotReceiver")
   lotsExpired          InventoryLot[]     @relation("LotExpirer")
+
+  diagnoses            Diagnosis[]        @relation("DoctorDiagnoses")
+  prescriptions        Prescription[]     @relation("DoctorPrescriptions")
+  doctorSchedules      DoctorSchedule[]   @relation("DoctorSchedules")
 }
 
 model Patient {
@@ -152,9 +158,11 @@ model Patient {
   submissions Submission[]
   activities  Activity[]
   eventTasks  EventTask[]
-  carePlanItems    CarePlanItem[]
+  carePlanItems       CarePlanItem[]
   carePlanAssessments CarePlanAssessment[]
-  alerts           Alert[]
+  alerts              Alert[]
+  diagnoses           Diagnosis[]
+  prescriptions       Prescription[]
 }
 
 model FormTemplate {
@@ -308,6 +316,47 @@ model CarePlanAssessment {
 
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
+}
+
+model Diagnosis {
+  id          String   @id @default(uuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId    String
+  doctor      User     @relation("DoctorDiagnoses", fields: [doctorId], references: [id])
+  title       String
+  description String
+  icd10       String?
+  severity    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Prescription {
+  id          String   @id @default(uuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId    String
+  doctor      User     @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  medications Json
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DoctorSchedule {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  doctorId       String
+  doctor         User         @relation("DoctorSchedules", fields: [doctorId], references: [id])
+  date           DateTime
+  startTime      String
+  endTime        String
+  location       String?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 model InventoryItem {
