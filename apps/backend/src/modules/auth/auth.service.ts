@@ -48,7 +48,7 @@ export class AuthService {
   }
 
   async verifyLiffToken(idToken: string) {
-    const channelId = this.config.get<string>('line.liffId').split('-')[0];
+    const channelId = (this.config.get<string>('line.liffId') ?? '').split('-')[0];
     const res = await fetch('https://api.line.me/oauth2/v2.1/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
