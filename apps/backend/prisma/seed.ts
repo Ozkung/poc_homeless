@@ -34,9 +34,9 @@ async function main() {
   console.log(`✓ Organisation: ${org.name}`);
 
   // ── Users (with phone + gender) ───────────────────────────────────────────
-  const [adminPw, saPw, cmPw, fwPw, mvPw] = await Promise.all([
+  const [adminPw, saPw, cmPw, fwPw, mvPw, docPw] = await Promise.all([
     hash('Admin1234!'), hash('SuperAdmin1!'), hash('CaseManager1!'),
-    hash('CareGiv1!'),  hash('MedVol1234!'),
+    hash('CareGiv1!'),  hash('MedVol1234!'), hash('Doctor1234!'),
   ]);
 
   const admin = await prisma.user.upsert({
@@ -132,7 +132,29 @@ async function main() {
     },
   });
 
-  console.log(`✓ Users: admin, sa, cm1, cm2, fw1, fw2, fw3, mv1`);
+  const doc1 = await prisma.user.upsert({
+    where:  { email: 'doc1@hospital.th' },
+    update: { phone: '081-777-8888', gender: 'MALE' },
+    create: {
+      id: 'user-seed-doc1', organizationId: org.id,
+      email: 'doc1@hospital.th', passwordHash: docPw,
+      role: 'DOCTOR', displayName: 'นพ.อภิชาต รักษาดี',
+      phone: '081-777-8888', gender: 'MALE',
+    },
+  });
+
+  const doc2 = await prisma.user.upsert({
+    where:  { email: 'doc2@hospital.th' },
+    update: { phone: '089-555-6666', gender: 'FEMALE' },
+    create: {
+      id: 'user-seed-doc2', organizationId: org.id,
+      email: 'doc2@hospital.th', passwordHash: docPw,
+      role: 'DOCTOR', displayName: 'พญ.ณัฐพร สุขสวัสดิ์',
+      phone: '089-555-6666', gender: 'FEMALE',
+    },
+  });
+
+  console.log(`✓ Users: admin, sa, cm1, cm2, fw1, fw2, fw3, mv1, doc1, doc2`);
 
   // ── Zones ──────────────────────────────────────────────────────────────────
   const zoneLumpini = await prisma.zone.upsert({
@@ -156,7 +178,7 @@ async function main() {
     create: { id: 'zone-seed-004', organizationId: org.id, name: 'พระราม 4', description: 'แนวถนนพระราม 4 และสะพานต่างๆ', color: '#059669' },
   });
   console.log(`✓ Zones: สวนลุมพินี, หัวลำโพง, คลองเตย, พระราม 4`);
-  void fw2; void fw3; void zoneLumpini; void zoneHualamphong; void zoneKlongtoey; void zoneRama4;
+  void fw2; void fw3; void zoneLumpini; void zoneHualamphong; void zoneKlongtoey; void zoneRama4; void doc2;
 
   // ── Patients ──────────────────────────────────────────────────────────────
   const patientsData = [
@@ -666,14 +688,198 @@ async function main() {
   });
   console.log(`✓ Adj requests: 3 records (2 pending, 1 approved)`);
 
+  // ── Diagnoses ─────────────────────────────────────────────────────────────
+  const diagnosesData = [
+    { id: 'diag-001', patientId: 'pat-seed-001', doctorId: doc1.id, title: 'เบาหวานชนิดที่ 2', description: 'ระดับน้ำตาลสะสม HbA1c 9.2% ควบคุมได้ไม่ดี ปรับยาและนัดติดตาม 3 เดือน', icd10: 'E11', severity: 'MODERATE', createdAt: ago(60) },
+    { id: 'diag-002', patientId: 'pat-seed-001', doctorId: doc1.id, title: 'ความดันโลหิตสูง Stage 2', description: 'ค่าเฉลี่ยความดัน 162/98 mmHg จำเป็นต้องปรับขนาดยาและติดตามอย่างใกล้ชิด', icd10: 'I10', severity: 'SEVERE', createdAt: ago(14) },
+    { id: 'diag-003', patientId: 'pat-seed-002', doctorId: doc2.id, title: 'วัณโรคปอด (Pulmonary TB)', description: 'ผลเสมหะ AFB Positive 2+ เริ่มสูตรยา 2HRZE ระยะเข้มข้น ต้องรับยาต่อเนื่อง 6 เดือน', icd10: 'A15', severity: 'SEVERE', createdAt: ago(45) },
+    { id: 'diag-004', patientId: 'pat-seed-002', doctorId: doc2.id, title: 'ภาวะขาดสารอาหาร', description: 'BMI 16.8 ขาดโปรตีนและวิตามินรุนแรง ให้อาหารเสริมและติดตามน้ำหนัก', icd10: 'E46', severity: 'MODERATE', createdAt: ago(30) },
+    { id: 'diag-005', patientId: 'pat-seed-003', doctorId: doc1.id, title: 'โรคข้อเสื่อม (Osteoarthritis)', description: 'ข้อเข่าทั้งสองข้างเสื่อม ปวดเรื้อรัง จ่ายยา NSAIDs และแนะนำกายภาพบำบัด', icd10: 'M17', severity: 'MILD', createdAt: ago(50) },
+    { id: 'diag-006', patientId: 'pat-seed-003', doctorId: doc2.id, title: 'ต้อกระจก (Cataract)', description: 'ต้อกระจกทั้งสองข้าง ระยะเริ่มต้น สายตาลดลง ส่งต่อจักษุแพทย์เพื่อประเมินผ่าตัด', icd10: 'H26', severity: 'MILD', createdAt: ago(40) },
+    { id: 'diag-007', patientId: 'pat-seed-005', doctorId: doc1.id, title: 'HIV Stage 3 (AIDS)', description: 'CD4 count 180 cells/mm³ เริ่มสูตร ARV Efavirenz + Tenofovir + Emtricitabine ติดตามทุก 3 เดือน', icd10: 'B24', severity: 'SEVERE', createdAt: ago(90) },
+    { id: 'diag-008', patientId: 'pat-seed-005', doctorId: doc1.id, title: 'กลุ่มอาการติดสารเสพติด (Opioid Use Disorder)', description: 'ติดยาเฮโรอีนมา 5 ปี ส่งต่อคลินิกบำบัดยาเสพติด MMT (Methadone)', icd10: 'F11', severity: 'SEVERE', createdAt: ago(85) },
+    { id: 'diag-009', patientId: 'pat-seed-007', doctorId: doc2.id, title: 'โรคหัวใจล้มเหลว (Heart Failure)', description: 'EF 40% Systolic HF NYHA Class II เหนื่อยเมื่อออกแรง จ่ายยา Furosemide และ Carvedilol', icd10: 'I50', severity: 'MODERATE', createdAt: ago(30) },
+    { id: 'diag-010', patientId: 'pat-seed-006', doctorId: doc1.id, title: 'เบาหวานชนิดที่ 2 ควบคุมได้', description: 'HbA1c 7.4% ควบคุมได้ปานกลาง ปรับอาหารและรับยา Metformin ต่อเนื่อง', icd10: 'E11', severity: 'MILD', createdAt: ago(20) },
+    { id: 'diag-011', patientId: 'pat-seed-008', doctorId: doc2.id, title: 'โรคซึมเศร้าระดับปานกลาง (MDD)', description: 'PHQ-9 score 14 ส่งต่อจิตแพทย์ด่วน ให้ยา Sertraline 50mg ติดตามทุก 2 สัปดาห์', icd10: 'F33', severity: 'MODERATE', createdAt: ago(10) },
+  ];
+
+  for (const d of diagnosesData) {
+    await prisma.diagnosis.upsert({
+      where:  { id: d.id },
+      update: {},
+      create: { id: d.id, patientId: d.patientId, doctorId: d.doctorId, title: d.title, description: d.description, icd10: d.icd10, severity: d.severity, createdAt: d.createdAt },
+    });
+  }
+  console.log(`✓ Diagnoses: ${diagnosesData.length} records`);
+
+  // ── Prescriptions ─────────────────────────────────────────────────────────
+  const prescriptionsData = [
+    {
+      id: 'presc-001', patientId: 'pat-seed-001', doctorId: doc1.id, createdAt: ago(60),
+      medications: [
+        { name: 'Metformin 500mg', dosage: '500mg', frequency: 'วันละ 2 ครั้ง หลังอาหาร', duration: '3 เดือน' },
+        { name: 'Amlodipine 5mg',  dosage: '5mg',   frequency: 'วันละ 1 ครั้ง ก่อนนอน',   duration: '3 เดือน' },
+      ],
+      notes: 'นัดติดตาม 3 เดือน เจาะเลือด HbA1c และวัดความดันทุกเดือน',
+    },
+    {
+      id: 'presc-002', patientId: 'pat-seed-001', doctorId: doc1.id, createdAt: ago(14),
+      medications: [
+        { name: 'Metformin 1000mg',  dosage: '1000mg', frequency: 'วันละ 2 ครั้ง หลังอาหาร', duration: '3 เดือน', notes: 'เพิ่มขนาดยา' },
+        { name: 'Enalapril 10mg',    dosage: '10mg',   frequency: 'วันละ 1 ครั้ง เช้า',        duration: '3 เดือน' },
+        { name: 'Amlodipine 10mg',   dosage: '10mg',   frequency: 'วันละ 1 ครั้ง ก่อนนอน',    duration: '3 เดือน', notes: 'เพิ่มขนาดยา' },
+      ],
+      notes: 'ปรับยาเนื่องจากความดันยังสูง เน้นการลดเกลือในอาหาร',
+    },
+    {
+      id: 'presc-003', patientId: 'pat-seed-002', doctorId: doc2.id, createdAt: ago(45),
+      medications: [
+        { name: 'Isoniazid 300mg',   dosage: '300mg', frequency: 'วันละ 1 ครั้ง เช้า (ก่อนอาหาร)', duration: '6 เดือน' },
+        { name: 'Rifampicin 600mg',  dosage: '600mg', frequency: 'วันละ 1 ครั้ง เช้า (ก่อนอาหาร)', duration: '6 เดือน' },
+        { name: 'Pyrazinamide 25mg/kg', dosage: '1500mg', frequency: 'วันละ 1 ครั้ง', duration: '2 เดือน' },
+        { name: 'Ethambutol 15mg/kg',   dosage: '900mg',  frequency: 'วันละ 1 ครั้ง', duration: '2 เดือน' },
+      ],
+      notes: 'สูตร 2HRZE จากนั้นต่อ 4HR ตรวจเสมหะซ้ำเดือนที่ 2 และ 5',
+    },
+    {
+      id: 'presc-004', patientId: 'pat-seed-005', doctorId: doc1.id, createdAt: ago(90),
+      medications: [
+        { name: 'Efavirenz 600mg',       dosage: '600mg', frequency: 'วันละ 1 ครั้ง ก่อนนอน',          duration: 'ต่อเนื่อง' },
+        { name: 'Tenofovir 300mg',       dosage: '300mg', frequency: 'วันละ 1 ครั้ง พร้อมอาหาร',        duration: 'ต่อเนื่อง' },
+        { name: 'Emtricitabine 200mg',   dosage: '200mg', frequency: 'วันละ 1 ครั้ง',                    duration: 'ต่อเนื่อง' },
+        { name: 'Co-trimoxazole 960mg',  dosage: '960mg', frequency: 'วันละ 1 ครั้ง (ป้องกัน PCP)',     duration: '6 เดือน' },
+      ],
+      notes: 'ติดตาม CD4 และ Viral Load ทุก 3 เดือน ส่งต่อคลินิก MMT สำหรับการบำบัดยาเสพติด',
+    },
+    {
+      id: 'presc-005', patientId: 'pat-seed-007', doctorId: doc2.id, createdAt: ago(30),
+      medications: [
+        { name: 'Furosemide 40mg',   dosage: '40mg',  frequency: 'วันละ 1 ครั้ง เช้า',  duration: 'ต่อเนื่อง' },
+        { name: 'Carvedilol 6.25mg', dosage: '6.25mg',frequency: 'วันละ 2 ครั้ง',        duration: 'ต่อเนื่อง' },
+        { name: 'Enalapril 5mg',     dosage: '5mg',   frequency: 'วันละ 2 ครั้ง',        duration: 'ต่อเนื่อง' },
+        { name: 'Spironolactone 25mg',dosage: '25mg', frequency: 'วันละ 1 ครั้ง',        duration: 'ต่อเนื่อง' },
+      ],
+      notes: 'จำกัดน้ำ 1.5 ลิตร/วัน จำกัดเกลือ ชั่งน้ำหนักทุกวัน ถ้าน้ำหนักเพิ่ม 2 กก./วัน ให้มาพบแพทย์',
+    },
+    {
+      id: 'presc-006', patientId: 'pat-seed-008', doctorId: doc2.id, createdAt: ago(10),
+      medications: [
+        { name: 'Sertraline 50mg', dosage: '50mg', frequency: 'วันละ 1 ครั้ง เช้า (พร้อมอาหาร)', duration: '3 เดือน' },
+      ],
+      notes: 'เริ่มยา Sertraline ขนาดต่ำก่อน ปรับขนาดยาตามอาการ ติดตามทุก 2 สัปดาห์ แจ้งหากมีความคิดทำร้ายตัวเอง',
+    },
+  ];
+
+  for (const p of prescriptionsData) {
+    await prisma.prescription.upsert({
+      where:  { id: p.id },
+      update: {},
+      create: { id: p.id, patientId: p.patientId, doctorId: p.doctorId, medications: p.medications, notes: p.notes, createdAt: p.createdAt },
+    });
+  }
+  console.log(`✓ Prescriptions: ${prescriptionsData.length} records`);
+
+  // ── Doctor Schedules ──────────────────────────────────────────────────────
+  const schedulesData = [
+    { id: 'sched-001', doctorId: doc1.id, date: ago(30),  startTime: '09:00', endTime: '12:00', location: 'สวนลุมพินี', notes: 'ตรวจสุขภาพเชิงรุก กลุ่มโรคเรื้อรัง' },
+    { id: 'sched-002', doctorId: doc2.id, date: ago(20),  startTime: '13:00', endTime: '16:00', location: 'บริเวณหัวลำโพง', notes: 'ติดตามผู้ป่วยวัณโรคและ HIV' },
+    { id: 'sched-003', doctorId: doc1.id, date: ago(7),   startTime: '10:00', endTime: '14:00', location: 'ใต้สะพานพระราม 4', notes: 'เยี่ยมผู้ป่วยฉุกเฉิน HN000001 และ HN000005' },
+    { id: 'sched-004', doctorId: doc1.id, date: fwd(2),   startTime: '08:30', endTime: '12:00', location: 'สวนลุมพินี', notes: 'ตรวจสุขภาพรอบเดือน กลุ่มผู้ป่วยเรื้อรัง' },
+    { id: 'sched-005', doctorId: doc2.id, date: fwd(3),   startTime: '13:00', endTime: '17:00', location: 'ชุมชนคลองเตย', notes: 'ติดตามการรักษาวัณโรค และประเมิน DOTS' },
+    { id: 'sched-006', doctorId: doc1.id, date: fwd(7),   startTime: '09:00', endTime: '13:00', location: 'หน้าวัดบุรณศิริมาตยาราม', notes: 'คลินิกเคลื่อนที่ร่วมกับทีม CM' },
+    { id: 'sched-007', doctorId: doc2.id, date: fwd(10),  startTime: '10:00', endTime: '15:00', location: 'บ้านรักแท้', notes: 'ตรวจสุขภาพผู้ป่วยจิตเวช ร่วมกับจิตแพทย์' },
+    { id: 'sched-008', doctorId: doc1.id, date: fwd(14),  startTime: '08:00', endTime: '12:00', location: 'สวนลุมพินี', notes: 'ออกหน่วยแพทย์เคลื่อนที่ประจำเดือน' },
+  ];
+
+  for (const s of schedulesData) {
+    await prisma.doctorSchedule.upsert({
+      where:  { id: s.id },
+      update: {},
+      create: { id: s.id, organizationId: org.id, doctorId: s.doctorId, date: s.date, startTime: s.startTime, endTime: s.endTime, location: s.location, notes: s.notes },
+    });
+  }
+  console.log(`✓ Doctor schedules: ${schedulesData.length} records (3 past, 5 upcoming)`);
+
+  // ── Care Plan Assessments ─────────────────────────────────────────────────
+  const assessmentsData = [
+    {
+      id: 'assess-001', patientId: 'pat-seed-001',
+      assessmentDate: ago(60), locationFound: 'ใต้สะพานปิ่นเกล้าฝั่งธน',
+      careSetting: 'Roadside', referralSource: 'Field Outreach / ลงพื้นที่',
+      status: 'Active', helpGoal: 'ทางการแพทย์และทางสังคม',
+      homelessType: 'คนไร้บ้านหน้าเก่า (2ปี+)', healthcareRight: 'บัตรทอง',
+      ncdConditions: ['เบาหวาน / Diabetes', 'ความดันโลหิตสูง / Hypertension'],
+      medicalGoals: ['ควบคุมโรคประจำตัว', 'รับยาและกินยาได้ต่อเนื่อง'],
+      socialGoals: ['เข้าถึงสิทธิการรักษาพยาบาล', 'จัดหาที่พักพิงฉุกเฉิน/ชั่วคราว'],
+      notes: 'ผู้ป่วยอาศัยอยู่ใต้สะพานมา 3 ปี มีประวัติเบาหวานและความดัน ขาดยามา 2 เดือน',
+    },
+    {
+      id: 'assess-002', patientId: 'pat-seed-002',
+      assessmentDate: ago(45), locationFound: 'บ้านอิ่มใจ',
+      careSetting: 'Non-Governmental Shelter (NGO)', referralSource: 'อิ่มใจ',
+      status: 'Active', helpGoal: 'ทางการแพทย์และทางสังคม',
+      homelessType: 'คนไร้บ้านหน้าใหม่ (2ปี-)', healthcareRight: 'ไม่มีสิทธิ',
+      infectiousConditions: ['วัณโรค (TB) / Tuberculosis'],
+      medicalGoals: ['รับยาและกินยาได้ต่อเนื่อง', 'ตรวจคัดกรองโรคติดต่อ'],
+      socialGoals: ['ทำบัตรประชาชน', 'เข้าถึงสิทธิการรักษาพยาบาล'],
+      notes: 'ผู้ป่วยไม่มีบัตรประชาชน ต้องเร่งดำเนินการด้านสิทธิก่อน',
+    },
+    {
+      id: 'assess-003', patientId: 'pat-seed-005',
+      assessmentDate: ago(90), locationFound: 'หัวลำโพง',
+      careSetting: 'Roadside', referralSource: 'Field Outreach / ลงพื้นที่',
+      status: 'Active', helpGoal: 'ทางการแพทย์และทางสังคม',
+      homelessType: 'คนไร้บ้านหน้าเก่า (2ปี+)', healthcareRight: 'บัตรทอง',
+      infectiousConditions: ['เอชไอวี (HIV/AIDS)'],
+      substanceConditions: ['ติดสารเสพติด / Drug Addiction'],
+      medicalGoals: ['ควบคุมโรคประจำตัว', 'บำบัดสารเสพติด/แอลกอฮอล์', 'รับยาและกินยาได้ต่อเนื่อง'],
+      socialGoals: ['จัดหาที่พักพิงฉุกเฉิน/ชั่วคราว', 'บำบัดสารเสพติด'],
+      notes: 'พบผู้ป่วยนอนอยู่บริเวณสถานีหัวลำโพง มีสภาพร่างกายซูบผอม ต้องการการดูแลเร่งด่วน',
+    },
+    {
+      id: 'assess-004', patientId: 'pat-seed-007',
+      assessmentDate: ago(50), locationFound: 'วงเวียน 22',
+      careSetting: 'Roadside', referralSource: 'Mobile Clinic',
+      status: 'Follow-up', helpGoal: 'ทางการแพทย์',
+      homelessType: 'คนไร้บ้านหน้าเก่า (2ปี+)', healthcareRight: 'ประกันสังคม',
+      ncdConditions: ['โรคหัวใจ / Heart Disease', 'ความดันโลหิตสูง / Hypertension'],
+      medicalGoals: ['ควบคุมโรคประจำตัว', 'การดูแลระยะยาว/ประคับประคอง'],
+      socialGoals: ['จัดหาที่อยู่อาศัยถาวร/เช่าห้อง'],
+      notes: 'ผู้สูงอายุ 73 ปี มีบุตรแต่ขาดการติดต่อ กำลังประสานงานหาครอบครัว',
+    },
+  ];
+
+  for (const a of assessmentsData) {
+    const { id, patientId, assessmentDate, ...rest } = a;
+    await prisma.carePlanAssessment.upsert({
+      where:  { id },
+      update: {},
+      create: {
+        id, patientId, assessmentDate,
+        ...rest,
+        ncdConditions:            (rest as any).ncdConditions ?? [],
+        infectiousConditions:     (rest as any).infectiousConditions ?? [],
+        mentalConditions:         (rest as any).mentalConditions ?? [],
+        substanceConditions:      (rest as any).substanceConditions ?? [],
+        disabilityConditions:     (rest as any).disabilityConditions ?? [],
+        otherConditionCategories: (rest as any).otherConditionCategories ?? [],
+        medicalGoals:             (rest as any).medicalGoals ?? [],
+        socialGoals:              (rest as any).socialGoals ?? [],
+      },
+    });
+  }
+  console.log(`✓ Care plan assessments: ${assessmentsData.length} records`);
+
   console.log('\n✅ Seed complete!\n');
   console.log('Credentials:');
   console.log('  admin@hospital.th  / Admin1234!     (ADMIN)');
   console.log('  sa@hospital.th     / SuperAdmin1!   (SUPER_ADMIN)');
   console.log('  cm1@hospital.th    / CaseManager1!  (CASE_MANAGER)');
   console.log('  cm2@hospital.th    / CaseManager1!  (CASE_MANAGER)');
-  console.log('  fw1@hospital.th    / CareGiv1!    (CARE_GIVER)');
+  console.log('  fw1@hospital.th    / CareGiv1!      (CARE_GIVER)');
   console.log('  mv1@hospital.th    / MedVol1234!    (MEDICAL_VOLUNTEER)');
+  console.log('  doc1@hospital.th   / Doctor1234!    (DOCTOR)');
+  console.log('  doc2@hospital.th   / Doctor1234!    (DOCTOR)');
 }
 
 main()
