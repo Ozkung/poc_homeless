@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Form, Input, Radio, Checkbox, Button, Card, Divider, Space,
   DatePicker, message, Spin, Typography, Row, Col,
@@ -101,10 +101,13 @@ function CheckboxGroup({ options, name }: { options: string[]; name: string }) {
 
 export default function CarePlanAssessmentPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const assessmentId = searchParams.get('id');
+  const isEdit = !!assessmentId;
   const router = useRouter();
   const { data: session } = useSession();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [helpGoal, setHelpGoal] = useState<string | null>(null);
 
@@ -114,8 +117,8 @@ export default function CarePlanAssessmentPage() {
   }), [session?.accessToken]);
 
   useEffect(() => {
-    if (!session?.accessToken) return;
-    fetch(`${API_URL}/patients/${id}/assessment`, { headers: headers() })
+    if (!isEdit || !session?.accessToken) return;
+    fetch(`${API_URL}/patients/${id}/assessment/${assessmentId}`, { headers: headers() })
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data) {
@@ -128,7 +131,7 @@ export default function CarePlanAssessmentPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [id, session?.accessToken, form, headers]);
+  }, [id, assessmentId, isEdit, session?.accessToken, form, headers]);
 
   async function handleSave(values: any) {
     setSaving(true);
@@ -137,13 +140,17 @@ export default function CarePlanAssessmentPage() {
         ...values,
         assessmentDate: values.assessmentDate ? values.assessmentDate.toISOString() : undefined,
       };
-      const res = await fetch(`${API_URL}/patients/${id}/assessment`, {
-        method: 'POST',
+      const url = isEdit
+        ? `${API_URL}/patients/${id}/assessment/${assessmentId}`
+        : `${API_URL}/patients/${id}/assessment`;
+      const res = await fetch(url, {
+        method: isEdit ? 'PATCH' : 'POST',
         headers: headers(),
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        message.success('บันทึกแผนการดูแลแล้ว');
+        message.success(isEdit ? 'อัปเดตแบบประเมินแล้ว' : 'บันทึกแบบประเมินแล้ว');
+        router.back();
       } else {
         message.error('บันทึกไม่สำเร็จ');
       }
@@ -162,7 +169,9 @@ export default function CarePlanAssessmentPage() {
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px', fontFamily: "'Sarabun', sans-serif" }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <Button icon={<ArrowLeft size={16} />} onClick={() => router.back()} type="text" />
-        <Title level={4} style={{ margin: 0 }}>แบบประเมินแผนการดูแล (Care Plan Assessment)</Title>
+        <Title level={4} style={{ margin: 0 }}>
+          {isEdit ? 'แก้ไขแบบประเมิน' : 'เพิ่มแบบประเมินใหม่'}
+        </Title>
       </div>
 
       <Form form={form} layout="vertical" onFinish={handleSave}>

@@ -53,10 +53,10 @@ export default function CarePlanPage() {
     if (!patientId) return;
     Promise.all([
       api.getCarePlan(patientId).catch(() => []),
-      api.getCarePlanAssessment(patientId),
-    ]).then(([plan, assess]) => {
+      api.getCarePlanAssessments(patientId),
+    ]).then(([plan, assessRes]) => {
       setItems(Array.isArray(plan) ? plan : []);
-      setAssessment(assess);
+      setAssessment(assessRes?.data?.[0] ?? null);
     }).finally(() => setLoading(false));
   }, [patientId]);
 

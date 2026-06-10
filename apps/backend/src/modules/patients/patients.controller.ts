@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -86,18 +86,46 @@ export class PatientsController {
   }
 
   @Get(':id/assessment')
-  getCarePlanAssessment(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.patients.getCarePlanAssessment(id, user.orgId);
+  listCarePlanAssessments(
+    @Param('id') id: string,
+    @Query('skip') skip: string,
+    @Query('limit') limit: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.listCarePlanAssessments(
+      id, user.orgId,
+      skip ? parseInt(skip, 10) : 0,
+      limit ? parseInt(limit, 10) : 10,
+    );
+  }
+
+  @Get(':id/assessment/:assessmentId')
+  getCarePlanAssessment(
+    @Param('id') id: string,
+    @Param('assessmentId') assessmentId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.getCarePlanAssessment(id, assessmentId, user.orgId);
   }
 
   @Post(':id/assessment')
-  @HttpCode(HttpStatus.OK)
-  upsertCarePlanAssessment(
+  @HttpCode(HttpStatus.CREATED)
+  createCarePlanAssessment(
     @Param('id') id: string,
     @Body() dto: UpsertCarePlanAssessmentDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.patients.upsertCarePlanAssessment(id, user.orgId, dto);
+    return this.patients.createCarePlanAssessment(id, user.orgId, dto);
+  }
+
+  @Patch(':id/assessment/:assessmentId')
+  updateCarePlanAssessment(
+    @Param('id') id: string,
+    @Param('assessmentId') assessmentId: string,
+    @Body() dto: UpsertCarePlanAssessmentDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.updateCarePlanAssessment(id, assessmentId, user.orgId, dto);
   }
 
   @Post('sos-by-task/:taskId')

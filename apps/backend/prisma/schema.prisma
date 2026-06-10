@@ -153,7 +153,7 @@ model Patient {
   activities  Activity[]
   eventTasks  EventTask[]
   carePlanItems    CarePlanItem[]
-  carePlanAssessment CarePlanAssessment?
+  carePlanAssessments CarePlanAssessment[]
   alerts           Alert[]
 }
 
@@ -277,7 +277,7 @@ model CarePlanItem {
 
 model CarePlanAssessment {
   id                       String   @id @default(uuid())
-  patientId                String   @unique
+  patientId                String
   patient                  Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   assessmentDate           DateTime?

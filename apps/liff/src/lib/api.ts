@@ -48,6 +48,6 @@ export const api = {
     }),
   getCarePlan: (patientId: string) =>
     request<any[]>(`/patients/${patientId}/care-plan`),
-  getCarePlanAssessment: (patientId: string) =>
-    request<any>(`/patients/${patientId}/assessment`).catch(() => null),
+  getCarePlanAssessments: (patientId: string) =>
+    request<{ data: any[]; total: number }>(`/patients/${patientId}/assessment?skip=0&limit=10`).catch(() => ({ data: [], total: 0 })),
 };

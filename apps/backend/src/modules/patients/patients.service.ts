@@ -122,21 +122,44 @@ export class PatientsService {
     });
   }
 
-  async getCarePlanAssessment(patientId: string, orgId: string) {
+  async listCarePlanAssessments(patientId: string, orgId: string, skip = 0, limit = 10) {
     await this.findOne(patientId, orgId);
-    return this.prisma.carePlanAssessment.findUnique({ where: { patientId } });
+    const [data, total] = await Promise.all([
+      this.prisma.carePlanAssessment.findMany({
+        where: { patientId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.carePlanAssessment.count({ where: { patientId } }),
+    ]);
+    return { data, total, skip, limit };
   }
 
-  async upsertCarePlanAssessment(patientId: string, orgId: string, dto: any) {
+  async getCarePlanAssessment(patientId: string, assessmentId: string, orgId: string) {
     await this.findOne(patientId, orgId);
-    const data = {
-      ...dto,
-      assessmentDate: dto.assessmentDate ? new Date(dto.assessmentDate) : undefined,
-    };
-    return this.prisma.carePlanAssessment.upsert({
-      where: { patientId },
-      create: { patientId, ...data },
-      update: data,
+    return this.prisma.carePlanAssessment.findFirst({ where: { id: assessmentId, patientId } });
+  }
+
+  async createCarePlanAssessment(patientId: string, orgId: string, dto: any) {
+    await this.findOne(patientId, orgId);
+    return this.prisma.carePlanAssessment.create({
+      data: {
+        patientId,
+        ...dto,
+        assessmentDate: dto.assessmentDate ? new Date(dto.assessmentDate) : undefined,
+      },
+    });
+  }
+
+  async updateCarePlanAssessment(patientId: string, assessmentId: string, orgId: string, dto: any) {
+    await this.findOne(patientId, orgId);
+    return this.prisma.carePlanAssessment.update({
+      where: { id: assessmentId, patientId },
+      data: {
+        ...dto,
+        assessmentDate: dto.assessmentDate ? new Date(dto.assessmentDate) : undefined,
+      },
     });
   }
 
