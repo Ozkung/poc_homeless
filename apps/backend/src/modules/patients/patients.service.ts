@@ -17,7 +17,11 @@ export class PatientsService {
     if (role === 'CARE_GIVER' && userId) {
       where = { organizationId: orgId, eventTasks: { some: { assigneeId: userId } } };
     }
-    const patients = await this.prisma.patient.findMany({ where });
+    const patients = await this.prisma.patient.findMany({
+      where,
+      include: { caseManager: { select: { id: true, displayName: true } } },
+      orderBy: { updatedAt: 'desc' },
+    });
     return patients.map((p) => this.decrypt(p));
   }
 

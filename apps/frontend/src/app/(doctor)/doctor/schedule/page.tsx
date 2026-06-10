@@ -108,7 +108,7 @@ export default function DoctorSchedulePage() {
           <Title level={3} style={{ margin: 0 }}><CalendarDays size={20} style={{ marginRight: 8 }} />ตารางลงพื้นที่</Title>
           <Text type="secondary" style={{ fontSize: 12 }}>ประกาศให้ทุก role รับรู้วันเวลาที่แพทย์จะออกพื้นที่</Text>
         </div>
-        <Button type="primary" icon={<Plus size={14} />} onClick={() => setModal(true)}>+ เพิ่มกำหนดการ</Button>
+        <Button type="primary" onClick={() => setModal(true)}>+ เพิ่มกำหนดการ</Button>
       </div>
 
       <Card title={`กำหนดการที่จะถึง (${upcoming.length})`} style={{ borderRadius: 12, marginBottom: 16 }}>

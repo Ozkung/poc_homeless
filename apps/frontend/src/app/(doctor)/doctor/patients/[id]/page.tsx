@@ -157,7 +157,7 @@ export default function DoctorPatientDetailPage() {
             children: (
               <Card style={{ borderRadius: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-                  <Button type="primary" icon={<Plus size={14} />} onClick={() => setDiagModal(true)}>+ วินิจฉัย</Button>
+                  <Button type="primary" onClick={() => setDiagModal(true)}>+ วินิจฉัย</Button>
                 </div>
                 <Table size="small" dataSource={patient.diagnoses ?? []} columns={diagColumns} rowKey="id"
                   pagination={{ pageSize: 10 }} locale={{ emptyText: 'ยังไม่มีการวินิจฉัย' }} />
@@ -170,7 +170,7 @@ export default function DoctorPatientDetailPage() {
             children: (
               <Card style={{ borderRadius: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-                  <Button type="primary" icon={<Plus size={14} />} onClick={() => setPrescModal(true)}>+ สั่งยา</Button>
+                  <Button type="primary" onClick={() => setPrescModal(true)}>+ สั่งยา</Button>
                 </div>
                 <Table size="small" dataSource={patient.prescriptions ?? []} columns={prescColumns} rowKey="id"
                   pagination={{ pageSize: 10 }} locale={{ emptyText: 'ยังไม่มีใบสั่งยา' }} />

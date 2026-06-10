@@ -12,6 +12,8 @@ interface Patient {
   id: string; name: string; hn: string;
   status: 'CRITICAL' | 'PENDING' | 'STABLE';
   locationText?: string; age?: number;
+  caseManager?: { id: string; displayName: string } | null;
+  updatedAt?: string;
 }
 
 const STATUS_TAG: Record<string, React.ReactNode> = {
@@ -43,6 +45,16 @@ const columns: ColumnsType<Patient> = [
   {
     title: 'สถานที่', dataIndex: 'locationText', key: 'locationText',
     render: (l) => l ?? '—',
+  },
+  {
+    title: 'CM ผู้รับผิดชอบ', dataIndex: 'caseManager', key: 'caseManager', width: 160,
+    render: (cm) => cm?.displayName ?? <Text type="secondary">—</Text>,
+  },
+  {
+    title: 'อัปเดตล่าสุด', dataIndex: 'updatedAt', key: 'updatedAt', width: 130,
+    render: (v) => v ? new Date(v).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '—',
+    sorter: (a, b) => new Date(a.updatedAt ?? 0).getTime() - new Date(b.updatedAt ?? 0).getTime(),
+    defaultSortOrder: 'descend',
   },
   {
     title: '', key: 'action', width: 110,

@@ -150,7 +150,6 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
         <Button
           size="small"
           type="primary"
-          icon={<Plus size={13} />}
           onClick={() => router.push(`/cm/patients/${patientId}/care-plan-assessment`)}
         >
           + เพิ่มแบบประเมิน
