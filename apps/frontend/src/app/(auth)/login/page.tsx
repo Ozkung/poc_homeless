@@ -1,5 +1,5 @@
 'use client';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Home } from 'lucide-react';
@@ -18,7 +18,17 @@ export default function LoginPage() {
     setError('');
     const res = await signIn('credentials', { email, password, redirect: false });
     if (res?.ok) {
-      router.replace('/dashboard');
+      const session = await getSession();
+      const role = (session as any)?.role ?? '';
+      const dest: Record<string, string> = {
+        ADMIN:             '/admin/dashboard',
+        SUPER_ADMIN:       '/admin/dashboard',
+        CASE_MANAGER:      '/cm/dashboard',
+        CARE_GIVER:        '/fw/dashboard',
+        MEDICAL_VOLUNTEER: '/medvol/dashboard',
+        DOCTOR:            '/doctor/dashboard',
+      };
+      router.replace(dest[role] ?? '/login');
     } else {
       setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
       setLoading(false);
