@@ -122,6 +122,24 @@ export class PatientsService {
     });
   }
 
+  async getCarePlanAssessment(patientId: string, orgId: string) {
+    await this.findOne(patientId, orgId);
+    return this.prisma.carePlanAssessment.findUnique({ where: { patientId } });
+  }
+
+  async upsertCarePlanAssessment(patientId: string, orgId: string, dto: any) {
+    await this.findOne(patientId, orgId);
+    const data = {
+      ...dto,
+      assessmentDate: dto.assessmentDate ? new Date(dto.assessmentDate) : undefined,
+    };
+    return this.prisma.carePlanAssessment.upsert({
+      where: { patientId },
+      create: { patientId, ...data },
+      update: data,
+    });
+  }
+
   async createSos(patientId: string, orgId: string, userId: string, coords: { lat?: number; lng?: number }) {
     const patient = await this.findOne(patientId, orgId); // throws if not found or wrong org
     const actor = await this.prisma.user.findUnique({

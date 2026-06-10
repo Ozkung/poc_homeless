@@ -152,8 +152,9 @@ model Patient {
   submissions Submission[]
   activities  Activity[]
   eventTasks  EventTask[]
-  carePlanItems CarePlanItem[]
-  alerts      Alert[]
+  carePlanItems    CarePlanItem[]
+  carePlanAssessment CarePlanAssessment?
+  alerts           Alert[]
 }
 
 model FormTemplate {
@@ -272,6 +273,41 @@ model CarePlanItem {
   isDone       Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model CarePlanAssessment {
+  id                       String   @id @default(uuid())
+  patientId                String   @unique
+  patient                  Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  assessmentDate           DateTime?
+  locationFound            String?
+  careSetting              String?
+  referralSource           String?
+  status                   String?
+  helpGoal                 String?
+  homelessType             String?
+  notes                    String?
+  healthcareRight          String?
+  primaryCareUnit          String?
+  referralUnit             String?
+
+  ncdConditions            String[]
+  infectiousConditions     String[]
+  mentalConditions         String[]
+  substanceConditions      String[]
+  disabilityConditions     String[]
+  otherConditionCategories String[]
+  conditionNote            String?
+  mentalConditionNote      String?
+
+  medicalGoals             String[]
+  medicalGoalOther         String?
+  socialGoals              String[]
+  socialGoalOther          String?
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }
 
 model InventoryItem {

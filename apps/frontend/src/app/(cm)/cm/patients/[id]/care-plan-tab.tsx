@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Button, Checkbox, Form, Input, Modal, Select, Tag, message } from 'antd';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ClipboardList } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -20,6 +21,7 @@ const PRIORITY_LABEL: Record<string, string> = { HIGH: 'HIGH', MED: 'MED', LOW: 
 
 export default function CarePlanTab({ patientId }: { patientId: string }) {
   const { data: session } = useSession();
+  const router = useRouter();
   const [items, setItems] = useState<CarePlanItem[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -80,7 +82,16 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <span style={{ fontSize: 12, color: '#888' }}>{items.length} แผน</span>
-        <Button size="small" type="primary" onClick={() => setModalOpen(true)}>+ เพิ่มแผน</Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button
+            size="small"
+            icon={<ClipboardList size={13} />}
+            onClick={() => router.push(`/cm/patients/${patientId}/care-plan-assessment`)}
+          >
+            แบบประเมิน
+          </Button>
+          <Button size="small" type="primary" onClick={() => setModalOpen(true)}>+ เพิ่มแผน</Button>
+        </div>
       </div>
 
       {items.length === 0 && (

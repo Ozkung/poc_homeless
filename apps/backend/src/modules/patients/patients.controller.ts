@@ -6,6 +6,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 import { SosDto } from './dto/sos.dto';
+import { UpsertCarePlanAssessmentDto } from './dto/care-plan-assessment.dto';
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -82,6 +83,21 @@ export class PatientsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.patients.deleteCarePlanItem(id, itemId, user.orgId);
+  }
+
+  @Get(':id/assessment')
+  getCarePlanAssessment(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.patients.getCarePlanAssessment(id, user.orgId);
+  }
+
+  @Post(':id/assessment')
+  @HttpCode(HttpStatus.OK)
+  upsertCarePlanAssessment(
+    @Param('id') id: string,
+    @Body() dto: UpsertCarePlanAssessmentDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.upsertCarePlanAssessment(id, user.orgId, dto);
   }
 
   @Post('sos-by-task/:taskId')
