@@ -76,6 +76,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 60000, limit: 20 } })
   liffVerify(@Body('idToken') idToken: string) {
+    console.log('LIFF verify called with idToken:', idToken);
     if (!idToken) throw new BadRequestException('idToken is required');
     return this.auth.verifyLiffToken(idToken);
   }
