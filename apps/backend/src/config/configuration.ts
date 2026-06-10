@@ -27,6 +27,7 @@ export default () => ({
   },
   encryption: { key: process.env.ENCRYPTION_KEY },
   line: {
+    channelId: process.env.CHANNEL_ID ?? '',
     channelSecret: process.env.LINE_CHANNEL_SECRET,
     channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
     liffId: process.env.LIFF_ID,
