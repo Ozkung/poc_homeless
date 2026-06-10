@@ -46,4 +46,8 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(coords),
     }),
+  getCarePlan: (patientId: string) =>
+    request<any[]>(`/patients/${patientId}/care-plan`),
+  getCarePlanAssessment: (patientId: string) =>
+    request<any>(`/patients/${patientId}/assessment`).catch(() => null),
 };

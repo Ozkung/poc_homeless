@@ -117,32 +117,40 @@ export default function TaskPage() {
                   </span>
                 </div>
 
-                {task.status !== 'DONE' && task.status !== 'NOT_FOUND' && (
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {task.status === 'PENDING' && (
-                      <Link
-                        to={`/checkin/${task.id}`}
-                        className="flex-1 text-center text-xs font-semibold py-2 px-3 border border-purple-300 text-purple-600 rounded-lg"
-                      >
-                        Check-in
-                      </Link>
-                    )}
-                    {task.formTemplate && (
-                      <Link
-                        to={`/form/${task.id}/${task.formTemplate.id ?? 'default'}`}
-                        className="flex-1 text-center text-xs font-semibold py-2 px-3 bg-purple-600 text-white rounded-lg"
-                      >
-                        กรอกแบบฟอร์ม
-                      </Link>
-                    )}
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {task.status !== 'DONE' && task.status !== 'NOT_FOUND' && task.status === 'PENDING' && (
+                    <Link
+                      to={`/checkin/${task.id}`}
+                      className="flex-1 text-center text-xs font-semibold py-2 px-3 border border-purple-300 text-purple-600 rounded-lg"
+                    >
+                      Check-in
+                    </Link>
+                  )}
+                  {task.status !== 'DONE' && task.status !== 'NOT_FOUND' && task.formTemplate && (
+                    <Link
+                      to={`/form/${task.id}/${task.formTemplate.id ?? 'default'}`}
+                      className="flex-1 text-center text-xs font-semibold py-2 px-3 bg-purple-600 text-white rounded-lg"
+                    >
+                      กรอกแบบฟอร์ม
+                    </Link>
+                  )}
+                  {task.status !== 'DONE' && task.status !== 'NOT_FOUND' && (
                     <Link
                       to={`/note/${task.id}`}
                       className="flex-1 text-center text-xs font-semibold py-2 px-3 border border-gray-300 text-gray-600 rounded-lg"
                     >
                       บันทึก
                     </Link>
-                  </div>
-                )}
+                  )}
+                  {task.patient?.id && (
+                    <Link
+                      to={`/care-plan/${task.patient.id}`}
+                      className="flex-1 text-center text-xs font-semibold py-2 px-3 border border-blue-200 text-blue-600 rounded-lg"
+                    >
+                      📋 แผนดูแล
+                    </Link>
+                  )}
+                </div>
               </div>
             ))}
           </div>

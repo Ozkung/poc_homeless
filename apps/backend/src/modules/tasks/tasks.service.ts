@@ -18,7 +18,7 @@ export class TasksService {
     return this.prisma.eventTask.findMany({
       where: { assigneeId: userId, status: { in: ['PENDING', 'IN_PROGRESS'] } },
       include: {
-        patient: { select: { hn: true, nameEnc: true, locationText: true } },
+        patient: { select: { id: true, hn: true, nameEnc: true, locationText: true } },
         formTemplate: { select: { title: true, fields: true } },
         event: { select: { title: true, startDate: true, endDate: true } },
       },

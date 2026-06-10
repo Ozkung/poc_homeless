@@ -8,6 +8,7 @@ import TaskPage from './pages/TaskPage';
 import CheckinPage from './pages/CheckinPage';
 import FormPage from './pages/FormPage';
 import NotePage from './pages/NotePage';
+import CarePlanPage from './pages/CarePlanPage';
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -55,6 +56,7 @@ function App() {
         <Route path="/checkin/:taskId" element={<CheckinPage />} />
         <Route path="/form/:taskId/:formId" element={<FormPage />} />
         <Route path="/note/:taskId" element={<NotePage />} />
+        <Route path="/care-plan/:patientId" element={<CarePlanPage />} />
       </Routes>
     </BrowserRouter>
   );
