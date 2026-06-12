@@ -34,7 +34,7 @@ export default function MedVolDashboard() {
   useEffect(() => { load(); }, [token, dateRange]);
 
   const handleApprove = async (id: string, approved: boolean) => {
-    const res = await fetch(`/api/inventory/adj-requests/${id}/review`, {
+    const res = await fetch(`/api/inventory/adj-requests/${id}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: approved ? 'APPROVED' : 'REJECTED' }),

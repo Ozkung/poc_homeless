@@ -20,7 +20,7 @@ export class InventoryController {
   constructor(private inventory: InventoryService) {}
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
   listItems(@CurrentUser() user: JwtPayload, @Query('category') category?: string) {
     return this.inventory.listItems(user.orgId, category);
   }
@@ -86,7 +86,7 @@ export class InventoryController {
   }
 
   @Post(':id/deduct')
-  @Roles(UserRole.ADMIN, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
   @HttpCode(HttpStatus.OK)
   deduct(@Param('id') id: string, @Body() dto: DeductDto, @CurrentUser() user: JwtPayload) {
     return this.inventory.deduct(id, dto.quantity, {

@@ -37,7 +37,11 @@ export default function DoctorPatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [diagModal, setDiagModal] = useState(false);
   const [prescModal, setPrescModal] = useState(false);
+  const [dispenseModal, setDispenseModal] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dispensing, setDispensing] = useState(false);
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+  const [dispenseRows, setDispenseRows] = useState([{ itemId: '', quantity: 1 }]);
   const [diagForm] = Form.useForm();
   const [medications, setMedications] = useState([{ name: '', dosage: '', frequency: '', duration: '', notes: '' }]);
 
@@ -54,6 +58,45 @@ export default function DoctorPatientDetailPage() {
   }, [id, session?.accessToken]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!session?.accessToken) return;
+    fetch(`${API_URL}/inventory`, { headers: { Authorization: `Bearer ${session.accessToken}` } })
+      .then((r) => r.ok ? r.json() : [])
+      .then(setInventoryItems)
+      .catch(() => {});
+  }, [session?.accessToken]);
+
+  async function openDispense(prescId: string) {
+    setDispenseRows([{ itemId: '', quantity: 1 }]);
+    setDispenseModal(prescId);
+  }
+
+  async function submitDispense() {
+    const rows = dispenseRows.filter((r) => r.itemId && r.quantity > 0);
+    if (!rows.length) { message.warning('กรุณาเลือกยาอย่างน้อย 1 รายการ'); return; }
+    setDispensing(true);
+    try {
+      const results = await Promise.all(
+        rows.map((r) =>
+          fetch(`${API_URL}/inventory/${r.itemId}/deduct`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ quantity: r.quantity, type: 'OUT_PRESCRIPTION', patientId: id }),
+          })
+        )
+      );
+      const failed = results.filter((r) => !r.ok);
+      if (failed.length) {
+        const errs = await Promise.all(failed.map((r) => r.json().then((d: any) => d.message ?? 'เกิดข้อผิดพลาด')));
+        message.error(errs.join(', '));
+      } else {
+        message.success('จ่ายยาสำเร็จ');
+        setDispenseModal(null);
+      }
+    } catch { message.error('เกิดข้อผิดพลาด'); }
+    finally { setDispensing(false); }
+  }
 
   async function submitDiagnosis(values: any) {
     setSaving(true);
@@ -121,6 +164,14 @@ export default function DoctorPatientDetailPage() {
     { title: 'หมายเหตุ', dataIndex: 'notes', width: 150, render: (v: string) => v ?? '-' },
     { title: 'แพทย์', dataIndex: ['doctor', 'displayName'], width: 130 },
     { title: 'วันที่', dataIndex: 'createdAt', width: 100, render: (v: string) => new Date(v).toLocaleDateString('th-TH') },
+    {
+      title: '', width: 100,
+      render: (_: any, r: any) => (
+        <Button size="small" type="primary" ghost onClick={() => openDispense(r.id)}>
+          จ่ายยา →
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -206,6 +257,54 @@ export default function DoctorPatientDetailPage() {
             <Button type="primary" htmlType="submit" loading={saving}>บันทึก</Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* Dispense Modal */}
+      <Modal
+        title={`จ่ายยาสำหรับ HN: ${patient.hn}`}
+        open={!!dispenseModal}
+        onCancel={() => setDispenseModal(null)}
+        onOk={submitDispense}
+        okText="ยืนยันจ่ายยา"
+        cancelText="ยกเลิก"
+        confirmLoading={dispensing}
+        width={520}
+      >
+        <div style={{ marginBottom: 8 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>เลือกรายการยาจาก Inventory และระบุจำนวนที่จ่าย — stock จะถูกตัดทันที</Text>
+        </div>
+        {dispenseRows.map((row, i) => (
+          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+            <Select
+              style={{ flex: 1 }}
+              placeholder="เลือกยา..."
+              showSearch
+              filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())}
+              value={row.itemId || undefined}
+              onChange={(val) => setDispenseRows((prev) => prev.map((r, j) => j === i ? { ...r, itemId: val } : r))}
+              options={inventoryItems.map((item) => ({
+                value: item.id,
+                label: `${item.name} (คงเหลือ ${item.currentStock} ${item.unit})`,
+                disabled: item.currentStock === 0,
+              }))}
+            />
+            <input
+              type="number" min={1}
+              value={row.quantity}
+              onChange={(e) => setDispenseRows((prev) => prev.map((r, j) => j === i ? { ...r, quantity: Number(e.target.value) } : r))}
+              style={{ width: 64, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 14 }}
+            />
+            {dispenseRows.length > 1 && (
+              <button onClick={() => setDispenseRows((prev) => prev.filter((_, j) => j !== i))}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ff4d4f', padding: 4 }}>
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+        ))}
+        <Button size="small" onClick={() => setDispenseRows((prev) => [...prev, { itemId: '', quantity: 1 }])} style={{ marginTop: 4 }}>
+          + เพิ่มรายการ
+        </Button>
       </Modal>
 
       {/* Prescription Modal */}
