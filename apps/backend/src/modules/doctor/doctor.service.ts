@@ -49,8 +49,17 @@ export class DoctorService {
     });
   }
 
-  createDiagnosis(patientId: string, doctorId: string, dto: any) {
-    return this.prisma.diagnosis.create({ data: { patientId, doctorId, ...dto } });
+  async createDiagnosis(patientId: string, doctorId: string, dto: any) {
+    const diagnosis = await this.prisma.diagnosis.create({ data: { patientId, doctorId, ...dto } });
+    await this.prisma.activity.create({
+      data: {
+        actorId: doctorId,
+        patientId,
+        type: 'DIAGNOSIS',
+        payload: { diagnosisId: diagnosis.id, title: dto.title, severity: dto.severity ?? null },
+      },
+    });
+    return diagnosis;
   }
 
   updateDiagnosis(diagnosisId: string, doctorId: string, dto: any) {
@@ -70,8 +79,18 @@ export class DoctorService {
     });
   }
 
-  createPrescription(patientId: string, doctorId: string, dto: any) {
-    return this.prisma.prescription.create({ data: { patientId, doctorId, ...dto } });
+  async createPrescription(patientId: string, doctorId: string, dto: any) {
+    const prescription = await this.prisma.prescription.create({ data: { patientId, doctorId, ...dto } });
+    const medNames = (dto.medications ?? []).map((m: any) => m.name).filter(Boolean).join(', ');
+    await this.prisma.activity.create({
+      data: {
+        actorId: doctorId,
+        patientId,
+        type: 'PRESCRIPTION',
+        payload: { prescriptionId: prescription.id, medications: medNames || null },
+      },
+    });
+    return prescription;
   }
 
   // ── Schedule ──────────────────────────────────────────────────────────

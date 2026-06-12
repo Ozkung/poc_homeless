@@ -354,17 +354,36 @@ export default function DoctorPatientDetailPage() {
               <Card style={{ borderRadius: 12 }}>
                 {!activities.length
                   ? <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีกิจกรรม</Text>
-                  : <Timeline items={activities.slice(0, 30).map((a: any) => ({
-                      color: ({ CHECK_IN: '#1677ff', NOTE: '#722ed1', FORM_SUBMIT: '#13c2c2', ASSIGN: '#faad14', STATUS_CHANGE: '#ff4d4f', SOS: '#ff0000' } as any)[a.type] ?? '#d9d9d9',
-                      children: (
-                        <div>
-                          <Text style={{ fontSize: 13 }}>{a.actor?.displayName}</Text>
-                          <Tag style={{ marginLeft: 8, fontSize: 10 }}>{a.type}</Tag>
-                          <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{new Date(a.createdAt).toLocaleString('th-TH')}</div>
-                          {a.payload?.note && <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{a.payload.note}</div>}
-                        </div>
-                      ),
-                    }))}
+                  : <Timeline items={activities.slice(0, 50).map((a: any) => {
+                      const COLOR: Record<string, string> = {
+                        CHECK_IN: '#1677ff', NOTE: '#722ed1', FORM_SUBMIT: '#13c2c2',
+                        ASSIGN: '#faad14', STATUS_CHANGE: '#ff4d4f', SOS: '#ff0000',
+                        DIAGNOSIS: '#0ea5e9', PRESCRIPTION: '#7c3aed', DISPENSE: '#059669',
+                      };
+                      const LABEL: Record<string, string> = {
+                        CHECK_IN: 'เช็คอิน', NOTE: 'บันทึก', FORM_SUBMIT: 'ส่งแบบฟอร์ม',
+                        ASSIGN: 'มอบหมาย', STATUS_CHANGE: 'เปลี่ยนสถานะ', SOS: 'SOS',
+                        DIAGNOSIS: 'วินิจฉัย', PRESCRIPTION: 'สั่งยา', DISPENSE: 'จ่ายยา',
+                      };
+                      const p = a.payload ?? {};
+                      return {
+                        color: COLOR[a.type] ?? '#d9d9d9',
+                        children: (
+                          <div>
+                            <Text style={{ fontSize: 13 }}>{a.actor?.displayName}</Text>
+                            <Tag color={COLOR[a.type] ? undefined : 'default'} style={{ marginLeft: 8, fontSize: 10, backgroundColor: COLOR[a.type] ? `${COLOR[a.type]}20` : undefined, borderColor: COLOR[a.type], color: COLOR[a.type] }}>
+                              {LABEL[a.type] ?? a.type}
+                            </Tag>
+                            <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{new Date(a.createdAt).toLocaleString('th-TH')}</div>
+                            {a.type === 'DIAGNOSIS' && p.title && <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>🩺 {p.title}{p.severity ? ` (${p.severity})` : ''}</div>}
+                            {a.type === 'PRESCRIPTION' && p.medications && <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>💊 {p.medications}</div>}
+                            {a.type === 'DISPENSE' && p.itemName && <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>📦 {p.itemName} × {p.quantity}</div>}
+                            {a.type === 'STATUS_CHANGE' && p.status && <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>→ {p.status}</div>}
+                            {p.note && <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{p.note}</div>}
+                          </div>
+                        ),
+                      };
+                    })}
                   />
                 }
               </Card>

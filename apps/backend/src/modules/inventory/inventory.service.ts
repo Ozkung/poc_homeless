@@ -212,6 +212,17 @@ export class InventoryService {
       });
     });
 
+    if (ctx.type === 'OUT_PRESCRIPTION' && ctx.patientId) {
+      await this.prisma.activity.create({
+        data: {
+          actorId: ctx.actorId,
+          patientId: ctx.patientId,
+          type: 'DISPENSE',
+          payload: { itemId, itemName: item.name, quantity: qty },
+        },
+      });
+    }
+
     if (newStock <= item.lowStockThreshold) {
       const admins = await this.prisma.user.findMany({
         where: { organizationId: ctx.orgId, role: UserRole.ADMIN, lineUserId: { not: null } },

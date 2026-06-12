@@ -53,6 +53,9 @@ enum ActivityType {
   LOGIN
   LOGOUT
   SOS
+  DIAGNOSIS
+  PRESCRIPTION
+  DISPENSE
 }
 
 enum InventoryCategory {
