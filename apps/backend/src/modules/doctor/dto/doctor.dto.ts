@@ -6,6 +6,11 @@ export class CreateDiagnosisDto {
   @IsString() description: string;
   @IsOptional() @IsString() icd10?: string;
   @IsOptional() @IsString() severity?: string;
+  @IsOptional() @IsString() chiefComplaint?: string;
+  @IsOptional() @IsString() presentIllness?: string;
+  @IsOptional() vitalSigns?: Record<string, any>;
+  @IsOptional() @IsString() physicalExam?: string;
+  @IsOptional() @IsString() treatmentPlan?: string;
 }
 
 export class MedicationItemDto {
