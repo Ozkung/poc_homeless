@@ -34,6 +34,16 @@ export class PatientsController {
     return this.patients.update(id, user.orgId, body);
   }
 
+  @Patch(':id/status')
+  @Roles(UserRole.CASE_MANAGER, UserRole.DOCTOR)
+  updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.patients.update(id, user.orgId, { status });
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {

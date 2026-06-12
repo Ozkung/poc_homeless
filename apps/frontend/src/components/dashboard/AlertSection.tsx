@@ -20,9 +20,7 @@ interface AlertSectionProps {
   alerts: AlertRow[];
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ', MISSING: 'สูญหาย',
-};
+const STATUS_LABEL: Record<string, string> = { CRITICAL: 'Emergency', PENDING: 'Urgency', STABLE: 'Semi-urgency', MISSING: 'Missing' }
 
 export default function AlertSection({ alerts }: AlertSectionProps) {
   if (alerts.length === 0) return null;

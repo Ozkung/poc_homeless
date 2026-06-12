@@ -2,14 +2,15 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Table, Tag, Input, Card, Typography, Spin } from 'antd';
+import { Table, Tag, Select, Input, Card, Typography, Spin, message } from 'antd';
 import { Search } from 'lucide-react';
 
 const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-const STATUS_COLOR: Record<string, string> = { CRITICAL: 'red', PENDING: 'orange', STABLE: 'green', MISSING: 'default' };
-const STATUS_LABEL: Record<string, string> = { CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ', MISSING: 'สูญหาย' };
+const STATUS_COLOR: Record<string, string> = { CRITICAL: 'error', PENDING: 'warning', STABLE: 'success', MISSING: 'default' };
+const STATUS_LABEL: Record<string, string> = { CRITICAL: 'Emergency', PENDING: 'Urgency', STABLE: 'Semi-urgency', MISSING: 'Missing' }
+const STATUS_OPTIONS = Object.entries(STATUS_LABEL).map(([v, l]) => ({ value: v, label: l }));
 const SEVERITY_COLOR: Record<string, string> = { MILD: 'green', MODERATE: 'orange', SEVERE: 'red' };
 
 export default function DoctorPatientsPage() {
@@ -27,6 +28,20 @@ export default function DoctorPatientsPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [session?.accessToken]);
+
+  async function handleStatusChange(patientId: string, newStatus: string) {
+    const prev = patients.find((p) => p.id === patientId)?.status;
+    setPatients((ps) => ps.map((p) => p.id === patientId ? { ...p, status: newStatus } : p));
+    try {
+      const res = await fetch(`${API_URL}/patients/${patientId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.accessToken ?? ''}` },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) message.success('อัปเดตสถานะแล้ว');
+      else { message.error('อัปเดตไม่สำเร็จ'); setPatients((ps) => ps.map((p) => p.id === patientId ? { ...p, status: prev } : p)); }
+    } catch { setPatients((ps) => ps.map((p) => p.id === patientId ? { ...p, status: prev } : p)); }
+  }
 
   const filtered = patients.filter((p) => {
     const q = search.toLowerCase();
@@ -47,8 +62,20 @@ export default function DoctorPatientsPage() {
       ),
     },
     {
-      title: 'สถานะ', dataIndex: 'status', width: 110,
-      render: (v: string) => <Tag color={STATUS_COLOR[v]}>{STATUS_LABEL[v] ?? v}</Tag>,
+      title: 'Triage', dataIndex: 'status', width: 155,
+      render: (v: string, r: any) => (
+        <Select
+          value={v}
+          size="small"
+          style={{ width: 140 }}
+          options={STATUS_OPTIONS.map((o) => ({
+            value: o.value,
+            label: <Tag color={STATUS_COLOR[o.value]} style={{ margin: 0 }}>{o.label}</Tag>,
+          }))}
+          onChange={(val) => handleStatusChange(r.id, val)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
     },
     { title: 'อายุ', dataIndex: 'age', width: 60, render: (v: number) => v ?? '-' },
     {

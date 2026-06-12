@@ -8,6 +8,7 @@ const ROLE_PREFIX: Record<string, string> = {
   CARE_GIVER:        'fw',
   MEDICAL_VOLUNTEER: 'medvol',
   DOCTOR:            'doctor',
+  GUEST:             'guest',
 };
 
 export async function proxy(req: NextRequest) {

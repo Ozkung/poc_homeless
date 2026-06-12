@@ -12,9 +12,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const STATUS_COLOR: Record<string, string> = {
   CRITICAL: 'red', PENDING: 'orange', STABLE: 'green', MISSING: 'default',
 };
-const STATUS_LABEL: Record<string, string> = {
-  CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ', MISSING: 'สูญหาย',
-};
+const STATUS_LABEL: Record<string, string> = { CRITICAL: 'Emergency', PENDING: 'Urgency', STABLE: 'Semi-urgency', MISSING: 'Missing' }
 const SEVERITY_COLOR: Record<string, string> = { MILD: 'green', MODERATE: 'orange', SEVERE: 'red' };
 
 export default function DoctorDashboardPage() {

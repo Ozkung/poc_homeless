@@ -24,8 +24,42 @@ const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 const STATUS_COLOR: Record<string, string> = { CRITICAL: 'red', PENDING: 'orange', STABLE: 'green', MISSING: 'default' };
-const STATUS_LABEL: Record<string, string> = { CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ', MISSING: 'สูญหาย' };
+const STATUS_LABEL: Record<string, string> = { CRITICAL: 'Emergency', PENDING: 'Urgency', STABLE: 'Semi-urgency', MISSING: 'Missing' }
 const SEVERITY_COLOR: Record<string, string> = { MILD: 'green', MODERATE: 'orange', SEVERE: 'red' };
+
+const STATUS_OPTIONS = [
+  { value: 'STABLE',   label: 'ปกติ' },
+  { value: 'PENDING',  label: 'รอดำเนินการ' },
+  { value: 'CRITICAL', label: 'วิกฤต' },
+  { value: 'MISSING',  label: 'สูญหาย' },
+];
+
+function StatusSelector({ patientId, currentStatus, token, onUpdated }: { patientId: string; currentStatus: string; token: string; onUpdated: (s: string) => void }) {
+  const [status, setStatus] = useState(currentStatus);
+  const [saving, setSaving] = useState(false);
+
+  async function handleUpdate() {
+    if (status === currentStatus) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/patients/${patientId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) { message.success('อัปเดตสถานะแล้ว'); onUpdated(status); }
+      else message.error('อัปเดตไม่สำเร็จ');
+    } catch { message.error('เกิดข้อผิดพลาด'); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <Select value={status} onChange={setStatus} size="small" style={{ width: 140 }} options={STATUS_OPTIONS} />
+      <Button size="small" type="primary" loading={saving} disabled={status === currentStatus} onClick={handleUpdate}>อัปเดต</Button>
+    </span>
+  );
+}
 
 function MedicationRow({ med, index, onChange, onRemove }: any) {
   return (
@@ -213,30 +247,34 @@ export default function DoctorPatientDetailPage() {
   ];
 
   return (
-    <div style={{ padding: 24, fontFamily: "'Sarabun', sans-serif" }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <Button icon={<ArrowLeft size={15} />} onClick={() => router.push('/doctor/patients')} type="text" />
-        <div>
+    <div style={{ padding: '16px 12px', fontFamily: "'Sarabun', sans-serif" }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <Button icon={<ArrowLeft size={15} />} onClick={() => router.push('/doctor/patients')} type="text" style={{ flexShrink: 0, marginTop: 2 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ fontSize: 11, color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase' }}>Doctor Portal</Text>
-          <Title level={4} style={{ margin: 0 }}>{patient.name}</Title>
+          <Title level={4} style={{ margin: 0, wordBreak: 'break-word' }}>{patient.name}</Title>
           <Text type="secondary" style={{ fontSize: 12 }}>HN: {patient.hn}</Text>
         </div>
       </div>
 
       {/* Patient info */}
       <Card style={{ borderRadius: 12, marginBottom: 16 }}>
-        <Row gutter={24}>
-          <Col xs={24} md={16}>
-            <Descriptions size="small" column={{ xs: 1, sm: 2 }}>
-              <Descriptions.Item label="สถานะ"><Tag color={STATUS_COLOR[patient.status]}>{STATUS_LABEL[patient.status]}</Tag></Descriptions.Item>
-              <Descriptions.Item label="อายุ">{patient.age ?? '-'} ปี</Descriptions.Item>
-              <Descriptions.Item label="เพศ">{patient.gender === 'MALE' ? 'ชาย' : patient.gender === 'FEMALE' ? 'หญิง' : '-'}</Descriptions.Item>
-              <Descriptions.Item label="Zone">{patient.zone?.name ?? '-'}</Descriptions.Item>
-              <Descriptions.Item label="Case Manager">{patient.caseManager?.displayName ?? '-'}</Descriptions.Item>
-              <Descriptions.Item label="โรคประจำตัว">{(patient.conditions ?? []).join(', ') || '-'}</Descriptions.Item>
-            </Descriptions>
-          </Col>
-        </Row>
+        <Descriptions size="small" column={{ xs: 1, sm: 2, md: 3 }}>
+          <Descriptions.Item label="สถานะ">
+            <StatusSelector
+              patientId={id!}
+              currentStatus={patient.status}
+              token={session?.accessToken ?? ''}
+              onUpdated={(s) => setPatient((p: any) => ({ ...p, status: s }))}
+            />
+          </Descriptions.Item>
+          <Descriptions.Item label="อายุ">{patient.age ?? '-'} ปี</Descriptions.Item>
+          <Descriptions.Item label="เพศ">{patient.gender === 'MALE' ? 'ชาย' : patient.gender === 'FEMALE' ? 'หญิง' : '-'}</Descriptions.Item>
+          <Descriptions.Item label="Zone">{patient.zone?.name ?? '-'}</Descriptions.Item>
+          <Descriptions.Item label="Case Manager">{patient.caseManager?.displayName ?? '-'}</Descriptions.Item>
+          <Descriptions.Item label="โรคประจำตัว" span={3}>{(patient.conditions ?? []).join(', ') || '-'}</Descriptions.Item>
+        </Descriptions>
       </Card>
 
       <Tabs

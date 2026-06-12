@@ -8,7 +8,7 @@ import { UserRole } from '@prisma/client';
 import { CreateDiagnosisDto, CreatePrescriptionDto, CreateScheduleDto } from './dto/doctor.dto';
 
 const DOCTOR_ROLES = [UserRole.DOCTOR];
-const ALL_ROLES = [UserRole.DOCTOR, UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CARE_GIVER];
+const ALL_ROLES = [UserRole.DOCTOR, UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CARE_GIVER, UserRole.GUEST];
 
 @Controller('doctor')
 @UseGuards(JwtAuthGuard, RolesGuard)

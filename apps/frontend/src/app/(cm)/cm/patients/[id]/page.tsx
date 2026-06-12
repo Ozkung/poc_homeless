@@ -17,6 +17,7 @@ export default async function CMPatientProfilePage({ params }: { params: Promise
       backLabel="← ผู้ป่วย"
       showCarePlan
       CarePlanTabComponent={CarePlanTab}
+      showStatusUpdate
     />
   );
 }
