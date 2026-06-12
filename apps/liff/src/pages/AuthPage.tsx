@@ -57,7 +57,7 @@ function ChoiceStep({ onChoice }: { onChoice: (c: 'register' | 'link') => void }
   );
 }
 
-function RegisterStep({ idToken, onSuccess, onBack }: { idToken: string; onSuccess: () => void; onBack: () => void }) {
+function RegisterStep({ idToken, onSuccess, onBack }: { idToken: string; onSuccess: (info: { name: string; email: string; role: string }) => void; onBack: () => void }) {
   const [zones, setZones] = useState<{ id: string; name: string }[]>([]);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', zoneId: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -72,7 +72,7 @@ function RegisterStep({ idToken, onSuccess, onBack }: { idToken: string; onSucce
     try {
       const { accessToken } = await api.guestRegister({ idToken, ...form });
       setToken(accessToken);
-      onSuccess();
+      onSuccess({ name: `${form.firstName} ${form.lastName}`, email: form.email, role: 'GUEST' });
     } catch (err: any) { setError(err.message ?? 'สมัครไม่สำเร็จ'); }
     finally { setSubmitting(false); }
   }
@@ -100,7 +100,7 @@ function RegisterStep({ idToken, onSuccess, onBack }: { idToken: string; onSucce
   );
 }
 
-function LinkStep({ idToken, onSuccess, onBack }: { idToken: string; onSuccess: () => void; onBack: () => void }) {
+function LinkStep({ idToken, onSuccess, onBack }: { idToken: string; onSuccess: (info: { name: string; email: string; role: string }) => void; onBack: () => void }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -112,7 +112,9 @@ function LinkStep({ idToken, onSuccess, onBack }: { idToken: string; onSuccess: 
     try {
       const { accessToken } = await api.linkLine({ idToken, ...form });
       setToken(accessToken);
-      onSuccess();
+      // Decode JWT payload to get user info
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      onSuccess({ name: payload.displayName ?? form.email, email: form.email, role: payload.role ?? 'UNKNOWN' });
     } catch (err: any) { setError(err.message ?? 'เชื่อมต่อไม่สำเร็จ'); }
     finally { setSubmitting(false); }
   }
@@ -176,7 +178,7 @@ function DoneStep({ info }: { info: UserInfo }) {
 export default function AuthPage() {
   const [step, setStep] = useState<Step>('choice');
   const [idToken, setIdToken] = useState('');
-  const [userInfo] = useState<UserInfo>({ name: '', role: '', email: '' });
+  const [userInfo, setUserInfo] = useState<UserInfo>({ name: '', role: '', email: '' });
 
   useEffect(() => {
     const token = liff.getIDToken();
@@ -192,8 +194,8 @@ export default function AuthPage() {
   );
 
   if (step === 'choice') return wrap(<ChoiceStep onChoice={(c) => setStep(c)} />);
-  if (step === 'register') return wrap(<RegisterStep idToken={idToken} onBack={() => setStep('choice')} onSuccess={() => setStep('tou')} />);
-  if (step === 'link') return wrap(<LinkStep idToken={idToken} onBack={() => setStep('choice')} onSuccess={() => setStep('tou')} />);
+  if (step === 'register') return wrap(<RegisterStep idToken={idToken} onBack={() => setStep('choice')} onSuccess={(info) => { setUserInfo(info); setStep('tou'); }} />);
+  if (step === 'link') return wrap(<LinkStep idToken={idToken} onBack={() => setStep('choice')} onSuccess={(info) => { setUserInfo(info); setStep('tou'); }} />);
   if (step === 'tou') return wrap(<TouStep onConfirm={() => setStep('done')} />);
   return wrap(<DoneStep info={userInfo} />);
 }
