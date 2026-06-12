@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 import Redis from 'ioredis';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { UpdateMeDto } from './dto/update-me.dto';
+import { SseService } from '../notifications/sse.service';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +16,7 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     @InjectRedis() private redis: Redis,
+    private sseService: SseService,
   ) {}
 
   async login(email: string, password: string) {
@@ -65,6 +67,93 @@ export class AuthService {
       { expiresIn: this.config.get('jwt.expiresIn') },
     );
     return { accessToken };
+  }
+
+  async guestRegister(idToken: string, data: {
+    firstName: string; lastName: string;
+    email: string; phone?: string; zoneId?: string;
+  }) {
+    const channelId = this.config.get<string>('line.channelId');
+    const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `id_token=${idToken}&client_id=${channelId}`,
+    });
+    if (!verifyRes.ok) throw new UnauthorizedException('Invalid LIFF token');
+    const profile = await verifyRes.json() as { sub: string };
+
+    const existing = await this.prisma.user.findUnique({ where: { lineUserId: profile.sub } });
+    if (existing) throw new ConflictException('LINE account already registered');
+
+    const emailExists = await this.prisma.user.findUnique({ where: { email: data.email } });
+    if (emailExists) throw new ConflictException('Email already in use');
+
+    const org = await this.prisma.organization.findFirst();
+    if (!org) throw new ForbiddenException('No organization found');
+
+    const passwordHash = await bcrypt.hash(randomUUID(), 12);
+    const user = await this.prisma.user.create({
+      data: {
+        organizationId: org.id,
+        email: data.email,
+        passwordHash,
+        role: 'GUEST',
+        displayName: `${data.firstName} ${data.lastName}`,
+        lineUserId: profile.sub,
+        phone: data.phone,
+        preferredZoneId: data.zoneId ?? null,
+      },
+    });
+
+    this.sseService.emit(org.id, ['CASE_MANAGER', 'DOCTOR'], {
+      type: 'guest_joined',
+      name: `${data.firstName} ${data.lastName}`,
+      role: 'GUEST',
+    });
+
+    return this.issueTokens(user.id, user.email, user.role, user.organizationId, user.displayName, user.avatarUrl ?? null);
+  }
+
+  async linkLine(idToken: string, email: string, password: string) {
+    const channelId = this.config.get<string>('line.channelId');
+    const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `id_token=${idToken}&client_id=${channelId}`,
+    });
+    if (!verifyRes.ok) throw new UnauthorizedException('Invalid LIFF token');
+    const profile = await verifyRes.json() as { sub: string };
+
+    const alreadyLinked = await this.prisma.user.findUnique({ where: { lineUserId: profile.sub } });
+    if (alreadyLinked) throw new ConflictException('LINE account already linked to another user');
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || !user.isActive) throw new UnauthorizedException('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+
+    const ALLOWED_ROLES = ['GUEST', 'CASE_MANAGER', 'CARE_GIVER'];
+    if (!ALLOWED_ROLES.includes(user.role)) {
+      throw new ForbiddenException('บัญชีนี้ไม่รองรับการผูก LINE');
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) throw new UnauthorizedException('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+
+    await this.prisma.user.update({ where: { id: user.id }, data: { lineUserId: profile.sub } });
+
+    this.sseService.emit(user.organizationId, ['CASE_MANAGER', 'DOCTOR'], {
+      type: 'guest_joined',
+      name: user.displayName,
+      role: user.role,
+    });
+
+    return this.issueTokens(user.id, user.email, user.role, user.organizationId, user.displayName, user.avatarUrl ?? null);
+  }
+
+  async getPublicZones() {
+    return this.prisma.zone.findMany({
+      select: { id: true, name: true, color: true, description: true },
+      orderBy: { name: 'asc' },
+    });
   }
 
   async setup(orgName: string, adminName: string, adminEmail: string, adminPassword: string) {
