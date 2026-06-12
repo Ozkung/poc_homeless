@@ -34,6 +34,7 @@ export class PatientsService {
   async create(orgId: string, cmId: string, data: {
     name: string; hn: string; age?: number; gender?: string;
     status?: string; conditions?: string[]; locationText?: string;
+    phone?: string; birthDate?: string; nationalId?: string;
   }) {
     const patient = await this.prisma.patient.create({
       data: {
@@ -46,6 +47,9 @@ export class PatientsService {
         status: data.status as any ?? 'PENDING',
         conditions: data.conditions ?? [],
         locationText: data.locationText,
+        phone: data.phone,
+        birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+        nationalIdEnc: data.nationalId ? this.crypto.encrypt(data.nationalId) : undefined,
       },
     });
     return this.decrypt(patient);
@@ -53,13 +57,13 @@ export class PatientsService {
 
   async update(id: string, orgId: string, data: Partial<{
     name: string; age: number; gender: string; status: string; conditions: string[]; locationText: string;
+    phone: string; birthDate: string; nationalId: string;
   }>) {
     await this.findOne(id, orgId);
     const updateData: any = { ...data };
-    if (data.name) {
-      updateData.nameEnc = this.crypto.encrypt(data.name);
-      delete updateData.name;
-    }
+    if (data.name) { updateData.nameEnc = this.crypto.encrypt(data.name); delete updateData.name; }
+    if (data.nationalId) { updateData.nationalIdEnc = this.crypto.encrypt(data.nationalId); delete updateData.nationalId; }
+    if (data.birthDate) { updateData.birthDate = new Date(data.birthDate); delete updateData.birthDate; }
     const updated = await this.prisma.patient.update({ where: { id }, data: updateData });
     return this.decrypt(updated);
   }
@@ -226,6 +230,12 @@ export class PatientsService {
   }
 
   private decrypt(p: any) {
-    return { ...p, name: this.crypto.decrypt(p.nameEnc), nameEnc: undefined };
+    return {
+      ...p,
+      name: this.crypto.decrypt(p.nameEnc),
+      nameEnc: undefined,
+      nationalId: p.nationalIdEnc ? this.crypto.decrypt(p.nationalIdEnc) : undefined,
+      nationalIdEnc: undefined,
+    };
   }
 }

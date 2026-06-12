@@ -3,37 +3,37 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
-  Button, Card, Form, Input, InputNumber, Select, Typography, message,
+  Button, Card, DatePicker, Form, Input, InputNumber, Select, Typography, message, Row, Col,
 } from 'antd';
 import Link from 'next/link';
+import dayjs from 'dayjs';
 
 const { Title } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-
-interface PatientForm {
-  name: string;
-  hn: string;
-  age?: number;
-  gender?: 'MALE' | 'FEMALE' | 'OTHER';
-  status: 'CRITICAL' | 'PENDING' | 'STABLE';
-  locationText?: string;
-  conditions?: string;
-}
 
 export default function NewPatientPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [saving, setSaving] = useState(false);
-  const [form] = Form.useForm<PatientForm>();
+  const [form] = Form.useForm();
 
-  async function handleSubmit(values: PatientForm) {
+  async function handleSubmit(values: any) {
     setSaving(true);
     try {
+      const name = [values.firstName, values.lastName].filter(Boolean).join(' ');
       const payload = {
-        ...values,
+        name,
+        hn: values.hn,
+        age: values.age,
+        gender: values.gender,
+        status: values.status,
+        locationText: values.locationText,
         conditions: values.conditions
-          ? values.conditions.split(',').map((s) => s.trim()).filter(Boolean)
+          ? values.conditions.split(',').map((s: string) => s.trim()).filter(Boolean)
           : [],
+        phone: values.phone,
+        birthDate: values.birthDate ? dayjs(values.birthDate).toISOString() : undefined,
+        nationalId: values.nationalId,
       };
       const res = await fetch(`${API_URL}/patients`, {
         method: 'POST',
@@ -45,7 +45,7 @@ export default function NewPatientPage() {
       });
       if (res.ok) {
         message.success('เพิ่มผู้ป่วยเรียบร้อย');
-        router.push("/cm/patients");
+        router.push('/cm/patients');
       } else {
         message.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
       }
@@ -58,12 +58,10 @@ export default function NewPatientPage() {
 
   return (
     <div>
-      {/* Breadcrumb */}
       <div style={{ marginBottom: 20 }}>
         <Link href="/cm/patients" style={{ fontSize: 12, color: '#aaa' }}>← ผู้ป่วย</Link>
       </div>
 
-      {/* Page header */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 4 }}>
           Patients
@@ -73,48 +71,71 @@ export default function NewPatientPage() {
         </Title>
       </div>
 
-      <Card style={{ maxWidth: 600 }}>
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{ status: 'PENDING' }}
-        >
-          <Form.Item
-            name="name"
-            label="ชื่อ-นามสกุล"
-            rules={[{ required: true, message: 'กรุณาใส่ชื่อผู้ป่วย' }]}
-          >
-            <Input placeholder="สมชาย ใจดี" />
-          </Form.Item>
+      <Card style={{ maxWidth: 640 }}>
+        <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ status: 'PENDING' }}>
 
-          <Form.Item
-            name="hn"
-            label="HN (Hospital Number)"
-            rules={[{ required: true, message: 'กรุณาใส่หมายเลข HN' }]}
-          >
+          {/* ── ชื่อ-นามสกุล ── */}
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="firstName" label="ชื่อ" rules={[{ required: true, message: 'กรุณาใส่ชื่อ' }]}>
+                <Input placeholder="สมชาย" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="lastName" label="นามสกุล" rules={[{ required: true, message: 'กรุณาใส่นามสกุล' }]}>
+                <Input placeholder="ใจดี" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* ── HN ── */}
+          <Form.Item name="hn" label="HN (Hospital Number)" rules={[{ required: true, message: 'กรุณาใส่หมายเลข HN' }]}>
             <Input placeholder="HN001234" style={{ fontFamily: "'Sarabun',sans-serif" }} />
           </Form.Item>
 
-          <div style={{ display: 'flex', gap: 16 }}>
-            <Form.Item name="age" label="อายุ" style={{ flex: 1 }}>
-              <InputNumber min={0} max={150} addonAfter="ปี" style={{ width: '100%' }} />
-            </Form.Item>
-
-            <Form.Item name="gender" label="เพศ" style={{ flex: 1 }}>
-              <Select placeholder="เลือกเพศ" options={[
-                { value: 'MALE',   label: 'ชาย' },
-                { value: 'FEMALE', label: 'หญิง' },
-                { value: 'OTHER',  label: 'อื่นๆ' },
-              ]} />
-            </Form.Item>
-          </div>
-
+          {/* ── เลขบัตรประชาชน ── */}
           <Form.Item
-            name="status"
-            label="สถานะ"
-            rules={[{ required: true }]}
+            name="nationalId"
+            label="เลขบัตรประชาชน"
+            rules={[{ pattern: /^\d{13}$/, message: 'เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก' }]}
           >
+            <Input placeholder="1234567890123" maxLength={13} />
+          </Form.Item>
+
+          {/* ── เบอร์โทร / เพศ ── */}
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="phone" label="เบอร์โทรศัพท์">
+                <Input placeholder="081-234-5678" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="gender" label="เพศ">
+                <Select placeholder="เลือกเพศ" options={[
+                  { value: 'MALE',   label: 'ชาย' },
+                  { value: 'FEMALE', label: 'หญิง' },
+                  { value: 'OTHER',  label: 'อื่นๆ' },
+                ]} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* ── วันเกิด / อายุ ── */}
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="birthDate" label="วันเกิด">
+                <DatePicker style={{ width: '100%' }} placeholder="เลือกวันเกิด" format="DD/MM/YYYY" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="age" label="อายุ (ปี)">
+                <InputNumber min={0} max={150} addonAfter="ปี" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* ── สถานะ ── */}
+          <Form.Item name="status" label="สถานะ" rules={[{ required: true }]}>
             <Select options={[
               { value: 'STABLE',   label: 'ปกติ' },
               { value: 'PENDING',  label: 'รอดำเนินการ' },
@@ -122,23 +143,18 @@ export default function NewPatientPage() {
             ]} />
           </Form.Item>
 
+          {/* ── สถานที่ / โรคประจำตัว ── */}
           <Form.Item name="locationText" label="สถานที่">
             <Input placeholder="เช่น ใต้สะพาน ถ.พระราม 4" />
           </Form.Item>
 
-          <Form.Item
-            name="conditions"
-            label="โรคประจำตัว"
-            extra="คั่นด้วยเครื่องหมายจุลภาค เช่น เบาหวาน, ความดัน"
-          >
+          <Form.Item name="conditions" label="โรคประจำตัว" extra="คั่นด้วยเครื่องหมายจุลภาค เช่น เบาหวาน, ความดัน">
             <Input placeholder="เบาหวาน, ความดัน" />
           </Form.Item>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-            <Button onClick={() => router.push("/cm/patients")}>ยกเลิก</Button>
-            <Button type="primary" htmlType="submit" loading={saving}>
-              บันทึกผู้ป่วย
-            </Button>
+            <Button onClick={() => router.push('/cm/patients')}>ยกเลิก</Button>
+            <Button type="primary" htmlType="submit" loading={saving}>บันทึกผู้ป่วย</Button>
           </div>
         </Form>
       </Card>

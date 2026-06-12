@@ -28,13 +28,24 @@ export default function DoctorPatientsPage() {
       .finally(() => setLoading(false));
   }, [session?.accessToken]);
 
-  const filtered = patients.filter((p) =>
-    p.hn?.toLowerCase().includes(search.toLowerCase()) ||
-    p.locationText?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = patients.filter((p) => {
+    const q = search.toLowerCase();
+    return !q ||
+      p.hn?.toLowerCase().includes(q) ||
+      p.name?.toLowerCase().includes(q) ||
+      p.locationText?.toLowerCase().includes(q);
+  });
 
   const columns = [
-    { title: 'HN', dataIndex: 'hn', width: 100 },
+    {
+      title: 'ชื่อ-นามสกุล', dataIndex: 'name',
+      render: (v: string, r: any) => (
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 13 }}>{v ?? '-'}</div>
+          <Text type="secondary" style={{ fontSize: 11 }}>HN {r.hn}</Text>
+        </div>
+      ),
+    },
     {
       title: 'สถานะ', dataIndex: 'status', width: 110,
       render: (v: string) => <Tag color={STATUS_COLOR[v]}>{STATUS_LABEL[v] ?? v}</Tag>,
@@ -72,7 +83,7 @@ export default function DoctorPatientsPage() {
         <div style={{ marginBottom: 12 }}>
           <Input
             prefix={<Search size={14} />}
-            placeholder="ค้นหา HN หรือสถานที่..."
+            placeholder="ค้นหาชื่อ, HN หรือสถานที่..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ maxWidth: 320 }}

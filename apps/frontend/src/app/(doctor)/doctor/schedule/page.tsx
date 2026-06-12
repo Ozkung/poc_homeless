@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { Button, Card, DatePicker, Form, Input, Modal, Table, TimePicker, Typography, Tag, message } from 'antd';
+import { Button, Card, DatePicker, Form, Input, Modal, Select, Table, TimePicker, Typography, Tag, message } from 'antd';
 import { Plus, CalendarDays, MapPin, Trash2 } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -21,6 +21,7 @@ function isFuture(dateStr: string) {
 export default function DoctorSchedulePage() {
   const { data: session } = useSession();
   const [schedules, setSchedules] = useState<any[]>([]);
+  const [zones, setZones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -40,6 +41,14 @@ export default function DoctorSchedulePage() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (!session?.accessToken) return;
+    fetch(`${API_URL}/zones`, { headers: { Authorization: `Bearer ${session.accessToken}` } })
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setZones(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, [session?.accessToken]);
+
   async function handleSubmit(values: any) {
     setSaving(true);
     try {
@@ -47,6 +56,7 @@ export default function DoctorSchedulePage() {
         date: values.date.toISOString(),
         startTime: values.startTime.format('HH:mm'),
         endTime: values.endTime.format('HH:mm'),
+        zoneId: values.zoneId ?? null,
         location: values.location,
         notes: values.notes,
       };
@@ -83,6 +93,10 @@ export default function DoctorSchedulePage() {
     {
       title: 'สถานที่', dataIndex: 'location',
       render: (v: string) => v ? <span><MapPin size={12} style={{ marginRight: 4 }} />{v}</span> : <Text type="secondary">-</Text>,
+    },
+    {
+      title: 'Zone', dataIndex: 'zone', width: 130,
+      render: (z: any) => z ? <Tag color={z.color ?? 'default'}>{z.name}</Tag> : <Text type="secondary">-</Text>,
     },
     { title: 'แพทย์', dataIndex: ['doctor', 'displayName'] },
     { title: 'หมายเหตุ', dataIndex: 'notes', render: (v: string) => v ?? '-' },
@@ -139,8 +153,15 @@ export default function DoctorSchedulePage() {
               </Form.Item>
             </div>
           </Form.Item>
-          <Form.Item name="location" label="สถานที่">
-            <Input placeholder="เช่น ตรอกสาเก, สวนลุมพินี" />
+          <Form.Item name="zoneId" label="Zone (พื้นที่)">
+            <Select
+              placeholder="เลือก Zone ที่จะไป"
+              allowClear
+              options={zones.map((z) => ({ value: z.id, label: z.name }))}
+            />
+          </Form.Item>
+          <Form.Item name="location" label="สถานที่ (ระบุเพิ่มเติม)">
+            <Input placeholder="เช่น ใต้สะพาน ถ.พระราม 4" />
           </Form.Item>
           <Form.Item name="notes" label="หมายเหตุ">
             <Input.TextArea rows={2} placeholder="รายละเอียดเพิ่มเติม" />

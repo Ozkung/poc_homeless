@@ -41,11 +41,13 @@ export class PatientsController {
   }
 
   @Get(':id/activities')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
   findActivities(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.patients.findActivities(id, user.orgId);
   }
 
   @Get(':id/submissions')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
   findSubmissions(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.patients.findSubmissions(id, user.orgId);
   }
@@ -86,6 +88,7 @@ export class PatientsController {
   }
 
   @Get(':id/assessment')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
   listCarePlanAssessments(
     @Param('id') id: string,
     @Query('skip') skip: string,

@@ -3,8 +3,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  Button, Card, Col, Descriptions, Divider, Form, Input, Modal,
-  Row, Select, Spin, Table, Tabs, Tag, Typography, message,
+  Button, Card, Col, Collapse, Descriptions, Divider, Form, Input, Modal,
+  Row, Select, Spin, Table, Tabs, Tag, Timeline, Typography, message,
 } from 'antd';
 import { ArrowLeft, Stethoscope, Pill, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
@@ -53,6 +53,9 @@ export default function DoctorPatientDetailPage() {
   const [saving, setSaving] = useState(false);
   const [dispensing, setDispensing] = useState(false);
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [assessments, setAssessments] = useState<any[]>([]);
   const [diagForm] = Form.useForm();
   const [medications, setMedications] = useState([{ name: '', dosage: '', frequency: '', duration: '', notes: '' }]);
 
@@ -72,11 +75,12 @@ export default function DoctorPatientDetailPage() {
 
   useEffect(() => {
     if (!session?.accessToken) return;
-    fetch(`${API_URL}/inventory`, { headers: { Authorization: `Bearer ${session.accessToken}` } })
-      .then((r) => r.ok ? r.json() : [])
-      .then(setInventoryItems)
-      .catch(() => {});
-  }, [session?.accessToken]);
+    const h = { Authorization: `Bearer ${session.accessToken}` };
+    fetch(`${API_URL}/inventory`, { headers: h }).then((r) => r.ok ? r.json() : []).then(setInventoryItems).catch(() => {});
+    fetch(`${API_URL}/patients/${id}/activities`, { headers: h }).then((r) => r.ok ? r.json() : []).then(setActivities).catch(() => {});
+    fetch(`${API_URL}/patients/${id}/submissions`, { headers: h }).then((r) => r.ok ? r.json() : []).then(setSubmissions).catch(() => {});
+    fetch(`${API_URL}/patients/${id}/assessment?limit=50`, { headers: h }).then((r) => r.ok ? r.json() : { data: [] }).then((res) => setAssessments(res.data ?? [])).catch(() => {});
+  }, [session?.accessToken, id]);
 
   function openDispense(prescription: any) {
     const rows: MatchedMed[] = (prescription.medications ?? []).map((med: any) => {
@@ -214,7 +218,8 @@ export default function DoctorPatientDetailPage() {
         <Button icon={<ArrowLeft size={15} />} onClick={() => router.push('/doctor/patients')} type="text" />
         <div>
           <Text style={{ fontSize: 11, color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase' }}>Doctor Portal</Text>
-          <Title level={4} style={{ margin: 0 }}>HN: {patient.hn}</Title>
+          <Title level={4} style={{ margin: 0 }}>{patient.name}</Title>
+          <Text type="secondary" style={{ fontSize: 12 }}>HN: {patient.hn}</Text>
         </div>
       </div>
 
@@ -238,7 +243,7 @@ export default function DoctorPatientDetailPage() {
         items={[
           {
             key: 'diagnosis',
-            label: <span><Stethoscope size={14} style={{ marginRight: 6 }} />การวินิจฉัย ({(patient.diagnoses ?? []).length})</span>,
+            label: <div className="flex items-center"><Stethoscope size={14} style={{ marginRight: 6 }} />การวินิจฉัย ({(patient.diagnoses ?? []).length})</div>,
             children: (
               <Card style={{ borderRadius: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
@@ -251,7 +256,7 @@ export default function DoctorPatientDetailPage() {
           },
           {
             key: 'prescription',
-            label: <span><Pill size={14} style={{ marginRight: 6 }} />ใบสั่งยา ({(patient.prescriptions ?? []).length})</span>,
+            label: <div className="flex items-center"><Pill size={14} style={{ marginRight: 6 }} />ใบสั่งยา ({(patient.prescriptions ?? []).length})</div>,
             children: (
               <Card style={{ borderRadius: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
@@ -259,6 +264,86 @@ export default function DoctorPatientDetailPage() {
                 </div>
                 <Table size="small" dataSource={patient.prescriptions ?? []} columns={prescColumns} rowKey="id"
                   pagination={{ pageSize: 10 }} locale={{ emptyText: 'ยังไม่มีใบสั่งยา' }} />
+              </Card>
+            ),
+          },
+          {
+            key: 'timeline',
+            label: `Timeline (${activities.length})`,
+            children: (
+              <Card style={{ borderRadius: 12 }}>
+                {!activities.length
+                  ? <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีกิจกรรม</Text>
+                  : <Timeline items={activities.slice(0, 30).map((a: any) => ({
+                      color: ({ CHECK_IN: '#1677ff', NOTE: '#722ed1', FORM_SUBMIT: '#13c2c2', ASSIGN: '#faad14', STATUS_CHANGE: '#ff4d4f', SOS: '#ff0000' } as any)[a.type] ?? '#d9d9d9',
+                      children: (
+                        <div>
+                          <Text style={{ fontSize: 13 }}>{a.actor?.displayName}</Text>
+                          <Tag style={{ marginLeft: 8, fontSize: 10 }}>{a.type}</Tag>
+                          <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{new Date(a.createdAt).toLocaleString('th-TH')}</div>
+                          {a.payload?.note && <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>{a.payload.note}</div>}
+                        </div>
+                      ),
+                    }))}
+                  />
+                }
+              </Card>
+            ),
+          },
+          {
+            key: 'submissions',
+            label: `แบบสอบถาม (${submissions.length})`,
+            children: (
+              <Card style={{ borderRadius: 12 }}>
+                {!submissions.length
+                  ? <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีการส่งแบบฟอร์ม</Text>
+                  : <Collapse items={submissions.slice(0, 20).map((s: any) => ({
+                      key: s.id,
+                      label: (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <Text type="secondary" style={{ fontSize: 11, flexShrink: 0 }}>{new Date(s.submittedAt).toLocaleDateString('th-TH')}</Text>
+                          <Text strong style={{ flex: 1, fontSize: 13 }}>{s.formTemplate?.title}</Text>
+                          <Text type="secondary" style={{ fontSize: 11 }}>{s.submittedBy?.displayName}</Text>
+                        </div>
+                      ),
+                      children: (
+                        <div style={{ display: 'grid', gap: 6 }}>
+                          {(s.answers ?? []).map((ans: any, i: number) => (
+                            <div key={i}>
+                              <div style={{ fontSize: 11, fontWeight: 600, color: '#555' }}>{ans.fieldId}</div>
+                              <div style={{ fontSize: 12, padding: '3px 8px', background: '#f5f5f5', borderRadius: 4, display: 'inline-block', marginTop: 2 }}>{String(ans.value)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ),
+                    }))}
+                  />
+                }
+              </Card>
+            ),
+          },
+          {
+            key: 'careplan',
+            label: `Care Plan (${assessments.length})`,
+            children: (
+              <Card style={{ borderRadius: 12 }}>
+                {!assessments.length
+                  ? <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีข้อมูลการประเมิน</Text>
+                  : <Table
+                      size="small"
+                      dataSource={assessments}
+                      rowKey="id"
+                      pagination={{ pageSize: 10 }}
+                      columns={[
+                        { title: 'วันที่พบ', dataIndex: 'assessmentDate', width: 120, render: (v: string, r: any) => v ? new Date(v).toLocaleDateString('th-TH') : new Date(r.createdAt).toLocaleDateString('th-TH') },
+                        { title: 'สถานะ', dataIndex: 'status', width: 100, render: (v: string) => v ? <Tag color={({ Active: 'green', 'Follow-up': 'blue', Missing: 'orange', Closed: 'default' } as any)[v] ?? 'default'}>{v}</Tag> : '-' },
+                        { title: 'เป้าหมาย', dataIndex: 'helpGoal', render: (v: string) => v ? <Tag color="purple">{v}</Tag> : '-' },
+                        { title: 'สถานที่พบ', dataIndex: 'locationFound', render: (v: string) => v ?? '-' },
+                        { title: 'ประเภทไร้บ้าน', dataIndex: 'homelessType', render: (v: string) => v ?? '-' },
+                        { title: 'สิทธิรักษา', dataIndex: 'healthcareRight', width: 110, render: (v: string) => v ?? '-' },
+                      ]}
+                    />
+                }
               </Card>
             ),
           },
@@ -295,7 +380,7 @@ export default function DoctorPatientDetailPage() {
 
       {/* Dispense Modal */}
       <Modal
-        title={`จ่ายยาสำหรับ HN: ${patient.hn}`}
+        title={`จ่ายยาสำหรับ ${patient.name} (HN: ${patient.hn})`}
         open={!!dispenseState}
         onCancel={() => setDispenseState(null)}
         onOk={dispenseState?.hasIssues ? undefined : submitDispense}

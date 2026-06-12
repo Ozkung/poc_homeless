@@ -1,13 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AesGcmService } from '../../common/crypto/aes-gcm.service';
 
 @Injectable()
 export class DoctorService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private crypto: AesGcmService) {}
+
+  private decryptPatient<T extends { nameEnc: string }>(p: T): Omit<T, 'nameEnc'> & { name: string } {
+    const { nameEnc, ...rest } = p;
+    return { ...rest, name: this.crypto.decrypt(nameEnc) };
+  }
 
   // ── Patients ─────────────────────────────────────────────────────────
-  getPatients(orgId: string) {
-    return this.prisma.patient.findMany({
+  async getPatients(orgId: string) {
+    const patients = await this.prisma.patient.findMany({
       where: { organizationId: orgId },
       include: {
         caseManager: { select: { displayName: true } },
@@ -16,10 +22,11 @@ export class DoctorService {
       },
       orderBy: { createdAt: 'desc' },
     });
+    return patients.map((p) => this.decryptPatient(p));
   }
 
-  getPatient(patientId: string, orgId: string) {
-    return this.prisma.patient.findFirst({
+  async getPatient(patientId: string, orgId: string) {
+    const patient = await this.prisma.patient.findFirst({
       where: { id: patientId, organizationId: orgId },
       include: {
         caseManager: { select: { displayName: true } },
@@ -29,6 +36,8 @@ export class DoctorService {
         carePlanItems: true,
       },
     });
+    if (!patient) return null;
+    return this.decryptPatient(patient);
   }
 
   // ── Diagnosis ─────────────────────────────────────────────────────────
@@ -70,14 +79,20 @@ export class DoctorService {
     return this.prisma.doctorSchedule.findMany({
       where: { organizationId: orgId },
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
-      include: { doctor: { select: { displayName: true, avatarUrl: true } } },
+      include: {
+        doctor: { select: { displayName: true, avatarUrl: true } },
+        zone: { select: { id: true, name: true, color: true } },
+      },
     });
   }
 
   createSchedule(doctorId: string, orgId: string, dto: any) {
     return this.prisma.doctorSchedule.create({
       data: { doctorId, organizationId: orgId, ...dto, date: new Date(dto.date) },
-      include: { doctor: { select: { displayName: true } } },
+      include: {
+        doctor: { select: { displayName: true } },
+        zone: { select: { id: true, name: true, color: true } },
+      },
     });
   }
 

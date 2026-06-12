@@ -14,7 +14,7 @@ export class ZonesController {
   constructor(private zones: ZonesService) {}
 
   @Get()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CASE_MANAGER)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CASE_MANAGER, UserRole.MEDICAL_VOLUNTEER, UserRole.CARE_GIVER, UserRole.DOCTOR)
   findAll(@CurrentUser() user: JwtPayload) {
     return this.zones.findAll(user.orgId);
   }
