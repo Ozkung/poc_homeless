@@ -50,4 +50,16 @@ export const api = {
     request<any[]>(`/patients/${patientId}/care-plan`),
   getCarePlanAssessments: (patientId: string) =>
     request<{ data: any[]; total: number }>(`/patients/${patientId}/assessment?skip=0&limit=10`).catch(() => ({ data: [], total: 0 })),
+  getPublicZones: () =>
+    fetch(`${API_URL}/auth/public/zones`).then((r) => r.ok ? r.json() : []) as Promise<{ id: string; name: string; color: string }[]>,
+  guestRegister: (data: { idToken: string; firstName: string; lastName: string; email: string; phone?: string; zoneId?: string }) =>
+    request<{ accessToken: string; refreshToken: string; role: string }>('/auth/liff/guest-register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  linkLine: (data: { idToken: string; email: string; password: string }) =>
+    request<{ accessToken: string; refreshToken: string; role: string }>('/auth/liff/link', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
