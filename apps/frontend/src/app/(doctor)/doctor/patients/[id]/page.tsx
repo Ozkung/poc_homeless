@@ -6,7 +6,19 @@ import {
   Button, Card, Col, Descriptions, Divider, Form, Input, Modal,
   Row, Select, Spin, Table, Tabs, Tag, Typography, message,
 } from 'antd';
-import { ArrowLeft, Plus, Stethoscope, Pill, Trash2 } from 'lucide-react';
+import { ArrowLeft, Stethoscope, Pill, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+
+interface MatchedMed {
+  prescName: string;
+  item: any | null;
+  hasStock: boolean;
+  quantity: number;
+}
+interface DispenseState {
+  prescriptionId: string;
+  rows: MatchedMed[];
+  hasIssues: boolean;
+}
 
 const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -37,11 +49,10 @@ export default function DoctorPatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [diagModal, setDiagModal] = useState(false);
   const [prescModal, setPrescModal] = useState(false);
-  const [dispenseModal, setDispenseModal] = useState<string | null>(null);
+  const [dispenseState, setDispenseState] = useState<DispenseState | null>(null);
   const [saving, setSaving] = useState(false);
   const [dispensing, setDispensing] = useState(false);
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
-  const [dispenseRows, setDispenseRows] = useState([{ itemId: '', quantity: 1 }]);
   const [diagForm] = Form.useForm();
   const [medications, setMedications] = useState([{ name: '', dosage: '', frequency: '', duration: '', notes: '' }]);
 
@@ -67,19 +78,36 @@ export default function DoctorPatientDetailPage() {
       .catch(() => {});
   }, [session?.accessToken]);
 
-  async function openDispense(prescId: string) {
-    setDispenseRows([{ itemId: '', quantity: 1 }]);
-    setDispenseModal(prescId);
+  function openDispense(prescription: any) {
+    const rows: MatchedMed[] = (prescription.medications ?? []).map((med: any) => {
+      const item = inventoryItems.find((inv) =>
+        inv.name.toLowerCase().includes(med.name.toLowerCase()) ||
+        med.name.toLowerCase().includes(inv.name.toLowerCase())
+      ) ?? null;
+      return { prescName: med.name, item, hasStock: !!item && item.currentStock > 0, quantity: 1 };
+    });
+    setDispenseState({
+      prescriptionId: prescription.id,
+      rows,
+      hasIssues: rows.some((r) => !r.hasStock),
+    });
+  }
+
+  function updateDispenseQty(index: number, qty: number) {
+    setDispenseState((prev) => prev ? {
+      ...prev,
+      rows: prev.rows.map((r, i) => i === index ? { ...r, quantity: qty } : r),
+    } : prev);
   }
 
   async function submitDispense() {
-    const rows = dispenseRows.filter((r) => r.itemId && r.quantity > 0);
-    if (!rows.length) { message.warning('กรุณาเลือกยาอย่างน้อย 1 รายการ'); return; }
+    if (!dispenseState) return;
+    const toDeduct = dispenseState.rows.filter((r) => r.hasStock);
     setDispensing(true);
     try {
       const results = await Promise.all(
-        rows.map((r) =>
-          fetch(`${API_URL}/inventory/${r.itemId}/deduct`, {
+        toDeduct.map((r) =>
+          fetch(`${API_URL}/inventory/${r.item.id}/deduct`, {
             method: 'POST',
             headers: authHeaders(),
             body: JSON.stringify({ quantity: r.quantity, type: 'OUT_PRESCRIPTION', patientId: id }),
@@ -92,7 +120,13 @@ export default function DoctorPatientDetailPage() {
         message.error(errs.join(', '));
       } else {
         message.success('จ่ายยาสำเร็จ');
-        setDispenseModal(null);
+        setDispenseState(null);
+        setInventoryItems((prev) =>
+          prev.map((inv) => {
+            const row = toDeduct.find((r) => r.item.id === inv.id);
+            return row ? { ...inv, currentStock: inv.currentStock - row.quantity } : inv;
+          })
+        );
       }
     } catch { message.error('เกิดข้อผิดพลาด'); }
     finally { setDispensing(false); }
@@ -167,7 +201,7 @@ export default function DoctorPatientDetailPage() {
     {
       title: '', width: 100,
       render: (_: any, r: any) => (
-        <Button size="small" type="primary" ghost onClick={() => openDispense(r.id)}>
+        <Button size="small" type="primary" ghost onClick={() => openDispense(r)}>
           จ่ายยา →
         </Button>
       ),
@@ -262,49 +296,66 @@ export default function DoctorPatientDetailPage() {
       {/* Dispense Modal */}
       <Modal
         title={`จ่ายยาสำหรับ HN: ${patient.hn}`}
-        open={!!dispenseModal}
-        onCancel={() => setDispenseModal(null)}
-        onOk={submitDispense}
-        okText="ยืนยันจ่ายยา"
-        cancelText="ยกเลิก"
+        open={!!dispenseState}
+        onCancel={() => setDispenseState(null)}
+        onOk={dispenseState?.hasIssues ? undefined : submitDispense}
+        okText={dispenseState?.hasIssues ? undefined : 'ยืนยันจ่ายยา'}
+        okButtonProps={dispenseState?.hasIssues ? { style: { display: 'none' } } : undefined}
+        cancelText="ปิด"
         confirmLoading={dispensing}
-        width={520}
+        width={500}
       >
-        <div style={{ marginBottom: 8 }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>เลือกรายการยาจาก Inventory และระบุจำนวนที่จ่าย — stock จะถูกตัดทันที</Text>
+        {/* header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8c8c8c', marginBottom: 8, padding: '0 2px' }}>
+          <span>ชื่อยา (ใบสั่งยา)</span>
+          <span style={{ display: 'flex', gap: 64 }}><span>Stock</span><span style={{ minWidth: 56 }}>จำนวน</span></span>
         </div>
-        {dispenseRows.map((row, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-            <Select
-              style={{ flex: 1 }}
-              placeholder="เลือกยา..."
-              showSearch
-              filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())}
-              value={row.itemId || undefined}
-              onChange={(val) => setDispenseRows((prev) => prev.map((r, j) => j === i ? { ...r, itemId: val } : r))}
-              options={inventoryItems.map((item) => ({
-                value: item.id,
-                label: `${item.name} (คงเหลือ ${item.currentStock} ${item.unit})`,
-                disabled: item.currentStock === 0,
-              }))}
-            />
-            <input
-              type="number" min={1}
-              value={row.quantity}
-              onChange={(e) => setDispenseRows((prev) => prev.map((r, j) => j === i ? { ...r, quantity: Number(e.target.value) } : r))}
-              style={{ width: 64, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 14 }}
-            />
-            {dispenseRows.length > 1 && (
-              <button onClick={() => setDispenseRows((prev) => prev.filter((_, j) => j !== i))}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ff4d4f', padding: 4 }}>
-                <Trash2 size={14} />
-              </button>
-            )}
+
+        {(dispenseState?.rows ?? []).map((row, i) => {
+          const statusIcon = !row.item
+            ? <span style={{ color: '#fa8c16', display: 'flex', alignItems: 'center', gap: 4 }}><AlertCircle size={14} /><span style={{ fontSize: 11 }}>ไม่พบในระบบ</span></span>
+            : !row.hasStock
+              ? <span style={{ color: '#ff4d4f', display: 'flex', alignItems: 'center', gap: 4 }}><XCircle size={14} /><span style={{ fontSize: 11 }}>หมดสต็อก</span></span>
+              : <span style={{ color: '#52c41a', display: 'flex', alignItems: 'center', gap: 4 }}><CheckCircle size={14} /><span style={{ fontSize: 11 }}>พร้อม</span></span>;
+
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 2px', borderBottom: '1px solid #f0f0f0' }}>
+              <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
+                <Text style={{ fontSize: 13, fontWeight: 500 }}>{row.prescName}</Text>
+                {row.item && <div style={{ fontSize: 11, color: '#8c8c8c' }}>{row.item.name}</div>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                {row.item
+                  ? <span style={{ fontSize: 12, color: row.hasStock ? '#595959' : '#ff4d4f', minWidth: 70, textAlign: 'right' }}>
+                      {row.item.currentStock} {row.item.unit}
+                    </span>
+                  : <span style={{ minWidth: 70 }} />
+                }
+                {row.hasStock
+                  ? <input
+                      type="number" min={1} max={row.item?.currentStock}
+                      value={row.quantity}
+                      onChange={(e) => updateDispenseQty(i, Math.max(1, Number(e.target.value)))}
+                      style={{ width: 56, padding: '3px 6px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 13, textAlign: 'center' }}
+                    />
+                  : <span style={{ width: 56, display: 'inline-block' }} />
+                }
+                <span style={{ minWidth: 80 }}>{statusIcon}</span>
+              </div>
+            </div>
+          );
+        })}
+
+        {dispenseState?.hasIssues && (
+          <div style={{ marginTop: 12, padding: '8px 12px', background: '#fff7e6', borderRadius: 6, border: '1px solid #ffd591', fontSize: 12, color: '#d46b08' }}>
+            ⚠ ยาบางรายการไม่พร้อมจ่าย กรุณาจัดเตรียมเพิ่มเติมก่อน
           </div>
-        ))}
-        <Button size="small" onClick={() => setDispenseRows((prev) => [...prev, { itemId: '', quantity: 1 }])} style={{ marginTop: 4 }}>
-          + เพิ่มรายการ
-        </Button>
+        )}
+        {!dispenseState?.hasIssues && (
+          <div style={{ marginTop: 12, padding: '8px 12px', background: '#f6ffed', borderRadius: 6, border: '1px solid #b7eb8f', fontSize: 12, color: '#389e0d' }}>
+            ✓ ยาทุกรายการพร้อมจ่าย — ยืนยันเพื่อตัด stock ทันที
+          </div>
+        )}
       </Modal>
 
       {/* Prescription Modal */}
