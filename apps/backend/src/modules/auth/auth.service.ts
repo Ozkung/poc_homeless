@@ -54,7 +54,7 @@ export class AuthService {
     const res = await fetch('https://api.line.me/oauth2/v2.1/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `id_token=${idToken}&client_id=${channelId}`,
+      body: new URLSearchParams({ id_token: idToken, client_id: channelId ?? '' }).toString(),
     });
     if (!res.ok) throw new UnauthorizedException('Invalid LIFF token');
     const profile = await res.json() as { sub: string };
@@ -77,7 +77,7 @@ export class AuthService {
     const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `id_token=${idToken}&client_id=${channelId}`,
+      body: new URLSearchParams({ id_token: idToken, client_id: channelId ?? '' }).toString(),
     });
     if (!verifyRes.ok) throw new UnauthorizedException('Invalid LIFF token');
     const profile = await verifyRes.json() as { sub: string };
@@ -119,7 +119,7 @@ export class AuthService {
     const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `id_token=${idToken}&client_id=${channelId}`,
+      body: new URLSearchParams({ id_token: idToken, client_id: channelId ?? '' }).toString(),
     });
     if (!verifyRes.ok) throw new UnauthorizedException('Invalid LIFF token');
     const profile = await verifyRes.json() as { sub: string };
