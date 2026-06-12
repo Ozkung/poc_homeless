@@ -107,14 +107,20 @@ export default function DoctorPatientDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const loadActivities = useCallback(() => {
+    if (!session?.accessToken) return;
+    fetch(`${API_URL}/patients/${id}/activities`, { headers: { Authorization: `Bearer ${session.accessToken}` } })
+      .then((r) => r.ok ? r.json() : []).then(setActivities).catch(() => {});
+  }, [id, session?.accessToken]);
+
   useEffect(() => {
     if (!session?.accessToken) return;
     const h = { Authorization: `Bearer ${session.accessToken}` };
     fetch(`${API_URL}/inventory`, { headers: h }).then((r) => r.ok ? r.json() : []).then(setInventoryItems).catch(() => {});
-    fetch(`${API_URL}/patients/${id}/activities`, { headers: h }).then((r) => r.ok ? r.json() : []).then(setActivities).catch(() => {});
+    loadActivities();
     fetch(`${API_URL}/patients/${id}/submissions`, { headers: h }).then((r) => r.ok ? r.json() : []).then(setSubmissions).catch(() => {});
     fetch(`${API_URL}/patients/${id}/assessment?limit=50`, { headers: h }).then((r) => r.ok ? r.json() : { data: [] }).then((res) => setAssessments(res.data ?? [])).catch(() => {});
-  }, [session?.accessToken, id]);
+  }, [session?.accessToken, id, loadActivities]);
 
   function openDispense(prescription: any) {
     const rows: MatchedMed[] = (prescription.medications ?? []).map((med: any) => {
@@ -165,6 +171,7 @@ export default function DoctorPatientDetailPage() {
             return row ? { ...inv, currentStock: inv.currentStock - row.quantity } : inv;
           })
         );
+        loadActivities();
       }
     } catch { message.error('เกิดข้อผิดพลาด'); }
     finally { setDispensing(false); }
@@ -174,7 +181,7 @@ export default function DoctorPatientDetailPage() {
     setSaving(true);
     try {
       const res = await fetch(`${API_URL}/doctor/patients/${id}/diagnoses`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(values) });
-      if (res.ok) { message.success('บันทึกการวินิจฉัยแล้ว'); setDiagModal(false); diagForm.resetFields(); load(); }
+      if (res.ok) { message.success('บันทึกการวินิจฉัยแล้ว'); setDiagModal(false); diagForm.resetFields(); load(); loadActivities(); }
       else message.error('บันทึกไม่สำเร็จ');
     } catch { message.error('เกิดข้อผิดพลาด'); }
     finally { setSaving(false); }
@@ -192,7 +199,7 @@ export default function DoctorPatientDetailPage() {
     setSaving(true);
     try {
       const res = await fetch(`${API_URL}/doctor/patients/${id}/prescriptions`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ medications: meds }) });
-      if (res.ok) { message.success('บันทึกใบสั่งยาแล้ว'); setPrescModal(false); setMedications([{ name: '', dosage: '', frequency: '', duration: '', notes: '' }]); load(); }
+      if (res.ok) { message.success('บันทึกใบสั่งยาแล้ว'); setPrescModal(false); setMedications([{ name: '', dosage: '', frequency: '', duration: '', notes: '' }]); load(); loadActivities(); }
       else message.error('บันทึกไม่สำเร็จ');
     } catch { message.error('เกิดข้อผิดพลาด'); }
     finally { setSaving(false); }
