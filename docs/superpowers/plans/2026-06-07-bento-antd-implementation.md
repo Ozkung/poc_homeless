@@ -314,9 +314,7 @@ async function fetchEventCount(token: string): Promise<number> {
 const STATUS_COLOR: Record<string, string> = {
   CRITICAL: '#ff4d4f', PENDING: '#faad14', STABLE: '#52c41a',
 };
-const STATUS_LABEL: Record<string, string> = {
-  CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ',
-};
+const STATUS_LABEL: Record<string, string> = { CRITICAL: 'Emergency', PENDING: 'Urgency', STABLE: 'Semi-urgency', MISSING: 'Missing' }
 const TAG_PRESET: Record<string, string> = {
   CRITICAL: 'error', PENDING: 'warning', STABLE: 'success',
 };
