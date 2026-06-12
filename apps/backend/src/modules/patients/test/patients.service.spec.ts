@@ -9,6 +9,7 @@ const mockPrisma = {
   patient: {
     findMany: jest.fn(),
     findFirst: jest.fn(),
+    findUnique: jest.fn().mockResolvedValue(null), // generateHN uniqueness check
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
@@ -68,7 +69,6 @@ describe('PatientsService', () => {
 
       const result = await service.create('org1', 'cm1', {
         name: 'John Doe',
-        hn: 'HN001',
         age: 45,
         gender: 'MALE',
       });
@@ -98,7 +98,7 @@ describe('PatientsService', () => {
       };
       mockPrisma.patient.create.mockResolvedValue(rawPatient);
 
-      await service.create('org1', 'cm1', { name: 'Jane', hn: 'HN002' });
+      await service.create('org1', 'cm1', { name: 'Jane' });
 
       expect(mockPrisma.patient.create).toHaveBeenCalledWith(
         expect.objectContaining({

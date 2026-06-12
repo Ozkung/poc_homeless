@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  Button, Card, Col, Collapse, Descriptions, Divider, Form, Input, Modal,
+  Button, Card, Col, Collapse, Descriptions, Divider, Form, Input, InputNumber, Modal,
   Row, Select, Spin, Table, Tabs, Tag, Timeline, Typography, message,
 } from 'antd';
 import { ArrowLeft, Stethoscope, Pill, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
@@ -222,6 +222,43 @@ export default function DoctorPatientDetailPage() {
     },
   ];
 
+  function DiagExpandedRow({ record }: { record: any }) {
+    const vs = record.vitalSigns;
+    const hasHistory = record.chiefComplaint || record.presentIllness || vs || record.physicalExam || record.treatmentPlan;
+    if (!hasHistory) return <Text type="secondary" style={{ fontSize: 12 }}>ไม่มีข้อมูลประวัติเพิ่มเติม</Text>;
+    return (
+      <div style={{ padding: '8px 4px', display: 'grid', gap: 8 }}>
+        {record.chiefComplaint && (
+          <div><Text type="secondary" style={{ fontSize: 11 }}>อาการสำคัญ: </Text><Text style={{ fontSize: 12 }}>{record.chiefComplaint}</Text></div>
+        )}
+        {record.presentIllness && (
+          <div><Text type="secondary" style={{ fontSize: 11 }}>ประวัติปัจจุบัน: </Text><Text style={{ fontSize: 12 }}>{record.presentIllness}</Text></div>
+        )}
+        {vs && (
+          <div>
+            <Text type="secondary" style={{ fontSize: 11 }}>สัญญาณชีพ: </Text>
+            <Text style={{ fontSize: 12 }}>
+              {[
+                vs.bp && `BP ${vs.bp} mmHg`,
+                vs.hr && `HR ${vs.hr} /min`,
+                vs.temp && `T ${vs.temp}°C`,
+                vs.rr && `RR ${vs.rr} /min`,
+                vs.o2sat && `SpO₂ ${vs.o2sat}%`,
+                vs.weight && `BW ${vs.weight} kg`,
+              ].filter(Boolean).join('  |  ')}
+            </Text>
+          </div>
+        )}
+        {record.physicalExam && (
+          <div><Text type="secondary" style={{ fontSize: 11 }}>ตรวจร่างกาย: </Text><Text style={{ fontSize: 12 }}>{record.physicalExam}</Text></div>
+        )}
+        {record.treatmentPlan && (
+          <div><Text type="secondary" style={{ fontSize: 11 }}>แผนการรักษา: </Text><Text style={{ fontSize: 12 }}>{record.treatmentPlan}</Text></div>
+        )}
+      </div>
+    );
+  }
+
   const prescColumns = [
     {
       title: 'รายการยา', dataIndex: 'medications',
@@ -288,7 +325,12 @@ export default function DoctorPatientDetailPage() {
                   <Button type="primary" onClick={() => setDiagModal(true)}>+ วินิจฉัย</Button>
                 </div>
                 <Table size="small" dataSource={patient.diagnoses ?? []} columns={diagColumns} rowKey="id"
-                  pagination={{ pageSize: 10 }} locale={{ emptyText: 'ยังไม่มีการวินิจฉัย' }} />
+                  pagination={{ pageSize: 10 }} locale={{ emptyText: 'ยังไม่มีการวินิจฉัย' }}
+                  expandable={{
+                    expandedRowRender: (record) => <DiagExpandedRow record={record} />,
+                    rowExpandable: (r: any) => !!(r.chiefComplaint || r.presentIllness || r.vitalSigns || r.physicalExam || r.treatmentPlan),
+                  }}
+                />
               </Card>
             ),
           },
@@ -389,14 +431,80 @@ export default function DoctorPatientDetailPage() {
       />
 
       {/* Diagnosis Modal */}
-      <Modal title="บันทึกการวินิจฉัย" open={diagModal} onCancel={() => { setDiagModal(false); diagForm.resetFields(); }} footer={null} width={520}>
+      <Modal
+        title="บันทึกประวัติและการวินิจฉัย"
+        open={diagModal}
+        onCancel={() => { setDiagModal(false); diagForm.resetFields(); }}
+        footer={null}
+        width={680}
+        styles={{ body: { maxHeight: '75vh', overflowY: 'auto' } }}
+      >
         <Form form={diagForm} layout="vertical" onFinish={submitDiagnosis}>
+
+          {/* ── ประวัติผู้ป่วย ── */}
+          <Divider style={{ fontSize: 13, color: '#1677ff', margin: '0 0 12px', borderColor: '#e6f4ff' }}><Text style={{ fontSize: 13, color: '#1677ff', fontWeight: 600 }}>ประวัติผู้ป่วย</Text></Divider>
+
+          <Form.Item name="chiefComplaint" label="อาการสำคัญ (Chief Complaint)">
+            <Input placeholder="เช่น ปวดศีรษะ เวียนหัว 3 วัน" />
+          </Form.Item>
+
+          <Form.Item name="presentIllness" label="ประวัติปัจจุบัน (Present Illness)">
+            <Input.TextArea rows={3} placeholder="ลักษณะอาการ ระยะเวลา ปัจจัยที่เกี่ยวข้อง..." />
+          </Form.Item>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(0,0,0,0.88)', display: 'block', marginBottom: 8 }}>
+              สัญญาณชีพ (Vital Signs)
+            </label>
+            <Row gutter={[8, 8]}>
+              <Col xs={12} sm={8}>
+                <Form.Item name={['vitalSigns', 'bp']} label="ความดันโลหิต (mmHg)" style={{ marginBottom: 0 }}>
+                  <Input placeholder="120/80" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} sm={8}>
+                <Form.Item name={['vitalSigns', 'hr']} label="ชีพจร (ครั้ง/นาที)" style={{ marginBottom: 0 }}>
+                  <InputNumber min={0} max={300} style={{ width: '100%' }} placeholder="72" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} sm={8}>
+                <Form.Item name={['vitalSigns', 'temp']} label="อุณหภูมิ (°C)" style={{ marginBottom: 0 }}>
+                  <InputNumber min={30} max={45} step={0.1} style={{ width: '100%' }} placeholder="37.0" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} sm={8}>
+                <Form.Item name={['vitalSigns', 'rr']} label="อัตราหายใจ (ครั้ง/นาที)" style={{ marginBottom: 0 }}>
+                  <InputNumber min={0} max={60} style={{ width: '100%' }} placeholder="18" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} sm={8}>
+                <Form.Item name={['vitalSigns', 'o2sat']} label="O₂ Saturation (%)" style={{ marginBottom: 0 }}>
+                  <InputNumber min={0} max={100} style={{ width: '100%' }} placeholder="98" />
+                </Form.Item>
+              </Col>
+              <Col xs={12} sm={8}>
+                <Form.Item name={['vitalSigns', 'weight']} label="น้ำหนัก (กก.)" style={{ marginBottom: 0 }}>
+                  <InputNumber min={0} max={300} step={0.1} style={{ width: '100%' }} placeholder="60" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+
+          <Form.Item name="physicalExam" label="ผลการตรวจร่างกาย (Physical Examination)">
+            <Input.TextArea rows={3} placeholder="ผลการตรวจระบบต่างๆ เช่น หัวใจ ปอด ช่องท้อง..." />
+          </Form.Item>
+
+          {/* ── การวินิจฉัย ── */}
+          <Divider style={{ fontSize: 13, color: '#1677ff', margin: '4px 0 12px', borderColor: '#e6f4ff' }}><Text style={{ fontSize: 13, color: '#1677ff', fontWeight: 600 }}>การวินิจฉัย</Text></Divider>
+
           <Form.Item name="title" label="การวินิจฉัย" rules={[{ required: true, message: 'กรุณาระบุการวินิจฉัย' }]}>
-            <Input placeholder="เช่น ความดันโลหิตสูง" />
+            <Input placeholder="เช่น ความดันโลหิตสูง Stage 2" />
           </Form.Item>
+
           <Form.Item name="description" label="รายละเอียด" rules={[{ required: true, message: 'กรุณาระบุรายละเอียด' }]}>
-            <Input.TextArea rows={3} placeholder="อาการ สาเหตุ และแนวทางการรักษา" />
+            <Input.TextArea rows={2} placeholder="สาเหตุ ผลการวิเคราะห์ และแนวทางการดูแล" />
           </Form.Item>
+
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="icd10" label="รหัส ICD-10">
@@ -405,11 +513,20 @@ export default function DoctorPatientDetailPage() {
             </Col>
             <Col span={12}>
               <Form.Item name="severity" label="ระดับความรุนแรง">
-                <Select allowClear options={[{ value: 'MILD', label: 'MILD (น้อย)' }, { value: 'MODERATE', label: 'MODERATE (ปานกลาง)' }, { value: 'SEVERE', label: 'SEVERE (รุนแรง)' }]} />
+                <Select allowClear options={[
+                  { value: 'MILD', label: 'MILD (น้อย)' },
+                  { value: 'MODERATE', label: 'MODERATE (ปานกลาง)' },
+                  { value: 'SEVERE', label: 'SEVERE (รุนแรง)' },
+                ]} />
               </Form.Item>
             </Col>
           </Row>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+
+          <Form.Item name="treatmentPlan" label="แผนการรักษา (Treatment Plan)">
+            <Input.TextArea rows={2} placeholder="แนวทางการรักษา การนัดติดตาม และคำแนะนำ..." />
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 4 }}>
             <Button onClick={() => { setDiagModal(false); diagForm.resetFields(); }}>ยกเลิก</Button>
             <Button type="primary" htmlType="submit" loading={saving}>บันทึก</Button>
           </div>

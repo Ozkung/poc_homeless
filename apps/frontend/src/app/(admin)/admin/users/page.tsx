@@ -34,7 +34,7 @@ export default function AdminUsersPage() {
   const cms = users.filter((u) => u.role === 'CASE_MANAGER');
   const roleColor: Record<string, string> = {
     SUPER_ADMIN: 'purple', ADMIN: 'geekblue', CASE_MANAGER: 'green',
-    CARE_GIVER: 'orange', MEDICAL_VOLUNTEER: 'blue',
+    CARE_GIVER: 'orange', MEDICAL_VOLUNTEER: 'blue', DOCTOR: 'cyan',
   };
 
   return (
@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
           <Form.Item name="email" label="อีเมล" rules={[{ required: true, type: 'email' }]}><Input /></Form.Item>
           <Form.Item name="password" label="รหัสผ่าน" rules={[{ required: true, min: 8 }]}><Input.Password /></Form.Item>
           <Form.Item name="role" label="Role" rules={[{ required: true }]}>
-            <Select options={['CASE_MANAGER','CARE_GIVER','MEDICAL_VOLUNTEER','ADMIN'].map((r) => ({ value: r, label: r }))} />
+            <Select options={['CASE_MANAGER','CARE_GIVER','MEDICAL_VOLUNTEER','DOCTOR','ADMIN'].map((r) => ({ value: r, label: r }))} />
           </Form.Item>
         </Form>
       </Modal>

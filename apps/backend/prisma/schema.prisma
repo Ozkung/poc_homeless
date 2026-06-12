@@ -332,12 +332,17 @@ model Diagnosis {
   patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
   doctorId    String
   doctor      User     @relation("DoctorDiagnoses", fields: [doctorId], references: [id])
-  title       String
-  description String
-  icd10       String?
-  severity    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  title          String
+  description    String
+  icd10          String?
+  severity       String?
+  chiefComplaint String?
+  presentIllness String?
+  vitalSigns     Json?
+  physicalExam   String?
+  treatmentPlan  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Prescription {

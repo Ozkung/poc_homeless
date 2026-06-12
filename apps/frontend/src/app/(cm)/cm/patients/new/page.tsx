@@ -23,7 +23,6 @@ export default function NewPatientPage() {
       const name = [values.firstName, values.lastName].filter(Boolean).join(' ');
       const payload = {
         name,
-        hn: values.hn,
         age: values.age,
         gender: values.gender,
         status: values.status,
@@ -87,11 +86,6 @@ export default function NewPatientPage() {
               </Form.Item>
             </Col>
           </Row>
-
-          {/* ── HN ── */}
-          <Form.Item name="hn" label="HN (Hospital Number)" rules={[{ required: true, message: 'กรุณาใส่หมายเลข HN' }]}>
-            <Input placeholder="HN001234" style={{ fontFamily: "'Sarabun',sans-serif" }} />
-          </Form.Item>
 
           {/* ── เลขบัตรประชาชน ── */}
           <Form.Item

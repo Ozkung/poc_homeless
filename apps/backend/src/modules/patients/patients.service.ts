@@ -19,7 +19,10 @@ export class PatientsService {
     }
     const patients = await this.prisma.patient.findMany({
       where,
-      include: { caseManager: { select: { id: true, displayName: true } } },
+      include: {
+        caseManager: { select: { id: true, displayName: true } },
+        zone: { select: { id: true, name: true, color: true } },
+      },
       orderBy: { updatedAt: 'desc' },
     });
     return patients.map((p) => this.decrypt(p));
@@ -31,17 +34,28 @@ export class PatientsService {
     return this.decrypt(patient);
   }
 
+  private async generateHN(): Promise<string> {
+    for (let i = 0; i < 10; i++) {
+      const digits = String(Math.floor(Math.random() * 1_000_000_000_000)).padStart(12, '0');
+      const hn = `HN${digits}`;
+      const existing = await this.prisma.patient.findUnique({ where: { hn } });
+      if (!existing) return hn;
+    }
+    throw new Error('ไม่สามารถสร้าง HN unique ได้ กรุณาลองใหม่');
+  }
+
   async create(orgId: string, cmId: string, data: {
-    name: string; hn: string; age?: number; gender?: string;
+    name: string; age?: number; gender?: string;
     status?: string; conditions?: string[]; locationText?: string;
     phone?: string; birthDate?: string; nationalId?: string;
   }) {
+    const hn = await this.generateHN();
     const patient = await this.prisma.patient.create({
       data: {
         organizationId: orgId,
         caseManagerId: cmId,
         nameEnc: this.crypto.encrypt(data.name),
-        hn: data.hn,
+        hn,
         age: data.age,
         gender: data.gender as any,
         status: data.status as any ?? 'PENDING',
