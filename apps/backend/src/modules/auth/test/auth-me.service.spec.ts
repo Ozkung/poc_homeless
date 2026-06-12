@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { getRedisConnectionToken } from '@nestjs-modules/ioredis';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { SseService } from '../../notifications/sse.service';
 
 const hash = (p: string) => bcrypt.hash(p, 10);
 
@@ -19,6 +20,7 @@ const mockPrisma = {
 const mockRedis = { setex: jest.fn(), del: jest.fn(), get: jest.fn() };
 const mockJwt = { signAsync: jest.fn().mockResolvedValue('tok') };
 const mockConfig = { get: jest.fn().mockReturnValue('15m') };
+const mockSse = { emit: jest.fn(), getSubject: jest.fn() };
 
 describe('AuthService — me operations', () => {
   let service: AuthService;
@@ -31,6 +33,7 @@ describe('AuthService — me operations', () => {
         { provide: JwtService, useValue: mockJwt },
         { provide: ConfigService, useValue: mockConfig },
         { provide: getRedisConnectionToken('default'), useValue: mockRedis },
+        { provide: SseService, useValue: mockSse },
       ],
     }).compile();
     service = module.get(AuthService);
