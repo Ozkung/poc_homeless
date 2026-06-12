@@ -5,6 +5,10 @@ import { api, setToken } from '../lib/api';
 type Step = 'choice' | 'register' | 'link' | 'tou' | 'done';
 interface UserInfo { name: string; role: string; email: string; zone?: string }
 
+interface PendingRegister { type: 'register'; idToken: string; firstName: string; lastName: string; email: string; phone: string; zoneId: string; }
+interface PendingLink { type: 'link'; idToken: string; email: string; password: string; }
+type PendingData = PendingRegister | PendingLink | null;
+
 const inp: React.CSSProperties = {
   width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb',
   borderRadius: 8, fontSize: 15, boxSizing: 'border-box' as const, marginTop: 4,
@@ -57,24 +61,17 @@ function ChoiceStep({ onChoice }: { onChoice: (c: 'register' | 'link') => void }
   );
 }
 
-function RegisterStep({ idToken, onSuccess, onBack }: { idToken: string; onSuccess: (info: { name: string; email: string; role: string }) => void; onBack: () => void }) {
+function RegisterStep({ idToken, onReady, onBack }: { idToken: string; onReady: (data: Omit<PendingRegister, 'type'>) => void; onBack: () => void }) {
   const [zones, setZones] = useState<{ id: string; name: string }[]>([]);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', zoneId: '' });
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => { api.getPublicZones().then(setZones).catch(() => {}); }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.firstName || !form.lastName || !form.email) { setError('กรุณากรอกข้อมูลให้ครบ'); return; }
-    setSubmitting(true); setError('');
-    try {
-      const { accessToken } = await api.guestRegister({ idToken, ...form });
-      setToken(accessToken);
-      onSuccess({ name: `${form.firstName} ${form.lastName}`, email: form.email, role: 'GUEST' });
-    } catch (err: any) { setError(err.message ?? 'สมัครไม่สำเร็จ'); }
-    finally { setSubmitting(false); }
+    onReady({ idToken, ...form });
   }
 
   return (
@@ -94,29 +91,20 @@ function RegisterStep({ idToken, onSuccess, onBack }: { idToken: string; onSucce
           {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
         </select>
       </div>
-      <button type="submit" style={btn(true)} disabled={submitting}>{submitting ? 'กำลังสมัคร...' : 'ถัดไป →'}</button>
+      <button type="submit" style={btn(true)}>ถัดไป →</button>
       <button type="button" style={btn(false)} onClick={onBack}>← ย้อนกลับ</button>
     </form>
   );
 }
 
-function LinkStep({ idToken, onSuccess, onBack }: { idToken: string; onSuccess: (info: { name: string; email: string; role: string }) => void; onBack: () => void }) {
+function LinkStep({ idToken, onReady, onBack }: { idToken: string; onReady: (data: Omit<PendingLink, 'type'>) => void; onBack: () => void }) {
   const [form, setForm] = useState({ email: '', password: '' });
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.email || !form.password) { setError('กรุณากรอกข้อมูลให้ครบ'); return; }
-    setSubmitting(true); setError('');
-    try {
-      const { accessToken } = await api.linkLine({ idToken, ...form });
-      setToken(accessToken);
-      // Decode JWT payload to get user info
-      const payload = JSON.parse(atob(accessToken.split('.')[1]));
-      onSuccess({ name: payload.displayName ?? form.email, email: form.email, role: payload.role ?? 'UNKNOWN' });
-    } catch (err: any) { setError(err.message ?? 'เชื่อมต่อไม่สำเร็จ'); }
-    finally { setSubmitting(false); }
+    onReady({ idToken, ...form });
   }
 
   return (
@@ -126,15 +114,16 @@ function LinkStep({ idToken, onSuccess, onBack }: { idToken: string; onSuccess: 
       {error && <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#dc2626' }}>{error}</div>}
       <div style={{ marginBottom: 12 }}><label style={lbl}>อีเมล *</label><input style={inp} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
       <div style={{ marginBottom: 20 }}><label style={lbl}>รหัสผ่าน *</label><input style={inp} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
-      <button type="submit" style={btn(true)} disabled={submitting}>{submitting ? 'กำลังเชื่อมต่อ...' : 'ถัดไป →'}</button>
+      <button type="submit" style={btn(true)}>ถัดไป →</button>
       <button type="button" style={btn(false)} onClick={onBack}>← ย้อนกลับ</button>
     </form>
   );
 }
 
-function TouStep({ onConfirm }: { onConfirm: () => void }) {
+function TouStep({ onConfirm }: { onConfirm: () => Promise<void> }) {
   const [scrolled, setScrolled] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
@@ -152,7 +141,9 @@ function TouStep({ onConfirm }: { onConfirm: () => void }) {
         <input type="checkbox" checked={checked} disabled={!scrolled} onChange={(e) => setChecked(e.target.checked)} style={{ width: 18, height: 18 }} />
         <span style={{ fontSize: 13 }}>ข้าพเจ้ายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัว</span>
       </label>
-      <button style={btn(true)} disabled={!checked} onClick={onConfirm}>ยืนยัน ✓</button>
+      <button style={btn(true)} disabled={!checked || submitting} onClick={async () => { setSubmitting(true); await onConfirm(); setSubmitting(false); }}>
+        {submitting ? 'กำลังบันทึก...' : 'ยืนยัน ✓'}
+      </button>
     </div>
   );
 }
@@ -179,6 +170,7 @@ export default function AuthPage() {
   const [step, setStep] = useState<Step>('choice');
   const [idToken, setIdToken] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfo>({ name: '', role: '', email: '' });
+  const [pendingData, setPendingData] = useState<PendingData>(null);
 
   useEffect(() => {
     const token = liff.getIDToken();
@@ -194,8 +186,61 @@ export default function AuthPage() {
   );
 
   if (step === 'choice') return wrap(<ChoiceStep onChoice={(c) => setStep(c)} />);
-  if (step === 'register') return wrap(<RegisterStep idToken={idToken} onBack={() => setStep('choice')} onSuccess={(info) => { setUserInfo(info); setStep('tou'); }} />);
-  if (step === 'link') return wrap(<LinkStep idToken={idToken} onBack={() => setStep('choice')} onSuccess={(info) => { setUserInfo(info); setStep('tou'); }} />);
-  if (step === 'tou') return wrap(<TouStep onConfirm={() => setStep('done')} />);
+
+  if (step === 'register') return wrap(
+    <RegisterStep
+      idToken={idToken}
+      onBack={() => setStep('choice')}
+      onReady={(data) => { setPendingData({ type: 'register', ...data }); setStep('tou'); }}
+    />
+  );
+
+  if (step === 'link') return wrap(
+    <LinkStep
+      idToken={idToken}
+      onBack={() => setStep('choice')}
+      onReady={(data) => { setPendingData({ type: 'link', ...data }); setStep('tou'); }}
+    />
+  );
+
+  if (step === 'tou') return wrap(
+    <TouStep
+      onConfirm={async () => {
+        if (!pendingData) return;
+        try {
+          let info: { name: string; email: string; role: string };
+          if (pendingData.type === 'register') {
+            const { accessToken } = await api.guestRegister({
+              idToken: pendingData.idToken,
+              firstName: pendingData.firstName,
+              lastName: pendingData.lastName,
+              email: pendingData.email,
+              phone: pendingData.phone,
+              zoneId: pendingData.zoneId,
+            });
+            setToken(accessToken);
+            info = { name: `${pendingData.firstName} ${pendingData.lastName}`, email: pendingData.email, role: 'GUEST' };
+          } else {
+            const { accessToken } = await api.linkLine({
+              idToken: pendingData.idToken,
+              email: pendingData.email,
+              password: pendingData.password,
+            });
+            setToken(accessToken);
+            const parts = accessToken.split('.');
+            let payload: any = {};
+            try { payload = JSON.parse(atob(parts[1])); } catch {}
+            info = { name: payload.displayName ?? pendingData.email, email: pendingData.email, role: payload.role ?? 'UNKNOWN' };
+          }
+          setUserInfo(info);
+          setStep('done');
+        } catch (err: any) {
+          alert(err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+          setStep('choice');
+        }
+      }}
+    />
+  );
+
   return wrap(<DoneStep info={userInfo} />);
 }
