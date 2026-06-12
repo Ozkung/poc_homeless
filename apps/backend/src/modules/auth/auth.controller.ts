@@ -80,6 +80,39 @@ export class AuthController {
     return this.auth.verifyLiffToken(idToken);
   }
 
+  @Post('liff/link')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  async liffLink(
+    @Body() body: { idToken: string; email: string; password: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (!body.idToken || !body.email || !body.password) {
+      throw new BadRequestException('idToken, email และ password จำเป็นต้องระบุ');
+    }
+    const { accessToken, refreshToken, role } = await this.auth.linkLine(body.idToken, body.email, body.password);
+    res.cookie(COOKIE_NAME, refreshToken, COOKIE_OPTS);
+    return { accessToken, role };
+  }
+
+  @Post('liff/guest-register')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  guestRegister(@Body() body: {
+    idToken: string; firstName: string; lastName: string;
+    email: string; phone?: string; zoneId?: string;
+  }) {
+    if (!body.idToken || !body.firstName || !body.lastName || !body.email) {
+      throw new BadRequestException('idToken, firstName, lastName และ email จำเป็นต้องระบุ');
+    }
+    return this.auth.guestRegister(body.idToken, body);
+  }
+
+  @Get('public/zones')
+  getPublicZones() {
+    return this.auth.getPublicZones();
+  }
+
   // ── Profile (me) ───────────────────────────────────────────────────────
 
   @Get('me')
