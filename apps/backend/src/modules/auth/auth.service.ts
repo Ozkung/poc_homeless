@@ -49,16 +49,20 @@ export class AuthService {
     await this.redis.del(`refresh:${refreshToken}`);
   }
 
-  async verifyLiffToken(idToken: string) {
-    const channelId = this.config.get<string>('line.channelId');
+  private async verifyLineIdToken(idToken: string): Promise<{ sub: string }> {
+    const clientId = this.config.get<string>('line.channelId') ?? '';
+    const body = new URLSearchParams({ id_token: idToken, client_id: clientId });
     const res = await fetch('https://api.line.me/oauth2/v2.1/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ id_token: idToken, client_id: channelId ?? '' }).toString(),
+      body: body.toString(),
     });
     if (!res.ok) throw new UnauthorizedException('Invalid LIFF token');
-    const profile = await res.json() as { sub: string };
+    return res.json() as Promise<{ sub: string }>;
+  }
 
+  async verifyLiffToken(idToken: string) {
+    const profile = await this.verifyLineIdToken(idToken);
     const user = await this.prisma.user.findUnique({ where: { lineUserId: profile.sub } });
     if (!user || !user.isActive) throw new UnauthorizedException('Line user not linked');
 
@@ -73,14 +77,7 @@ export class AuthService {
     firstName: string; lastName: string;
     email: string; phone?: string; zoneId?: string;
   }) {
-    const channelId = this.config.get<string>('line.channelId');
-    const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ id_token: idToken, client_id: channelId ?? '' }).toString(),
-    });
-    if (!verifyRes.ok) throw new UnauthorizedException('Invalid LIFF token');
-    const profile = await verifyRes.json() as { sub: string };
+    const profile = await this.verifyLineIdToken(idToken);
 
     const existing = await this.prisma.user.findUnique({ where: { lineUserId: profile.sub } });
     if (existing) throw new ConflictException('LINE account already registered');
@@ -115,14 +112,7 @@ export class AuthService {
   }
 
   async linkLine(idToken: string, email: string, password: string) {
-    const channelId = this.config.get<string>('line.channelId');
-    const verifyRes = await fetch('https://api.line.me/oauth2/v2.1/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ id_token: idToken, client_id: channelId ?? '' }).toString(),
-    });
-    if (!verifyRes.ok) throw new UnauthorizedException('Invalid LIFF token');
-    const profile = await verifyRes.json() as { sub: string };
+    const profile = await this.verifyLineIdToken(idToken);
 
     const alreadyLinked = await this.prisma.user.findUnique({ where: { lineUserId: profile.sub } });
     if (alreadyLinked) throw new ConflictException('LINE account already linked to another user');
