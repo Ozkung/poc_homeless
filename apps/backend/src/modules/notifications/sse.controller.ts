@@ -1,15 +1,9 @@
-import { Controller, Get, Query, Sse, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Query, Req, Sse, UnauthorizedException, MessageEvent } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
 import { Observable, Subject, interval, merge } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
 import { SseService, SseEvent } from './sse.service';
-
-export interface MessageEvent {
-  data: string | object;
-  id?: string;
-  type?: string;
-  retry?: number;
-}
 
 @Controller('notifications')
 export class SseController {
@@ -20,7 +14,9 @@ export class SseController {
 
   @Get('stream')
   @Sse()
-  stream(@Query('token') token: string): Observable<MessageEvent> {
+  stream(@Query('token') token: string, @Req() req: Request): Observable<MessageEvent> {
+    if (!token) throw new UnauthorizedException('Token required');
+
     let payload: { sub: string; orgId: string; role: string };
     try {
       payload = this.jwt.verify(token) as any;
@@ -35,6 +31,8 @@ export class SseController {
 
     const subject = this.sseService.getSubject(payload.orgId, payload.role);
     const destroy$ = new Subject<void>();
+
+    req.on('close', () => { destroy$.next(); destroy$.complete(); });
 
     const events$ = subject.pipe(
       map((event: SseEvent) => ({ data: JSON.stringify(event) } as MessageEvent)),
