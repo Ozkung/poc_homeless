@@ -180,7 +180,7 @@ export default function CarePlanAssessmentPage() {
         <SectionCard title="ข้อมูลเบื้องต้น" color="#1677ff">
           <Row gutter={16}>
             <Col xs={24} sm={12}>
-              <Form.Item name="assessmentDate" label="วันที่ประเมิน">
+              <Form.Item name="assessmentDate" label="วันที่พบ">
                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
               </Form.Item>
             </Col>

@@ -96,7 +96,7 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
 
   const columns = [
     {
-      title: 'วันที่ประเมิน',
+      title: 'วันที่พบ',
       dataIndex: 'assessmentDate',
       width: 120,
       render: (v: string, row: Assessment) =>
@@ -202,7 +202,7 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
         {viewItem && (
           <div style={{ fontFamily: "'Sarabun', sans-serif" }}>
             <Divider style={{ fontSize: 12, margin: '12px 0 8px' }}>ข้อมูลเบื้องต้น</Divider>
-            <InfoRow label="วันที่ประเมิน" value={viewItem.assessmentDate ? new Date(viewItem.assessmentDate).toLocaleDateString('th-TH') : undefined} />
+            <InfoRow label="วันที่พบ" value={viewItem.assessmentDate ? new Date(viewItem.assessmentDate).toLocaleDateString('th-TH') : undefined} />
             <InfoRow label="สถานะ" value={viewItem.status} />
             <InfoRow label="สถานที่พบ" value={viewItem.locationFound} />
             <InfoRow label="ประเภทไร้บ้าน" value={viewItem.homelessType} />
