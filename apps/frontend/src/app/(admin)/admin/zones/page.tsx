@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, message, Popconfirm } from 'antd';
+import { Table, Button, Modal, Form, Input, ColorPicker, message, Popconfirm } from 'antd';
 import { useSession } from 'next-auth/react';
 
 interface Zone { id: string; name: string; description?: string; color?: string; _count?: { patients: number } }
@@ -52,7 +52,12 @@ export default function ZonesPage() {
       <Table
         dataSource={zones} rowKey="id" size="small"
         columns={[
-          { title: 'Zone', dataIndex: 'name' },
+          { title: 'Zone', dataIndex: 'name', render: (name, r) => (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {r.color && <span style={{ width: 12, height: 12, borderRadius: '50%', background: r.color, display: 'inline-block', flexShrink: 0 }} />}
+              {name}
+            </span>
+          )},
           { title: 'คำอธิบาย', dataIndex: 'description', render: (v) => v ?? '-' },
           { title: 'ผู้ป่วย', render: (_, r) => r._count?.patients ?? 0 },
           { title: '', render: (_, r) => (
@@ -69,7 +74,9 @@ export default function ZonesPage() {
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="ชื่อ Zone" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="description" label="คำอธิบาย"><Input /></Form.Item>
-          <Form.Item name="color" label="สี (hex)"><Input placeholder="#7c3aed" /></Form.Item>
+          <Form.Item name="color" label="สี" getValueFromEvent={(color) => color.toHexString()}>
+            <ColorPicker format="hex" showText />
+          </Form.Item>
         </Form>
       </Modal>
     </div>
