@@ -8,7 +8,7 @@ interface Patient {
   id: string; name: string; hn: string;
   status: 'CRITICAL' | 'PENDING' | 'STABLE' | 'MISSING';
   age?: number; gender?: 'MALE' | 'FEMALE' | 'OTHER';
-  conditions: string[]; locationText?: string;
+  conditions: string[]; initialComplaint?: string; locationText?: string;
 }
 interface Activity {
   id: string; type: string; createdAt: string;
@@ -91,6 +91,11 @@ export default async function PatientDetailPage({
           {patient.conditions.length > 0 && (
             <Descriptions.Item label="โรคประจำตัว" span={3}>
               {patient.conditions.map((c) => <Tag key={c} style={{ marginRight: 4 }}>{c}</Tag>)}
+            </Descriptions.Item>
+          )}
+          {patient.initialComplaint && (
+            <Descriptions.Item label="อาการเบื้องต้น" span={3}>
+              {patient.initialComplaint}
             </Descriptions.Item>
           )}
         </Descriptions>

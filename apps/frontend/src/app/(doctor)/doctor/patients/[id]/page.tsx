@@ -318,6 +318,9 @@ export default function DoctorPatientDetailPage() {
           <Descriptions.Item label="Zone">{patient.zone?.name ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="Case Manager">{patient.caseManager?.displayName ?? '-'}</Descriptions.Item>
           <Descriptions.Item label="โรคประจำตัว" span={3}>{(patient.conditions ?? []).join(', ') || '-'}</Descriptions.Item>
+          {patient.initialComplaint && (
+            <Descriptions.Item label="อาการเบื้องต้น" span={3}>{patient.initialComplaint}</Descriptions.Item>
+          )}
         </Descriptions>
       </Card>
 
