@@ -74,6 +74,28 @@ function priorityDotsForDay(evs: CalendarEvent[]): Priority[] {
   return result;
 }
 
+function toDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getBarsForWeek(weekDays: (Date | null)[], events: CalendarEvent[]) {
+  const bars: { ev: CalendarEvent; startCol: number; span: number; isStart: boolean; isEnd: boolean }[] = [];
+  for (const ev of events) {
+    const evS = toDateStr(new Date(ev.startDate));
+    const evE = toDateStr(new Date(ev.endDate));
+    let first = -1, last = -1;
+    for (let i = 0; i < 7; i++) {
+      const d = weekDays[i];
+      if (!d) continue;
+      const ds = toDateStr(d);
+      if (ds >= evS && ds <= evE) { if (first === -1) first = i; last = i; }
+    }
+    if (first === -1) continue;
+    bars.push({ ev, startCol: first + 1, span: last - first + 1, isStart: toDateStr(weekDays[first]!) === evS, isEnd: toDateStr(weekDays[last]!) === evE });
+  }
+  return bars;
+}
+
 function CreateEventForm({
   patients,
   users,
@@ -383,66 +405,72 @@ export default function EventsPage() {
           ))}
         </div>
 
-        {/* Day cells */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)' }}>
-          {Array.from({ length: startPadding }).map((_, i) => (
-            <div key={`pad-${i}`} style={{ minHeight: isMobile ? 48 : 80, borderBottom: '1px solid #fafafa', borderRight: '1px solid #fafafa' }} />
-          ))}
-          {daysInMonth.map((day) => {
-            const dayEvents = eventsForDate(events, day);
-            const dots = priorityDotsForDay(dayEvents);
-            const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
-            const isToday = isSameDay(day, new Date());
+        {/* Week rows — day cells + spanning bars in one grid */}
+        {(() => {
+          const allCells: (Date | null)[] = [...Array(startPadding).fill(null), ...daysInMonth];
+          while (allCells.length % 7 !== 0) allCells.push(null);
+          const weeks: (Date | null)[][] = [];
+          for (let i = 0; i < allCells.length; i += 7) weeks.push(allCells.slice(i, i + 7));
+          return weeks.map((weekDays, wi) => {
+            const bars = getBarsForWeek(weekDays, events);
+            // single-day events: show as dots; multi-day: show as bar
+            const multiBars = bars.filter(b => b.ev.startDate !== b.ev.endDate || b.span > 1);
+            const singleEvents = (day: Date) => eventsForDate(events, day).filter(ev => {
+              const s = toDateStr(new Date(ev.startDate));
+              const e = toDateStr(new Date(ev.endDate));
+              return s === e;
+            });
             return (
-              <button
-                key={day.toISOString()}
-                onClick={() => setSelectedDate((prev) => prev && isSameDay(prev, day) ? null : day)}
-                style={{
-                  minHeight: isMobile ? 48 : 80,
-                  borderBottom: '1px solid #f5f5f5',
-                  borderRight: '1px solid #f5f5f5',
-                  padding: isMobile ? 4 : 8,
-                  textAlign: 'left',
-                  background: isSelected ? '#e6f4ff' : 'transparent',
-                  outline: isSelected ? '2px solid #1677ff' : 'none',
-                  outlineOffset: -2,
-                  cursor: 'pointer',
-                  transition: 'background 0.15s',
-                  border: 'none',
-                }}
-              >
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  width: 24, height: 24, borderRadius: '50%', marginBottom: 2,
-                  fontFamily: "'Sarabun',sans-serif", fontSize: 11, fontWeight: 500,
-                  background: isToday ? '#1677ff' : 'transparent',
-                  color: isToday ? '#fff' : '#555',
-                }}>
-                  {format(day, 'd')}
-                </span>
-                {dayEvents.length > 0 && (
-                  <p style={{ fontSize: 10, fontFamily: "'Sarabun',sans-serif", color: '#aaa', margin: '0 0 2px' }}>
-                    {dayEvents.length} กิจกรรม
-                  </p>
-                )}
-                {dots.length > 0 && (
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {dots.map((priority) => (
-                      <span
-                        key={priority}
-                        title={PRIORITY_LABEL[priority]}
-                        style={{
-                          display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
-                          background: PRIORITY_COLOR[priority],
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </button>
+              <div key={wi} style={{ borderBottom: '1px solid #f0f0f0', display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gridAutoRows: 'auto', paddingBottom: multiBars.length ? 4 : 0 }}>
+                {/* Day cells span all rows */}
+                {weekDays.map((day, di) => {
+                  if (!day) return <div key={`p-${di}`} style={{ gridRow: '1/-1', gridColumn: di+1, minHeight: isMobile ? 48 : 70, borderRight: '1px solid #fafafa' }} />;
+                  const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
+                  const isToday = isSameDay(day, new Date());
+                  const singles = singleEvents(day);
+                  const dots = priorityDotsForDay(singles);
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      onClick={() => setSelectedDate(prev => prev && isSameDay(prev, day) ? null : day)}
+                      style={{
+                        gridRow: '1/-1', gridColumn: di+1,
+                        minHeight: isMobile ? 48 : 70,
+                        borderRight: '1px solid #f5f5f5',
+                        padding: isMobile ? '4px 4px 2px' : '6px 8px 2px',
+                        textAlign: 'left',
+                        background: isSelected ? '#e6f4ff' : 'transparent',
+                        outline: isSelected ? '2px solid #1677ff' : 'none',
+                        outlineOffset: -2,
+                        cursor: 'pointer', transition: 'background 0.15s', border: 'none', zIndex: 1,
+                      }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', fontFamily: "'Sarabun',sans-serif", fontSize: 11, fontWeight: 500, background: isToday ? '#1677ff' : 'transparent', color: isToday ? '#fff' : '#555' }}>
+                        {format(day, 'd')}
+                      </span>
+                      {dots.length > 0 && (
+                        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 2 }}>
+                          {dots.map(p => <span key={p} title={PRIORITY_LABEL[p]} style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: PRIORITY_COLOR[p] }} />)}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+                {/* Multi-day bars — pointerEvents:none so clicks fall through */}
+                {multiBars.map(({ ev, startCol, span, isStart, isEnd }, idx) => (
+                  <div key={ev.id} style={{
+                    gridRow: idx + 2, gridColumn: `${startCol}/${startCol + span}`,
+                    pointerEvents: 'none', zIndex: 2,
+                    height: 14, marginTop: 2, marginLeft: isStart ? 3 : 0, marginRight: isEnd ? 3 : 0,
+                    background: PRIORITY_COLOR[ev.priority],
+                    opacity: 0.25,
+                    borderRadius: `${isStart ? 4 : 0}px ${isEnd ? 4 : 0}px ${isEnd ? 4 : 0}px ${isStart ? 4 : 0}px`,
+                  }} />
+                ))}
+              </div>
             );
-          })}
-        </div>
+          });
+        })()}
       </Card>
 
       {/* Event detail / create drawer */}
