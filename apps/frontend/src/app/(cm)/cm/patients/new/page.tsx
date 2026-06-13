@@ -30,6 +30,7 @@ export default function NewPatientPage() {
         conditions: values.conditions
           ? values.conditions.split(',').map((s: string) => s.trim()).filter(Boolean)
           : [],
+        initialComplaint: values.initialComplaint || undefined,
         phone: values.phone,
         birthDate: values.birthDate ? dayjs(values.birthDate).toISOString() : undefined,
         nationalId: values.nationalId,
@@ -138,12 +139,16 @@ export default function NewPatientPage() {
           </Form.Item>
 
           {/* ── สถานที่ / โรคประจำตัว ── */}
-          <Form.Item name="locationText" label="สถานที่">
+          <Form.Item name="locationText" label="สถานที่ที่พบ">
             <Input placeholder="เช่น ใต้สะพาน ถ.พระราม 4" />
           </Form.Item>
 
           <Form.Item name="conditions" label="โรคประจำตัว" extra="คั่นด้วยเครื่องหมายจุลภาค เช่น เบาหวาน, ความดัน">
             <Input placeholder="เบาหวาน, ความดัน" />
+          </Form.Item>
+
+          <Form.Item name="initialComplaint" label="อาการเบื้องต้น">
+            <Input.TextArea rows={3} placeholder="เช่น ปวดศีรษะ เวียนหัว อ่อนเพลีย มา 3 วัน..." />
           </Form.Item>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>

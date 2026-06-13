@@ -159,11 +159,12 @@ model Patient {
   age            Int?
   gender         Gender?
   status         PatientStatus @default(PENDING)
-  conditions     String[]
-  locationText   String?
-  phone          String?
-  birthDate      DateTime?
-  nationalIdEnc  String?
+  conditions        String[]
+  initialComplaint  String?
+  locationText      String?
+  phone             String?
+  birthDate         DateTime?
+  nationalIdEnc     String?
   zoneId  String?
   zone    Zone?   @relation(fields: [zoneId], references: [id])
   createdAt      DateTime      @default(now())

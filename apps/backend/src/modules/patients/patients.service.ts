@@ -46,8 +46,8 @@ export class PatientsService {
 
   async create(orgId: string, cmId: string, data: {
     name: string; age?: number; gender?: string;
-    status?: string; conditions?: string[]; locationText?: string;
-    phone?: string; birthDate?: string; nationalId?: string;
+    status?: string; conditions?: string[]; initialComplaint?: string;
+    locationText?: string; phone?: string; birthDate?: string; nationalId?: string;
   }) {
     const hn = await this.generateHN();
     const patient = await this.prisma.patient.create({
@@ -60,6 +60,7 @@ export class PatientsService {
         gender: data.gender as any,
         status: data.status as any ?? 'PENDING',
         conditions: data.conditions ?? [],
+        initialComplaint: data.initialComplaint,
         locationText: data.locationText,
         phone: data.phone,
         birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
