@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, GoneException, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { AesGcmService } from '../../common/crypto/aes-gcm.service';
 import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { InjectRedis } from '@nestjs-modules/ioredis';
@@ -11,19 +12,24 @@ export class TasksService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private crypto: AesGcmService,
     @InjectRedis() private redis: Redis,
   ) {}
 
-  findMyTasks(userId: string) {
-    return this.prisma.eventTask.findMany({
+  async findMyTasks(userId: string) {
+    const tasks = await this.prisma.eventTask.findMany({
       where: { assigneeId: userId, status: { in: ['PENDING', 'IN_PROGRESS'] } },
       include: {
-        patient: { select: { id: true, hn: true, nameEnc: true, locationText: true } },
-        formTemplate: { select: { title: true, fields: true } },
-        event: { select: { title: true, startDate: true, endDate: true } },
+        patient: { select: { id: true, hn: true, nameEnc: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
+        formTemplate: { select: { id: true, title: true, fields: true } },
+        event: { select: { id: true, title: true, note: true, startDate: true, endDate: true, priority: true } },
       },
       orderBy: { createdAt: 'asc' },
     });
+    return tasks.map((t: any) => ({
+      ...t,
+      patient: t.patient ? { ...t.patient, name: this.crypto.decrypt(t.patient.nameEnc), nameEnc: undefined } : null,
+    }));
   }
 
   async findOne(id: string) {
