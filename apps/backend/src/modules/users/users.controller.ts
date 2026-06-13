@@ -42,6 +42,16 @@ export class UsersController {
     return this.users.createFW(user.sub, user.orgId, dto);
   }
 
+  @Patch(':id/zone')
+  @Roles(UserRole.SUPER_ADMIN)
+  assignZone(
+    @Param('id') id: string,
+    @Body('zoneId') zoneId: string | null,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.users.assignZone(id, zoneId ?? null, user.orgId);
+  }
+
   @Patch(':id/transfer')
   @Roles(UserRole.SUPER_ADMIN)
   transferFW(

@@ -8,6 +8,7 @@ const USER_SELECT = {
   id: true, email: true, displayName: true, role: true,
   phone: true, gender: true, avatarUrl: true,
   isActive: true, lineUserId: true, createdAt: true,
+  zone: { select: { id: true, name: true, color: true } },
 } as const;
 
 @Injectable()
@@ -88,6 +89,20 @@ export class UsersService {
       where: { id },
       data: dto as any,
       select: USER_SELECT,
+    });
+  }
+
+  async assignZone(userId: string, zoneId: string | null, orgId: string) {
+    const user = await this.prisma.user.findFirst({ where: { id: userId, organizationId: orgId, role: 'CASE_MANAGER' } });
+    if (!user) throw new NotFoundException('CASE_MANAGER not found');
+    if (zoneId) {
+      const zone = await this.prisma.zone.findFirst({ where: { id: zoneId, organizationId: orgId } });
+      if (!zone) throw new NotFoundException('Zone not found');
+    }
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { zoneId },
+      select: { id: true, displayName: true, zone: { select: { id: true, name: true, color: true } } },
     });
   }
 

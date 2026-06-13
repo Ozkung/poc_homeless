@@ -103,6 +103,7 @@ model Zone {
   patients         Patient[]
   doctorSchedules  DoctorSchedule[]
   guestUsers       User[]           @relation("GuestZone")
+  caseManagers     User[]           @relation("CMZone")
 }
 
 model User {
@@ -117,6 +118,8 @@ model User {
   phone          String?
   gender         Gender?
   avatarUrl      String?
+  zoneId          String?
+  zone            Zone?   @relation("CMZone", fields: [zoneId], references: [id])
   preferredZoneId String?
   preferredZone   Zone?   @relation("GuestZone", fields: [preferredZoneId], references: [id])
   supervisorId   String?

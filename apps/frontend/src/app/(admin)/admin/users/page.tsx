@@ -3,19 +3,25 @@ import { useEffect, useState } from 'react';
 import { Table, Tag, Button, Modal, Form, Input, Select, message } from 'antd';
 import { useSession } from 'next-auth/react';
 
-interface User { id: string; displayName: string; email: string; role: string; isActive: boolean; supervisorId?: string }
+interface Zone { id: string; name: string; color: string }
+interface User { id: string; displayName: string; email: string; role: string; isActive: boolean; supervisorId?: string; zone?: Zone | null }
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [users, setUsers] = useState<User[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
   const [createModal, setCreateModal] = useState(false);
   const [form] = Form.useForm();
 
   const load = async () => {
     if (!token) return;
-    const res = await fetch('/api/users', { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) setUsers(await res.json());
+    const [uRes, zRes] = await Promise.all([
+      fetch('/api/users', { headers: { Authorization: `Bearer ${token}` } }),
+      fetch('/api/zones', { headers: { Authorization: `Bearer ${token}` } }),
+    ]);
+    if (uRes.ok) setUsers(await uRes.json());
+    if (zRes.ok) setZones(await zRes.json());
   };
 
   useEffect(() => { load(); }, [token]);
@@ -29,6 +35,24 @@ export default function AdminUsersPage() {
     });
     if (res.ok) { message.success('สร้างผู้ใช้สำเร็จ'); setCreateModal(false); form.resetFields(); load(); }
     else message.error('เกิดข้อผิดพลาด');
+  };
+
+  const handleAssignZone = async (userId: string, zoneId: string | null) => {
+    const res = await fetch(`/api/users/${userId}/zone`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ zoneId }),
+    });
+    if (res.ok) {
+      message.success('กำหนด Zone แล้ว');
+      setUsers((prev) => prev.map((u) => {
+        if (u.id !== userId) return u;
+        const zone = zones.find((z) => z.id === zoneId) ?? null;
+        return { ...u, zone };
+      }));
+    } else {
+      message.error('เกิดข้อผิดพลาด');
+    }
   };
 
   const cms = users.filter((u) => u.role === 'CASE_MANAGER');
@@ -50,6 +74,24 @@ export default function AdminUsersPage() {
           { title: 'อีเมล', dataIndex: 'email' },
           { title: 'Role', dataIndex: 'role', render: (r) => <Tag color={roleColor[r] ?? 'default'}>{r}</Tag> },
           { title: 'สังกัด CM', dataIndex: 'supervisorId', render: (id) => cms.find((c) => c.id === id)?.displayName ?? '-' },
+          {
+            title: 'Zone',
+            dataIndex: 'zone',
+            render: (zone: Zone | null, record: User) => {
+              if (record.role !== 'CASE_MANAGER') return zone ? <Tag color={zone.color ?? 'default'}>{zone.name}</Tag> : <span style={{ color: '#ccc' }}>-</span>;
+              return (
+                <Select
+                  size="small"
+                  style={{ width: 150 }}
+                  value={zone?.id ?? null}
+                  allowClear
+                  placeholder="เลือก Zone"
+                  onChange={(val) => handleAssignZone(record.id, val ?? null)}
+                  options={zones.map((z) => ({ value: z.id, label: z.name }))}
+                />
+              );
+            },
+          },
           { title: 'สถานะ', dataIndex: 'isActive', render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Active' : 'Inactive'}</Tag> },
         ]}
       />
