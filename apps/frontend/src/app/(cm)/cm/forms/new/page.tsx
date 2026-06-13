@@ -10,7 +10,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Card, Checkbox, Input, InputNumber, Tag, Typography, message } from 'antd';
-import { HolderOutlined, CloseOutlined } from '@ant-design/icons';
+import { HolderOutlined, CloseOutlined, CopyOutlined } from '@ant-design/icons';
 import {
   Type, Hash, ChevronDown, Circle, BarChart2, Calendar, AlignLeft, ClipboardList,
 } from 'lucide-react';
@@ -31,10 +31,11 @@ const FIELD_TYPES: { type: FieldType; label: string; icon: React.ReactNode }[] =
 
 const HAS_OPTIONS: FieldType[] = ['radio', 'select', 'multiselect', 'checkbox'];
 
-function SortableField({ field, onUpdate, onRemove }: {
+function SortableField({ field, onUpdate, onRemove, onDuplicate }: {
   field: FormField;
   onUpdate: (f: FormField) => void;
   onRemove: (id: string) => void;
+  onDuplicate: (id: string) => void;
 }) {
   const [optInput, setOptInput] = useState('');
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.id });
@@ -143,14 +144,25 @@ function SortableField({ field, onUpdate, onRemove }: {
         )}
       </div>
 
-      <button
-        onClick={() => onRemove(field.id)}
-        style={{ color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', flexShrink: 0, transition: 'color 0.15s' }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = '#ff4d4f')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = '#ccc')}
-      >
-        <CloseOutlined />
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+        <button
+          onClick={() => onDuplicate(field.id)}
+          title="Duplicate"
+          style={{ color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', transition: 'color 0.15s' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#1677ff')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#ccc')}
+        >
+          <CopyOutlined />
+        </button>
+        <button
+          onClick={() => onRemove(field.id)}
+          style={{ color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', transition: 'color 0.15s' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#ff4d4f')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#ccc')}
+        >
+          <CloseOutlined />
+        </button>
+      </div>
     </Card>
   );
 }
@@ -181,6 +193,17 @@ export default function FormBuilderPage() {
 
   const removeField = useCallback((id: string) => {
     setFields((prev) => prev.filter((f) => f.id !== id));
+  }, []);
+
+  const duplicateField = useCallback((fieldId: string) => {
+    setFields((prev) => {
+      const idx = prev.findIndex((f) => f.id === fieldId);
+      if (idx === -1) return prev;
+      const copy = { ...prev[idx], id: Math.random().toString(36).slice(2) };
+      const next = [...prev];
+      next.splice(idx + 1, 0, copy);
+      return next.map((f, i) => ({ ...f, order: i }));
+    });
   }, []);
 
   function handleDragEnd(event: DragEndEvent) {
@@ -271,7 +294,7 @@ export default function FormBuilderPage() {
               <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {fields.map((field) => (
-                    <SortableField key={field.id} field={field} onUpdate={updateField} onRemove={removeField} />
+                    <SortableField key={field.id} field={field} onUpdate={updateField} onRemove={removeField} onDuplicate={duplicateField} />
                   ))}
                 </div>
               </SortableContext>
