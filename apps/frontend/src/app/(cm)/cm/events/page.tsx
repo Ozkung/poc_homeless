@@ -252,7 +252,7 @@ export default function EventsPage() {
           priority: values.priority,
           patientIds: values.patientIds,
           assigneeId: values.assigneeId,
-          formTemplateId: values.formTemplateId,
+          formIds: values.formTemplateId ? [values.formTemplateId] : undefined,
           note: values.note,
         }),
       });
@@ -263,10 +263,12 @@ export default function EventsPage() {
         setSelectedDate(null);
         setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth(), 1));
       } else {
-        message.error('บันทึกไม่สำเร็จ กรุณาลองใหม่');
+        const errBody = await res.json().catch(() => ({}));
+        const errMsg = errBody?.message ?? `HTTP ${res.status}`;
+        message.error(`บันทึกไม่สำเร็จ: ${Array.isArray(errMsg) ? errMsg.join(', ') : errMsg}`);
       }
-    } catch {
-      message.error('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } catch (e: any) {
+      message.error(`เกิดข้อผิดพลาด: ${e?.message ?? 'unknown'}`);
     } finally {
       setSaving(false);
     }
