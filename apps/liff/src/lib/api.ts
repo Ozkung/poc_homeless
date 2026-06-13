@@ -6,6 +6,10 @@ export function setToken(token: string) {
   accessToken = token;
 }
 
+export function getToken(): string | null {
+  return accessToken;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
