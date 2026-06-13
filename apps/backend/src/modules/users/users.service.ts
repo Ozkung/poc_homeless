@@ -7,8 +7,9 @@ import * as bcrypt from 'bcrypt';
 const USER_SELECT = {
   id: true, email: true, displayName: true, role: true,
   phone: true, gender: true, avatarUrl: true,
-  isActive: true, lineUserId: true, createdAt: true,
+  isActive: true, lineUserId: true, createdAt: true, supervisorId: true,
   zone: { select: { id: true, name: true, color: true } },
+  supervisor: { select: { zone: { select: { id: true, name: true, color: true } } } },
 } as const;
 
 @Injectable()
@@ -73,10 +74,12 @@ export class UsersService {
   async transferFW(fwId: string, newSupervisorId: string, orgId: string) {
     const fw = await this.prisma.user.findFirst({ where: { id: fwId, organizationId: orgId, role: 'CARE_GIVER' } });
     if (!fw) throw new NotFoundException('CARE_GIVER not found');
+    const cm = await this.prisma.user.findFirst({ where: { id: newSupervisorId, organizationId: orgId, role: 'CASE_MANAGER' } });
+    if (!cm) throw new NotFoundException('CASE_MANAGER not found');
     return this.prisma.user.update({
       where: { id: fwId },
-      data: { supervisorId: newSupervisorId },
-      select: { id: true, displayName: true, supervisorId: true },
+      data: { supervisorId: newSupervisorId, zoneId: cm.zoneId },
+      select: { id: true, displayName: true, supervisorId: true, zone: { select: { id: true, name: true, color: true } } },
     });
   }
 

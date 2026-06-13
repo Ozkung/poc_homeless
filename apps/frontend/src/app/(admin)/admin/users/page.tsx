@@ -4,7 +4,7 @@ import { Table, Tag, Button, Modal, Form, Input, Select, message } from 'antd';
 import { useSession } from 'next-auth/react';
 
 interface Zone { id: string; name: string; color: string }
-interface User { id: string; displayName: string; email: string; role: string; isActive: boolean; supervisorId?: string; zone?: Zone | null }
+interface User { id: string; displayName: string; email: string; role: string; isActive: boolean; supervisorId?: string; zone?: Zone | null; supervisor?: { zone?: Zone | null } }
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
@@ -55,7 +55,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  const cms = users.filter((u) => u.role === 'CASE_MANAGER');
   const roleColor: Record<string, string> = {
     SUPER_ADMIN: 'purple', ADMIN: 'geekblue', CASE_MANAGER: 'green',
     CARE_GIVER: 'orange', MEDICAL_VOLUNTEER: 'blue', DOCTOR: 'cyan',
@@ -78,7 +77,8 @@ export default function AdminUsersPage() {
             title: 'Zone',
             dataIndex: 'zone',
             render: (zone: Zone | null, record: User) => {
-              if (record.role !== 'CASE_MANAGER') return zone ? <Tag color={zone.color ?? 'default'}>{zone.name}</Tag> : <span style={{ color: '#ccc' }}>-</span>;
+              const effectiveZone = zone ?? record.supervisor?.zone ?? null;
+              if (record.role !== 'CASE_MANAGER') return effectiveZone ? <Tag color={effectiveZone.color ?? 'default'}>{effectiveZone.name}</Tag> : <span style={{ color: '#ccc' }}>-</span>;
               return (
                 <Select
                   size="small"
