@@ -11,6 +11,7 @@ import NotePage from './pages/NotePage';
 import CarePlanPage from './pages/CarePlanPage';
 import AuthPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
+import AddPatientPage from './pages/AddPatientPage';
 
 function AppRoutes() {
   const [ready, setReady] = useState(false);
@@ -66,6 +67,7 @@ function AppRoutes() {
       <Route path="/note/:taskId" element={<NotePage />} />
       <Route path="/care-plan/:patientId" element={<CarePlanPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/add-patient" element={<AddPatientPage />} />
     </Routes>
   );
 }
