@@ -469,17 +469,15 @@ export default function EventsPage() {
                   );
                 })}
 
-                {/* Event bars — rows 2, 3, 4 (z-index: 2 so they sit above day cells) */}
+                {/* Event bars — rows 2, 3, 4 (pointerEvents:none → clicks fall through to day cell) */}
                 {visible.map(({ ev, startCol, span, startsHere, endsHere }, idx) => (
                   <div
                     key={ev.id}
                     title={ev.title}
-                    onClick={(e) => { e.stopPropagation(); setSelectedDate(new Date(ev.startDate)); }}
                     style={{
                       gridRow: idx + 2,
                       gridColumn: `${startCol} / ${startCol + span}`,
-                      position: 'relative',
-                      zIndex: 2,
+                      pointerEvents: 'none',
                       background: PRIORITY_LIGHT[ev.priority],
                       color: PRIORITY_TEXT[ev.priority],
                       borderLeft: startsHere ? `3px solid ${PRIORITY_BG[ev.priority]}` : '3px solid transparent',
@@ -504,12 +502,10 @@ export default function EventsPage() {
                 {/* +N more — row after last visible */}
                 {hidden > 0 && (
                   <div
-                    onClick={(e) => { e.stopPropagation(); setSelectedDate(new Date(bars[MAX].ev.startDate)); }}
                     style={{
                       gridRow: MAX + 2,
                       gridColumn: '1 / -1',
-                      position: 'relative',
-                      zIndex: 2,
+                      pointerEvents: 'none',
                       fontSize: 10,
                       color: '#888',
                       padding: '2px 6px',
