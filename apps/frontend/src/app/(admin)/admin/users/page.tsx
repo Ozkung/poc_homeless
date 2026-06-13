@@ -73,7 +73,7 @@ export default function AdminUsersPage() {
           { title: 'ชื่อ', dataIndex: 'displayName' },
           { title: 'อีเมล', dataIndex: 'email' },
           { title: 'Role', dataIndex: 'role', render: (r) => <Tag color={roleColor[r] ?? 'default'}>{r}</Tag> },
-          { title: 'สังกัด CM', dataIndex: 'supervisorId', render: (id) => cms.find((c) => c.id === id)?.displayName ?? '-' },
+          // { title: 'สังกัด CM', dataIndex: 'supervisorId', render: (id) => cms.find((c) => c.id === id)?.displayName ?? '-' },
           {
             title: 'Zone',
             dataIndex: 'zone',

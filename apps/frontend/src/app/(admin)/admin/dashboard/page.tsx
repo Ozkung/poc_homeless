@@ -102,7 +102,8 @@ export default function AdminDashboard() {
           dataSource={fws} rowKey="id" size="small" pagination={{ pageSize: 5 }}
           columns={[
             { title: 'CARE_GIVER', dataIndex: 'displayName' },
-            { title: 'สังกัด CM', dataIndex: 'supervisorId', render: (id) => cms.find((c) => c.id === id)?.displayName ?? '-' },
+            { title: 'สังกัด CM', dataIndex: 'zone', render: (z) => z ? <Tag color={z.color ?? 'default'}>{z.name}</Tag> : <span style={{ color: '#ccc' }}>-</span> },
+            // { title: 'สังกัด CM', dataIndex: 'supervisorId', render: (id) => cms.find((c) => c.id === id)?.displayName ?? '-' },
           ]}
         />
       </Card>
