@@ -76,7 +76,7 @@ export default function ProfilePage() {
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#555' }}>
           <span style={{ fontSize: 15 }}>🏷️</span>
-          <span>{ROLE_LABEL[info.role] ?? info.role || '—'}</span>
+          <span>{(ROLE_LABEL[info.role] ?? info.role) || '—'}</span>
         </div>
       </div>
 
