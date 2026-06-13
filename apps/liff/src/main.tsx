@@ -21,7 +21,7 @@ function AppRoutes() {
       try {
         await initLiff();
         const token = liff.getIDToken();
-        if (!token) throw new Error('No ID token');
+        if (!token) return; // liff.login() redirect is in progress — stay on loading screen
         try {
           const { accessToken } = await api.verifyLiff(token);
           setToken(accessToken);
