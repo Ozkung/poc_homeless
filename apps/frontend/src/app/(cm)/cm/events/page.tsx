@@ -7,9 +7,9 @@ import {
   format, getDay, addMonths, subMonths,
 } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { Button, Card, Drawer, Form, Input, Select, DatePicker, Tag, Typography, message } from 'antd';
+import { Button, Card, Drawer, Form, Input, Select, DatePicker, Tag, Typography, Popconfirm, message } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { LeftOutlined, RightOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { User } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -169,6 +169,8 @@ export default function EventsPage() {
   const [formTemplates, setFormTemplates] = useState<{ id: string; title: string }[]>([]);
   const [allPatients, setAllPatients] = useState<{ id: string; name: string; status: string }[]>([]);
   const [saving, setSaving] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [editForm] = Form.useForm();
 
   useEffect(() => {
     if (!session?.accessToken) return;
@@ -221,6 +223,65 @@ export default function EventsPage() {
   const monthEnd   = endOfMonth(currentMonth);
   const daysInMonth  = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const startPadding = getDay(monthStart);
+
+  function openEdit(ev: CalendarEvent) {
+    setEditingEvent(ev);
+    editForm.setFieldsValue({
+      title: ev.title,
+      dateRange: [dayjs(ev.startDate), dayjs(ev.endDate)],
+      priority: ev.priority,
+      note: ev.note ?? '',
+    });
+  }
+
+  async function handleUpdateEvent(values: any) {
+    if (!editingEvent) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/events/${editingEvent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.accessToken}` },
+        body: JSON.stringify({
+          title: values.title,
+          startDate: values.dateRange[0].toISOString(),
+          endDate: values.dateRange[1].toISOString(),
+          priority: values.priority,
+          note: values.note || null,
+        }),
+      });
+      if (res.ok) {
+        message.success('แก้ไข Event แล้ว');
+        setEditingEvent(null);
+        editForm.resetFields();
+        setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth(), 1));
+      } else {
+        const errBody = await res.json().catch(() => ({}));
+        message.error(`แก้ไขไม่สำเร็จ: ${errBody?.message ?? `HTTP ${res.status}`}`);
+      }
+    } catch (e: any) {
+      message.error(`เกิดข้อผิดพลาด: ${e?.message ?? 'unknown'}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteEvent(eventId: string) {
+    try {
+      const res = await fetch(`${API_URL}/events/${eventId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session?.accessToken}` },
+      });
+      if (res.ok) {
+        message.success('ลบ Event แล้ว');
+        setSelectedDate(null);
+        setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth(), 1));
+      } else {
+        message.error('ลบไม่สำเร็จ');
+      }
+    } catch {
+      message.error('เกิดข้อผิดพลาด');
+    }
+  }
 
   function goPrev() { setCurrentMonth((m) => subMonths(m, 1)); setSelectedDate(null); }
   function goNext() { setCurrentMonth((m) => addMonths(m, 1)); setSelectedDate(null); }
@@ -443,9 +504,19 @@ export default function EventsPage() {
                   <Card key={ev.id} size="small" style={{ borderLeft: `3px solid ${PRIORITY_COLOR[ev.priority]}` }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
                       <Text style={{ fontWeight: 600, fontSize: 13 }}>{ev.title}</Text>
-                      <Tag color={PRIORITY_TAG_COLOR[ev.priority]} style={{ fontSize: 10, flexShrink: 0 }}>
-                        {PRIORITY_LABEL[ev.priority]}
-                      </Tag>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                        <Tag color={PRIORITY_TAG_COLOR[ev.priority]} style={{ fontSize: 10, margin: 0 }}>
+                          {PRIORITY_LABEL[ev.priority]}
+                        </Tag>
+                        <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(ev)} />
+                        <Popconfirm
+                          title="ลบ Event นี้และงานทั้งหมด?"
+                          onConfirm={() => handleDeleteEvent(ev.id)}
+                          okText="ลบ" cancelText="ยกเลิก" okButtonProps={{ danger: true }}
+                        >
+                          <Button size="small" danger icon={<DeleteOutlined />} />
+                        </Popconfirm>
+                      </div>
                     </div>
                     <Text type="secondary" style={{ fontSize: 11, fontFamily: "'Sarabun',sans-serif", display: 'block', marginBottom: 6 }}>
                       {format(new Date(ev.startDate), 'd MMM', { locale: th })}
@@ -473,6 +544,38 @@ export default function EventsPage() {
             </div>
           </>
         )}
+      </Drawer>
+
+      {/* Edit Event Drawer */}
+      <Drawer
+        title={<span style={{ fontFamily: "'Sarabun',sans-serif", fontSize: 12 }}>แก้ไข Event</span>}
+        placement="right"
+        width={isMobile ? '100%' : 400}
+        open={!!editingEvent}
+        onClose={() => { setEditingEvent(null); editForm.resetFields(); }}
+      >
+        <Form form={editForm} layout="vertical" onFinish={handleUpdateEvent}>
+          <Form.Item name="title" label="ชื่อ Event" rules={[{ required: true }]}>
+            <Input placeholder="เช่น Follow-up รายสัปดาห์" />
+          </Form.Item>
+          <Form.Item name="dateRange" label="วันเริ่ม – สิ้นสุด" rules={[{ required: true }]}>
+            <DatePicker.RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+          </Form.Item>
+          <Form.Item name="priority" label="ความเร่งด่วน">
+            <Select options={[
+              { value: 'NORMAL', label: '📅 ปกติ' },
+              { value: 'URGENT', label: '⚠️ เร่งด่วน' },
+              { value: 'CRITICAL', label: '🚨 วิกฤต' },
+            ]} />
+          </Form.Item>
+          <Form.Item name="note" label="หมายเหตุ">
+            <Input.TextArea rows={3} placeholder="คำแนะนำพิเศษถึงผู้ช่วย CM..." />
+          </Form.Item>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button type="primary" htmlType="submit" loading={saving} block>💾 บันทึก</Button>
+            <Button onClick={() => { setEditingEvent(null); editForm.resetFields(); }}>ยกเลิก</Button>
+          </div>
+        </Form>
       </Drawer>
     </div>
   );
