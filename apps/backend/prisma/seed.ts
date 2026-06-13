@@ -28,8 +28,8 @@ async function main() {
   // ── Organisation ──────────────────────────────────────────────────────────
   const org = await prisma.organization.upsert({
     where:  { id: 'org-seed-001' },
-    update: {},
-    create: { id: 'org-seed-001', name: 'โรงพยาบาลชุมชนกรุงเทพ' },
+    update: { name: 'มูลนิธิเพื่อคนไร้บ้านแห่งกรุงเทพ' },
+    create: { id: 'org-seed-001', name: 'มูลนิธิเพื่อคนไร้บ้านแห่งกรุงเทพ' },
   });
   console.log(`✓ Organisation: ${org.name}`);
 
@@ -41,7 +41,7 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where:  { email: 'admin@hospital.th' },
-    update: { phone: '02-000-1234', gender: 'MALE' },
+    update: { phone: '02-000-1234', gender: 'MALE', displayName: 'ผู้ดูแลระบบ' },
     create: {
       id: 'user-seed-admin', organizationId: org.id,
       email: 'admin@hospital.th', passwordHash: adminPw,
@@ -52,44 +52,44 @@ async function main() {
 
   await prisma.user.upsert({
     where:  { email: 'sa@hospital.th' },
-    update: { phone: '081-999-8888', gender: 'FEMALE' },
+    update: { phone: '081-999-8888', gender: 'FEMALE', displayName: 'ผอ.ศิริพร มั่นคง' },
     create: {
       id: 'user-seed-sa', organizationId: org.id,
       email: 'sa@hospital.th', passwordHash: saPw,
-      role: 'SUPER_ADMIN', displayName: 'ผู้อำนวยการ สุดา',
+      role: 'SUPER_ADMIN', displayName: 'ผอ.ศิริพร มั่นคง',
       phone: '081-999-8888', gender: 'FEMALE',
     },
   });
 
   const cm1 = await prisma.user.upsert({
     where:  { email: 'cm1@hospital.th' },
-    update: { phone: '081-234-5678', gender: 'MALE' },
+    update: { phone: '081-234-5678', gender: 'FEMALE', displayName: 'น.ส.มาลี สายใจ' },
     create: {
       id: 'user-seed-cm1', organizationId: org.id,
       email: 'cm1@hospital.th', passwordHash: cmPw,
-      role: 'CASE_MANAGER', displayName: 'นายสมชาย ดูแลดี',
-      phone: '081-234-5678', gender: 'MALE',
+      role: 'CASE_MANAGER', displayName: 'น.ส.มาลี สายใจ',
+      phone: '081-234-5678', gender: 'FEMALE',
     },
   });
 
   const cm2 = await prisma.user.upsert({
     where:  { email: 'cm2@hospital.th' },
-    update: { phone: '089-876-5432', gender: 'FEMALE' },
+    update: { phone: '089-876-5432', gender: 'MALE', displayName: 'นายวิชาญ ดูแลดี' },
     create: {
       id: 'user-seed-cm2', organizationId: org.id,
       email: 'cm2@hospital.th', passwordHash: cmPw,
-      role: 'CASE_MANAGER', displayName: 'น.ส.มาลี ใจดี',
-      phone: '089-876-5432', gender: 'FEMALE',
+      role: 'CASE_MANAGER', displayName: 'นายวิชาญ ดูแลดี',
+      phone: '089-876-5432', gender: 'MALE',
     },
   });
 
   const fw1 = await prisma.user.upsert({
     where:  { email: 'fw1@hospital.th' },
-    update: { phone: '062-345-6789', gender: 'MALE', supervisorId: 'user-seed-cm1' },
+    update: { phone: '062-345-6789', gender: 'MALE', displayName: 'นายอภิชาต ลงพื้นที่', supervisorId: 'user-seed-cm1' },
     create: {
       id: 'user-seed-fw1', organizationId: org.id,
       email: 'fw1@hospital.th', passwordHash: fwPw,
-      role: 'CARE_GIVER', displayName: 'นายประยุทธ ลงพื้นที่',
+      role: 'CARE_GIVER', displayName: 'นายอภิชาต ลงพื้นที่',
       phone: '062-345-6789', gender: 'MALE',
       supervisorId: 'user-seed-cm1',
     },
@@ -99,11 +99,11 @@ async function main() {
 
   const fw2 = await prisma.user.upsert({
     where:  { email: 'fw2@hospital.th' },
-    update: { supervisorId: 'user-seed-cm1' },
+    update: { displayName: 'น.ส.สุกัญญา ช่วยเหลือ', supervisorId: 'user-seed-cm1' },
     create: {
       id: 'user-seed-fw2', organizationId: org.id,
       email: 'fw2@hospital.th', passwordHash: fw2Pw,
-      role: 'CARE_GIVER', displayName: 'น.ส.วิภา ช่วยเหลือ',
+      role: 'CARE_GIVER', displayName: 'น.ส.สุกัญญา ช่วยเหลือ',
       phone: '062-456-7890', gender: 'FEMALE',
       supervisorId: 'user-seed-cm1',
     },
@@ -111,11 +111,11 @@ async function main() {
 
   const fw3 = await prisma.user.upsert({
     where:  { email: 'fw3@hospital.th' },
-    update: { supervisorId: 'user-seed-cm2' },
+    update: { displayName: 'นายพิทักษ์ ดูแลชุมชน', supervisorId: 'user-seed-cm2' },
     create: {
       id: 'user-seed-fw3', organizationId: org.id,
       email: 'fw3@hospital.th', passwordHash: fw3Pw,
-      role: 'CARE_GIVER', displayName: 'นายสุรชัย ดูแล',
+      role: 'CARE_GIVER', displayName: 'นายพิทักษ์ ดูแลชุมชน',
       phone: '062-567-8901', gender: 'MALE',
       supervisorId: 'user-seed-cm2',
     },
@@ -123,33 +123,33 @@ async function main() {
 
   const mv1 = await prisma.user.upsert({
     where:  { email: 'mv1@hospital.th' },
-    update: { phone: '065-111-2222', gender: 'FEMALE' },
+    update: { phone: '065-111-2222', gender: 'FEMALE', displayName: 'น.ส.ปรียา ใจเกื้อ' },
     create: {
       id: 'user-seed-mv1', organizationId: org.id,
       email: 'mv1@hospital.th', passwordHash: mvPw,
-      role: 'MEDICAL_VOLUNTEER', displayName: 'น.ส.รัตนา ใจเกื้อ',
+      role: 'MEDICAL_VOLUNTEER', displayName: 'น.ส.ปรียา ใจเกื้อ',
       phone: '065-111-2222', gender: 'FEMALE',
     },
   });
 
   const doc1 = await prisma.user.upsert({
     where:  { email: 'doc1@hospital.th' },
-    update: { phone: '081-777-8888', gender: 'MALE' },
+    update: { phone: '081-777-8888', gender: 'MALE', displayName: 'นพ.ณัฐวุฒิ รักษาดี' },
     create: {
       id: 'user-seed-doc1', organizationId: org.id,
       email: 'doc1@hospital.th', passwordHash: docPw,
-      role: 'DOCTOR', displayName: 'นพ.อภิชาต รักษาดี',
+      role: 'DOCTOR', displayName: 'นพ.ณัฐวุฒิ รักษาดี',
       phone: '081-777-8888', gender: 'MALE',
     },
   });
 
   const doc2 = await prisma.user.upsert({
     where:  { email: 'doc2@hospital.th' },
-    update: { phone: '089-555-6666', gender: 'FEMALE' },
+    update: { phone: '089-555-6666', gender: 'FEMALE', displayName: 'พญ.อารีย์ สุขสวัสดิ์' },
     create: {
       id: 'user-seed-doc2', organizationId: org.id,
       email: 'doc2@hospital.th', passwordHash: docPw,
-      role: 'DOCTOR', displayName: 'พญ.ณัฐพร สุขสวัสดิ์',
+      role: 'DOCTOR', displayName: 'พญ.อารีย์ สุขสวัสดิ์',
       phone: '089-555-6666', gender: 'FEMALE',
     },
   });
@@ -157,39 +157,39 @@ async function main() {
   console.log(`✓ Users: admin, sa, cm1, cm2, fw1, fw2, fw3, mv1, doc1, doc2`);
 
   // ── Zones ──────────────────────────────────────────────────────────────────
-  const zoneLumpini = await prisma.zone.upsert({
+  const zonePhraNakhon = await prisma.zone.upsert({
     where:  { id: 'zone-seed-001' },
-    update: {},
-    create: { id: 'zone-seed-001', organizationId: org.id, name: 'สวนลุมพินี', description: 'พื้นที่สวนลุมพินีและบริเวณโดยรอบ', color: '#7c3aed' },
+    update: { name: 'เขตพระนคร', description: 'บริเวณสนามหลวง, ท่าช้าง, ท่าพระจันทร์ และวัดโพธิ์' },
+    create: { id: 'zone-seed-001', organizationId: org.id, name: 'เขตพระนคร', description: 'บริเวณสนามหลวง, ท่าช้าง, ท่าพระจันทร์ และวัดโพธิ์', color: '#7c3aed' },
   });
-  const zoneHualamphong = await prisma.zone.upsert({
+  const zonePomPrab = await prisma.zone.upsert({
     where:  { id: 'zone-seed-002' },
-    update: {},
-    create: { id: 'zone-seed-002', organizationId: org.id, name: 'หัวลำโพง', description: 'บริเวณสถานีรถไฟและย่านเยาวราช', color: '#dc2626' },
+    update: { name: 'เขตป้อมปราบศัตรูพ่าย', description: 'บริเวณสถานีหัวลำโพง, บ้านหม้อ และชุมชนริมทางรถไฟ' },
+    create: { id: 'zone-seed-002', organizationId: org.id, name: 'เขตป้อมปราบศัตรูพ่าย', description: 'บริเวณสถานีหัวลำโพง, บ้านหม้อ และชุมชนริมทางรถไฟ', color: '#dc2626' },
   });
-  const zoneKlongtoey = await prisma.zone.upsert({
+  const zoneNongChok = await prisma.zone.upsert({
     where:  { id: 'zone-seed-003' },
-    update: {},
-    create: { id: 'zone-seed-003', organizationId: org.id, name: 'คลองเตย', description: 'ชุมชนแออัดคลองเตยและท่าเรือ', color: '#d97706' },
+    update: { name: 'เขตหนองจอก', description: 'ชุมชนแรงงาน, ริมคลองแสนแสบ และพื้นที่อุตสาหกรรม' },
+    create: { id: 'zone-seed-003', organizationId: org.id, name: 'เขตหนองจอก', description: 'ชุมชนแรงงาน, ริมคลองแสนแสบ และพื้นที่อุตสาหกรรม', color: '#d97706' },
   });
-  const zoneRama4 = await prisma.zone.upsert({
+  const zoneSamphan = await prisma.zone.upsert({
     where:  { id: 'zone-seed-004' },
-    update: {},
-    create: { id: 'zone-seed-004', organizationId: org.id, name: 'พระราม 4', description: 'แนวถนนพระราม 4 และสะพานต่างๆ', color: '#059669' },
+    update: { name: 'เขตสัมพันธวงศ์', description: 'ย่านเยาวราช, ตลาดน้อย และสะพานเหลือง' },
+    create: { id: 'zone-seed-004', organizationId: org.id, name: 'เขตสัมพันธวงศ์', description: 'ย่านเยาวราช, ตลาดน้อย และสะพานเหลือง', color: '#059669' },
   });
-  console.log(`✓ Zones: สวนลุมพินี, หัวลำโพง, คลองเตย, พระราม 4`);
-  void fw2; void fw3; void zoneLumpini; void zoneHualamphong; void zoneKlongtoey; void zoneRama4; void doc2;
+  console.log(`✓ Zones: เขตพระนคร, เขตป้อมปราบศัตรูพ่าย, เขตหนองจอก, เขตสัมพันธวงศ์`);
+  void fw2; void fw3; void zonePhraNakhon; void zonePomPrab; void zoneNongChok; void zoneSamphan; void doc2;
 
   // ── Patients ──────────────────────────────────────────────────────────────
   const patientsData = [
-    { id: 'pat-seed-001', hn: 'HN000001', name: 'นายสมศักดิ์ พลัดบ้าน',  age: 52, gender: 'MALE'   as const, status: 'CRITICAL' as const, locationText: 'ใต้สะพานพระราม 4',          conditions: ['เบาหวาน', 'ความดันโลหิตสูง'], cmId: cm1.id, zoneId: 'zone-seed-004' },
-    { id: 'pat-seed-002', hn: 'HN000002', name: 'นางสาวอรุณี หาที่พัก',  age: 38, gender: 'FEMALE' as const, status: 'PENDING'  as const, locationText: 'ตลาดนัดจตุจักร',             conditions: ['วัณโรค'],                      cmId: cm1.id, zoneId: 'zone-seed-001' },
-    { id: 'pat-seed-003', hn: 'HN000003', name: 'นายวิชัย ไร้ที่อยู่',   age: 67, gender: 'MALE'   as const, status: 'STABLE'   as const, locationText: 'สวนลุมพินี',                 conditions: ['ข้ออักเสบ', 'ต้อกระจก'],       cmId: cm2.id, zoneId: 'zone-seed-001' },
-    { id: 'pat-seed-004', hn: 'HN000004', name: 'นางมะลิ สีเงิน',       age: 45, gender: 'FEMALE' as const, status: 'STABLE'   as const, locationText: 'หน้าห้างบิ๊กซี รามคำแหง',   conditions: [],                              cmId: cm2.id, zoneId: null },
-    { id: 'pat-seed-005', hn: 'HN000005', name: 'นายอานนท์ ทุกข์ยาก',  age: 29, gender: 'MALE'   as const, status: 'CRITICAL' as const, locationText: 'บริเวณสถานีรถไฟหัวลำโพง',   conditions: ['ติดยาเสพติด', 'HIV'],          cmId: cm1.id, zoneId: 'zone-seed-002' },
-    { id: 'pat-seed-006', hn: 'HN000006', name: 'นางรัตนา ชีวิตใหม่',   age: 55, gender: 'FEMALE' as const, status: 'PENDING'  as const, locationText: 'ชุมชนแออัดคลองเตย',          conditions: ['เบาหวาน'],                     cmId: cm2.id, zoneId: 'zone-seed-003' },
-    { id: 'pat-seed-007', hn: 'HN000007', name: 'นายบุญมี ขาดรายได้',   age: 73, gender: 'MALE'   as const, status: 'STABLE'   as const, locationText: 'วัดโพธิ์ ท่าเตียน',           conditions: ['หัวใจ', 'ความดันโลหิตสูง'],   cmId: cm2.id, zoneId: 'zone-seed-002' },
-    { id: 'pat-seed-008', hn: 'HN000008', name: 'นายธนากร ไม่มีบ้าน',  age: 19, gender: 'MALE'   as const, status: 'MISSING'  as const, locationText: 'บริเวณเยาวราช',               conditions: ['ซึมเศร้า'],                    cmId: cm1.id, zoneId: 'zone-seed-002' },
+    { id: 'pat-seed-001', hn: 'HN000001', name: 'นายสมศักดิ์ พลัดถิ่น',   age: 54, gender: 'MALE'   as const, status: 'CRITICAL' as const, locationText: 'ใต้สะพานพระปิ่นเกล้า ฝั่งพระนคร',    conditions: ['เบาหวาน', 'ความดันโลหิตสูง'], cmId: cm1.id, zoneId: 'zone-seed-001' },
+    { id: 'pat-seed-002', hn: 'HN000002', name: 'นางสาวอรุณี ไร้ที่พัก',   age: 40, gender: 'FEMALE' as const, status: 'PENDING'  as const, locationText: 'ริมสถานีรถไฟหัวลำโพง',                conditions: ['วัณโรค'],                      cmId: cm1.id, zoneId: 'zone-seed-002' },
+    { id: 'pat-seed-003', hn: 'HN000003', name: 'นายวิชัย สนามหลวง',       age: 68, gender: 'MALE'   as const, status: 'STABLE'   as const, locationText: 'สนามหลวง บริเวณใกล้ท่าพระจันทร์',     conditions: ['ข้ออักเสบ', 'ต้อกระจก'],       cmId: cm2.id, zoneId: 'zone-seed-001' },
+    { id: 'pat-seed-004', hn: 'HN000004', name: 'นางมะลิ แรงงานหนองจอก',   age: 47, gender: 'FEMALE' as const, status: 'STABLE'   as const, locationText: 'ชุมชนแรงงาน เขตหนองจอก',             conditions: [],                              cmId: cm2.id, zoneId: 'zone-seed-003' },
+    { id: 'pat-seed-005', hn: 'HN000005', name: 'นายอานนท์ เยาวราช',       age: 31, gender: 'MALE'   as const, status: 'CRITICAL' as const, locationText: 'ซอยเยาวราช 11 ใกล้วัดกันมาตุยาราม',  conditions: ['ติดยาเสพติด', 'HIV'],          cmId: cm1.id, zoneId: 'zone-seed-004' },
+    { id: 'pat-seed-006', hn: 'HN000006', name: 'นางรัตนา คลองแสนแสบ',     age: 57, gender: 'FEMALE' as const, status: 'PENDING'  as const, locationText: 'ริมคลองแสนแสบ เขตหนองจอก',           conditions: ['เบาหวาน'],                     cmId: cm2.id, zoneId: 'zone-seed-003' },
+    { id: 'pat-seed-007', hn: 'HN000007', name: 'นายบุญมี ท่าพระจันทร์',   age: 75, gender: 'MALE'   as const, status: 'STABLE'   as const, locationText: 'ท่าพระจันทร์ หน้าวัดมหาธาตุ',        conditions: ['หัวใจ', 'ความดันโลหิตสูง'],   cmId: cm2.id, zoneId: 'zone-seed-001' },
+    { id: 'pat-seed-008', hn: 'HN000008', name: 'นายธนากร บ้านหม้อ',       age: 21, gender: 'MALE'   as const, status: 'MISSING'  as const, locationText: 'บริเวณบ้านหม้อ เขตป้อมปราบฯ',         conditions: ['ซึมเศร้า'],                    cmId: cm1.id, zoneId: 'zone-seed-002' },
   ];
 
   for (const p of patientsData) {
@@ -871,15 +871,17 @@ async function main() {
   console.log(`✓ Care plan assessments: ${assessmentsData.length} records`);
 
   console.log('\n✅ Seed complete!\n');
+  console.log('องค์กร: มูลนิธิเพื่อคนไร้บ้านแห่งกรุงเทพ');
+  console.log('Zones: เขตพระนคร, เขตป้อมปราบศัตรูพ่าย, เขตหนองจอก, เขตสัมพันธวงศ์\n');
   console.log('Credentials:');
-  console.log('  admin@hospital.th  / Admin1234!     (ADMIN)');
-  console.log('  sa@hospital.th     / SuperAdmin1!   (SUPER_ADMIN)');
-  console.log('  cm1@hospital.th    / CaseManager1!  (CASE_MANAGER)');
-  console.log('  cm2@hospital.th    / CaseManager1!  (CASE_MANAGER)');
-  console.log('  fw1@hospital.th    / CareGiv1!      (CARE_GIVER)');
-  console.log('  mv1@hospital.th    / MedVol1234!    (MEDICAL_VOLUNTEER)');
-  console.log('  doc1@hospital.th   / Doctor1234!    (DOCTOR)');
-  console.log('  doc2@hospital.th   / Doctor1234!    (DOCTOR)');
+  console.log('  admin@hospital.th  / Admin1234!     (ADMIN)           ผู้ดูแลระบบ');
+  console.log('  sa@hospital.th     / SuperAdmin1!   (SUPER_ADMIN)     ผอ.ศิริพร มั่นคง');
+  console.log('  cm1@hospital.th    / CaseManager1!  (CASE_MANAGER)    น.ส.มาลี สายใจ');
+  console.log('  cm2@hospital.th    / CaseManager1!  (CASE_MANAGER)    นายวิชาญ ดูแลดี');
+  console.log('  fw1@hospital.th    / CareGiv1!      (CARE_GIVER)      นายอภิชาต ลงพื้นที่');
+  console.log('  mv1@hospital.th    / MedVol1234!    (MEDICAL_VOLUNTEER) น.ส.ปรียา ใจเกื้อ');
+  console.log('  doc1@hospital.th   / Doctor1234!    (DOCTOR)          นพ.ณัฐวุฒิ รักษาดี');
+  console.log('  doc2@hospital.th   / Doctor1234!    (DOCTOR)          พญ.อารีย์ สุขสวัสดิ์');
 }
 
 main()
