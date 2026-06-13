@@ -70,7 +70,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/liff">
       <AppRoutes />
     </BrowserRouter>
   );
