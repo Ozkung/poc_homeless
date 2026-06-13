@@ -416,7 +416,7 @@ export default function EventsPage() {
           return weeks.map((weekDays, wi) => {
             const bars = getEventBarsForWeek(weekDays, events);
             return (
-              <div key={wi} style={{ borderBottom: '1px solid #f0f0f0' }}>
+              <div key={wi} style={{ borderBottom: '1px solid #f0f0f0', minHeight: isMobile ? 36 : 48 }}>
                 {/* Day number row */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)' }}>
                   {weekDays.map((day, di) => {
@@ -455,36 +455,56 @@ export default function EventsPage() {
                 </div>
 
                 {/* Event bars row */}
-                {bars.length > 0 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', padding: '2px 0 4px', rowGap: 2 }}>
-                    {bars.map(({ ev, startCol, span, startsHere, endsHere }) => (
-                      <div
-                        key={ev.id}
-                        title={ev.title}
-                        onClick={() => setSelectedDate(new Date(ev.startDate))}
-                        style={{
-                          gridColumn: `${startCol} / ${startCol + span}`,
-                          background: PRIORITY_LIGHT[ev.priority],
-                          color: PRIORITY_TEXT[ev.priority],
-                          borderLeft: startsHere ? `3px solid ${PRIORITY_BG[ev.priority]}` : '3px solid transparent',
-                          borderRadius: `${startsHere ? 4 : 0}px ${endsHere ? 4 : 0}px ${endsHere ? 4 : 0}px ${startsHere ? 4 : 0}px`,
-                          fontSize: 10,
-                          fontWeight: 600,
-                          padding: '2px 6px',
-                          cursor: 'pointer',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                          textOverflow: 'ellipsis',
-                          marginLeft: startsHere ? 2 : 0,
-                          marginRight: endsHere ? 2 : 0,
-                          fontFamily: "'Sarabun',sans-serif",
-                        }}
-                      >
-                        {startsHere ? ev.title : ''}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {bars.length > 0 && (() => {
+                  const MAX = 3;
+                  const visible = bars.slice(0, MAX);
+                  const hidden = bars.length - MAX;
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', padding: '2px 0 4px', rowGap: 2 }}>
+                      {visible.map(({ ev, startCol, span, startsHere, endsHere }) => (
+                        <div
+                          key={ev.id}
+                          title={ev.title}
+                          onClick={() => setSelectedDate(new Date(ev.startDate))}
+                          style={{
+                            gridColumn: `${startCol} / ${startCol + span}`,
+                            background: PRIORITY_LIGHT[ev.priority],
+                            color: PRIORITY_TEXT[ev.priority],
+                            borderLeft: startsHere ? `3px solid ${PRIORITY_BG[ev.priority]}` : '3px solid transparent',
+                            borderRadius: `${startsHere ? 4 : 0}px ${endsHere ? 4 : 0}px ${endsHere ? 4 : 0}px ${startsHere ? 4 : 0}px`,
+                            fontSize: 10,
+                            fontWeight: 600,
+                            padding: '2px 6px',
+                            cursor: 'pointer',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
+                            marginLeft: startsHere ? 2 : 0,
+                            marginRight: endsHere ? 2 : 0,
+                            fontFamily: "'Sarabun',sans-serif",
+                          }}
+                        >
+                          {startsHere ? ev.title : ''}
+                        </div>
+                      ))}
+                      {hidden > 0 && (
+                        <div
+                          onClick={() => setSelectedDate(new Date(bars[MAX].ev.startDate))}
+                          style={{
+                            gridColumn: '1 / -1',
+                            fontSize: 10,
+                            color: '#888',
+                            padding: '1px 6px',
+                            cursor: 'pointer',
+                            fontFamily: "'Sarabun',sans-serif",
+                          }}
+                        >
+                          +{hidden} more
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 {bars.length === 0 && <div style={{ height: isMobile ? 8 : 12 }} />}
               </div>
             );
