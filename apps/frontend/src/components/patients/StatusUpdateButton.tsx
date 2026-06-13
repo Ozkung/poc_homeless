@@ -1,15 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { Button, Select, message } from 'antd';
+import { STATUS_OPTIONS as OPTIONS } from '@/lib/patientStatus';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-
-const OPTIONS = [
-  { value: 'STABLE',   label: 'ปกติ' },
-  { value: 'PENDING',  label: 'รอดำเนินการ' },
-  { value: 'CRITICAL', label: 'วิกฤต' },
-  { value: 'MISSING',  label: 'สูญหาย' },
-];
 
 interface Props {
   patientId: string;

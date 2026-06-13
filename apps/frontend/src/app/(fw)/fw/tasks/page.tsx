@@ -4,14 +4,13 @@ import { Badge, Card, Collapse, Empty, Spin, Tag, Typography } from 'antd';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, MapPin, User, ClipboardList, AlertCircle } from 'lucide-react';
+import { STATUS_COLOR as PATIENT_STATUS_COLOR, STATUS_LABEL as PATIENT_STATUS_LABEL } from '@/lib/patientStatus';
 
 const { Text, Title } = Typography;
 
 const STATUS_COLOR: Record<string, string> = { PENDING: 'orange', IN_PROGRESS: 'blue', DONE: 'green', NOT_FOUND: 'red' };
 const STATUS_LABEL: Record<string, string> = { PENDING: 'รอดำเนินการ', IN_PROGRESS: 'กำลังดำเนินการ', DONE: 'เสร็จแล้ว', NOT_FOUND: 'ไม่พบผู้ป่วย' };
 const PRIORITY_COLOR: Record<string, string> = { HIGH: 'red', MEDIUM: 'orange', LOW: 'green' };
-const PATIENT_STATUS_COLOR: Record<string, string> = { CRITICAL: 'red', PENDING: 'orange', STABLE: 'green', MISSING: 'default' };
-const PATIENT_STATUS_LABEL: Record<string, string> = { CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ', MISSING: 'สูญหาย' };
 
 export default function FWTasksPage() {
   const { data: session } = useSession();

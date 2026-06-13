@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { Table, Input, Segmented, Select, Tag, Typography, Card, Button, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import Link from 'next/link';
+import { STATUS_COLOR, STATUS_OPTIONS } from '@/lib/patientStatus';
 
 const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -15,16 +16,6 @@ interface Patient {
   caseManager?: { id: string; displayName: string } | null;
   updatedAt?: string;
 }
-
-const STATUS_COLOR: Record<string, string> = {
-  CRITICAL: 'error', PENDING: 'warning', STABLE: 'success', MISSING: 'default',
-};
-const STATUS_OPTIONS = [
-  { value: 'STABLE',   label: 'ปกติ' },
-  { value: 'PENDING',  label: 'รอดำเนินการ' },
-  { value: 'CRITICAL', label: 'วิกฤต' },
-  { value: 'MISSING',  label: 'สูญหาย' },
-];
 
 const FILTER_OPTIONS = [
   { label: 'ทั้งหมด', value: 'ALL' },

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Card, Col, Collapse, Descriptions, Row, Tag, Tabs, Timeline } from 'antd';
 import StatusUpdateButton from './StatusUpdateButton';
+import { STATUS_COLOR, STATUS_LABEL } from '@/lib/patientStatus';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -21,8 +22,6 @@ interface Submission {
   submittedBy: { displayName: string };
 }
 
-const STATUS_COLOR: Record<string, string> = { CRITICAL: 'error', PENDING: 'warning', STABLE: 'success', MISSING: 'default' };
-const STATUS_LABEL: Record<string, string> = { CRITICAL: 'Emergency', PENDING: 'Urgency', STABLE: 'Semi-urgency', MISSING: 'Missing' }
 const GENDER_LABEL: Record<string, string> = { MALE: 'ชาย', FEMALE: 'หญิง', OTHER: 'อื่นๆ' };
 const ACTIVITY_COLOR: Record<string, string> = {
   CHECK_IN: '#1677ff', NOTE: '#722ed1', FORM_SUBMIT: '#13c2c2',

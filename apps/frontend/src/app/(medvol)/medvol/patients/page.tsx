@@ -3,11 +3,9 @@ import { useEffect, useState } from 'react';
 import { Table, Tag, Input, Typography } from 'antd';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { STATUS_COLOR, STATUS_LABEL } from '@/lib/patientStatus';
 
 const { Text } = Typography;
-
-const STATUS_COLOR: Record<string, string> = { CRITICAL: 'red', PENDING: 'orange', STABLE: 'green', MISSING: 'default' };
-const STATUS_LABEL: Record<string, string> = { CRITICAL: 'วิกฤต', PENDING: 'รอดำเนินการ', STABLE: 'ปกติ', MISSING: 'สูญหาย' };
 
 export default function MedVolPatientsPage() {
   const { data: session } = useSession();

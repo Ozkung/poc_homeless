@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { Card, Progress, Statistic, Tag } from 'antd';
+import { STATUS_COLOR, STATUS_LABEL } from '@/lib/patientStatus';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -18,9 +19,6 @@ interface MonthlyReport {
     followUpDone: number; followUpTotal: number;
   }[];
 }
-
-const STATUS_COLOR: Record<string, string> = { CRITICAL: 'error', PENDING: 'warning', STABLE: 'success', MISSING: 'default' };
-const STATUS_LABEL: Record<string, string> = { CRITICAL: 'Emergency', PENDING: 'Urgency', STABLE: 'Semi-urgency', MISSING: 'Missing' };
 
 async function fetchReport(token: string): Promise<MonthlyReport | null> {
   const now = new Date();

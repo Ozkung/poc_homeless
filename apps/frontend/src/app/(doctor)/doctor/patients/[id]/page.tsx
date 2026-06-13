@@ -7,6 +7,7 @@ import {
   Row, Select, Spin, Table, Tabs, Tag, Timeline, Typography, message,
 } from 'antd';
 import { ArrowLeft, Stethoscope, Pill, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { STATUS_OPTIONS } from '@/lib/patientStatus';
 
 interface MatchedMed {
   prescName: string;
@@ -23,16 +24,7 @@ interface DispenseState {
 const { Title, Text } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-const STATUS_COLOR: Record<string, string> = { CRITICAL: 'red', PENDING: 'orange', STABLE: 'green', MISSING: 'default' };
-const STATUS_LABEL: Record<string, string> = { CRITICAL: 'Emergency', PENDING: 'Urgency', STABLE: 'Semi-urgency', MISSING: 'Missing' }
 const SEVERITY_COLOR: Record<string, string> = { MILD: 'green', MODERATE: 'orange', SEVERE: 'red' };
-
-const STATUS_OPTIONS = [
-  { value: 'STABLE',   label: 'ปกติ' },
-  { value: 'PENDING',  label: 'รอดำเนินการ' },
-  { value: 'CRITICAL', label: 'วิกฤต' },
-  { value: 'MISSING',  label: 'สูญหาย' },
-];
 
 function StatusSelector({ patientId, currentStatus, token, onUpdated }: { patientId: string; currentStatus: string; token: string; onUpdated: (s: string) => void }) {
   const [status, setStatus] = useState(currentStatus);
