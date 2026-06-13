@@ -63,35 +63,35 @@ async function main() {
 
   const cm1 = await prisma.user.upsert({
     where:  { email: 'cm1@hospital.th' },
-    update: { phone: '081-234-5678', gender: 'FEMALE', displayName: 'น.ส.มาลี สายใจ' },
+    update: { phone: '081-234-5678', gender: 'FEMALE', displayName: 'น.ส.มาลี สายใจ', zoneId: 'zone-seed-001' },
     create: {
       id: 'user-seed-cm1', organizationId: org.id,
       email: 'cm1@hospital.th', passwordHash: cmPw,
       role: 'CASE_MANAGER', displayName: 'น.ส.มาลี สายใจ',
-      phone: '081-234-5678', gender: 'FEMALE',
+      phone: '081-234-5678', gender: 'FEMALE', zoneId: 'zone-seed-001',
     },
   });
 
   const cm2 = await prisma.user.upsert({
     where:  { email: 'cm2@hospital.th' },
-    update: { phone: '089-876-5432', gender: 'MALE', displayName: 'นายวิชาญ ดูแลดี' },
+    update: { phone: '089-876-5432', gender: 'MALE', displayName: 'นายวิชาญ ดูแลดี', zoneId: 'zone-seed-002' },
     create: {
       id: 'user-seed-cm2', organizationId: org.id,
       email: 'cm2@hospital.th', passwordHash: cmPw,
       role: 'CASE_MANAGER', displayName: 'นายวิชาญ ดูแลดี',
-      phone: '089-876-5432', gender: 'MALE',
+      phone: '089-876-5432', gender: 'MALE', zoneId: 'zone-seed-002',
     },
   });
 
   const fw1 = await prisma.user.upsert({
     where:  { email: 'fw1@hospital.th' },
-    update: { phone: '062-345-6789', gender: 'MALE', displayName: 'นายอภิชาต ลงพื้นที่', supervisorId: 'user-seed-cm1' },
+    update: { phone: '062-345-6789', gender: 'MALE', displayName: 'นายอภิชาต ลงพื้นที่', supervisorId: 'user-seed-cm1', zoneId: 'zone-seed-001' },
     create: {
       id: 'user-seed-fw1', organizationId: org.id,
       email: 'fw1@hospital.th', passwordHash: fwPw,
       role: 'CARE_GIVER', displayName: 'นายอภิชาต ลงพื้นที่',
       phone: '062-345-6789', gender: 'MALE',
-      supervisorId: 'user-seed-cm1',
+      supervisorId: 'user-seed-cm1', zoneId: 'zone-seed-001',
     },
   });
 
@@ -99,25 +99,25 @@ async function main() {
 
   const fw2 = await prisma.user.upsert({
     where:  { email: 'fw2@hospital.th' },
-    update: { displayName: 'น.ส.สุกัญญา ช่วยเหลือ', supervisorId: 'user-seed-cm1' },
+    update: { displayName: 'น.ส.สุกัญญา ช่วยเหลือ', supervisorId: 'user-seed-cm1', zoneId: 'zone-seed-001' },
     create: {
       id: 'user-seed-fw2', organizationId: org.id,
       email: 'fw2@hospital.th', passwordHash: fw2Pw,
       role: 'CARE_GIVER', displayName: 'น.ส.สุกัญญา ช่วยเหลือ',
       phone: '062-456-7890', gender: 'FEMALE',
-      supervisorId: 'user-seed-cm1',
+      supervisorId: 'user-seed-cm1', zoneId: 'zone-seed-001',
     },
   });
 
   const fw3 = await prisma.user.upsert({
     where:  { email: 'fw3@hospital.th' },
-    update: { displayName: 'นายพิทักษ์ ดูแลชุมชน', supervisorId: 'user-seed-cm2' },
+    update: { displayName: 'นายพิทักษ์ ดูแลชุมชน', supervisorId: 'user-seed-cm2', zoneId: 'zone-seed-002' },
     create: {
       id: 'user-seed-fw3', organizationId: org.id,
       email: 'fw3@hospital.th', passwordHash: fw3Pw,
       role: 'CARE_GIVER', displayName: 'นายพิทักษ์ ดูแลชุมชน',
       phone: '062-567-8901', gender: 'MALE',
-      supervisorId: 'user-seed-cm2',
+      supervisorId: 'user-seed-cm2', zoneId: 'zone-seed-002',
     },
   });
 
