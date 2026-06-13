@@ -20,9 +20,10 @@ export default function AdminDashboard() {
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(30, 'day'), dayjs()]);
   const [users, setUsers] = useState<any[]>([]);
   const [invItems, setInvItems] = useState<any[]>([]);
+  const [zones, setZones] = useState<any[]>([]);
   const [transferModal, setTransferModal] = useState(false);
   const [selectedFW, setSelectedFW] = useState<string>('');
-  const [targetCM, setTargetCM] = useState<string>('');
+  const [targetZone, setTargetZone] = useState<string>('');
 
   const token = (session as any)?.accessToken;
 
@@ -42,21 +43,24 @@ export default function AdminDashboard() {
       .then((r) => r.json()).then((d) => setUsers(Array.isArray(d) ? d : []));
     fetch('/api/inventory', { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json()).then((d) => setInvItems(Array.isArray(d) ? d : []));
+    fetch('/api/zones', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json()).then((d) => setZones(Array.isArray(d) ? d : []));
   }, [token]);
 
-  const cms = users.filter((u) => u.role === 'CASE_MANAGER');
   const fws = users.filter((u) => u.role === 'CARE_GIVER');
 
   const handleTransfer = async () => {
-    if (!selectedFW || !targetCM) return;
-    const res = await fetch(`/api/users/${selectedFW}/transfer`, {
+    if (!selectedFW || !targetZone) return;
+    const res = await fetch(`/api/users/${selectedFW}/zone`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ supervisorId: targetCM }),
+      body: JSON.stringify({ zoneId: targetZone }),
     });
     if (res.ok) {
       message.success('โยกย้าย CARE_GIVER สำเร็จ');
       setTransferModal(false);
+      setSelectedFW('');
+      setTargetZone('');
       fetch('/api/users', { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json()).then((d) => setUsers(Array.isArray(d) ? d : []));
     } else {
@@ -102,19 +106,18 @@ export default function AdminDashboard() {
           dataSource={fws} rowKey="id" size="small" pagination={{ pageSize: 5 }}
           columns={[
             { title: 'CARE_GIVER', dataIndex: 'displayName' },
-            { title: 'สังกัด CM', dataIndex: 'zone', render: (z) => z ? <Tag color={z.color ?? 'default'}>{z.name}</Tag> : <span style={{ color: '#ccc' }}>-</span> },
-            // { title: 'สังกัด CM', dataIndex: 'supervisorId', render: (id) => cms.find((c) => c.id === id)?.displayName ?? '-' },
+            { title: 'Zone', dataIndex: 'zone', render: (z) => z ? <Tag color={z.color ?? 'default'}>{z.name}</Tag> : <span style={{ color: '#ccc' }}>-</span> },
           ]}
         />
       </Card>
-      <Modal title="โยกย้าย CARE_GIVER" open={transferModal} onOk={handleTransfer} onCancel={() => setTransferModal(false)} okText="ยืนยัน">
+      <Modal title="โยกย้าย CARE_GIVER" open={transferModal} onOk={handleTransfer} onCancel={() => { setTransferModal(false); setSelectedFW(''); setTargetZone(''); }} okText="ยืนยัน">
         <div style={{ marginBottom: 12 }}>
           <div style={{ marginBottom: 4 }}>เลือก CARE_GIVER</div>
-          <Select style={{ width: '100%' }} placeholder="เลือก FW" onChange={setSelectedFW} options={fws.map((f) => ({ value: f.id, label: f.displayName }))} />
+          <Select style={{ width: '100%' }} placeholder="เลือก FW" value={selectedFW || undefined} onChange={setSelectedFW} options={fws.map((f) => ({ value: f.id, label: `${f.displayName}${f.zone ? ` (${f.zone.name})` : ''}` }))} />
         </div>
         <div>
-          <div style={{ marginBottom: 4 }}>ย้ายไปยัง CASE_MANAGER</div>
-          <Select style={{ width: '100%' }} placeholder="เลือก CM" onChange={setTargetCM} options={cms.map((c) => ({ value: c.id, label: c.displayName }))} />
+          <div style={{ marginBottom: 4 }}>ย้ายไปยัง Zone</div>
+          <Select style={{ width: '100%' }} placeholder="เลือก Zone" value={targetZone || undefined} onChange={setTargetZone} options={zones.map((z) => ({ value: z.id, label: z.name }))} />
         </div>
       </Modal>
     </>
