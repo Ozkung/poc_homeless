@@ -429,10 +429,10 @@ export default function EventsPage() {
                   paddingBottom: bars.length > 0 ? 4 : 0,
                 }}
               >
-                {/* Day number cells — row 1 */}
+                {/* Day cells — span ALL rows so the full column height is clickable */}
                 {weekDays.map((day, di) => {
                   if (!day) return (
-                    <div key={`e-${di}`} style={{ gridRow: 1, gridColumn: di + 1, borderRight: '1px solid #fafafa' }} />
+                    <div key={`e-${di}`} style={{ gridRow: '1 / -1', gridColumn: di + 1, borderRight: '1px solid #fafafa', zIndex: 1 }} />
                   );
                   const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
                   const isToday = isSameDay(day, new Date());
@@ -441,17 +441,19 @@ export default function EventsPage() {
                       key={day.toISOString()}
                       onClick={() => setSelectedDate((prev) => prev && isSameDay(prev, day) ? null : day)}
                       style={{
-                        gridRow: 1, gridColumn: di + 1,
-                        minHeight: isMobile ? 28 : 32,
+                        gridRow: '1 / -1', gridColumn: di + 1,
+                        minHeight: isMobile ? 48 : 60,
                         borderRight: '1px solid #f5f5f5',
                         padding: isMobile ? '4px 4px 2px' : '6px 8px 2px',
                         textAlign: 'left',
+                        verticalAlign: 'top',
                         background: isSelected ? '#e6f4ff' : 'transparent',
                         outline: isSelected ? '2px solid #1677ff' : 'none',
                         outlineOffset: -2,
                         cursor: 'pointer',
                         transition: 'background 0.15s',
                         border: 'none',
+                        zIndex: 1,
                       }}
                     >
                       <span style={{
@@ -467,15 +469,17 @@ export default function EventsPage() {
                   );
                 })}
 
-                {/* Event bars — rows 2, 3, 4 */}
+                {/* Event bars — rows 2, 3, 4 (z-index: 2 so they sit above day cells) */}
                 {visible.map(({ ev, startCol, span, startsHere, endsHere }, idx) => (
                   <div
                     key={ev.id}
                     title={ev.title}
-                    onClick={() => setSelectedDate(new Date(ev.startDate))}
+                    onClick={(e) => { e.stopPropagation(); setSelectedDate(new Date(ev.startDate)); }}
                     style={{
                       gridRow: idx + 2,
                       gridColumn: `${startCol} / ${startCol + span}`,
+                      position: 'relative',
+                      zIndex: 2,
                       background: PRIORITY_LIGHT[ev.priority],
                       color: PRIORITY_TEXT[ev.priority],
                       borderLeft: startsHere ? `3px solid ${PRIORITY_BG[ev.priority]}` : '3px solid transparent',
@@ -500,10 +504,12 @@ export default function EventsPage() {
                 {/* +N more — row after last visible */}
                 {hidden > 0 && (
                   <div
-                    onClick={() => setSelectedDate(new Date(bars[MAX].ev.startDate))}
+                    onClick={(e) => { e.stopPropagation(); setSelectedDate(new Date(bars[MAX].ev.startDate)); }}
                     style={{
                       gridRow: MAX + 2,
                       gridColumn: '1 / -1',
+                      position: 'relative',
+                      zIndex: 2,
                       fontSize: 10,
                       color: '#888',
                       padding: '2px 6px',
