@@ -108,9 +108,15 @@ export class UsersService {
       const zone = await this.prisma.zone.findFirst({ where: { id: zoneId, organizationId: orgId } });
       if (!zone) throw new NotFoundException('Zone not found');
     }
-    return this.prisma.user.update({
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: userId }, data: { zoneId } }),
+      this.prisma.user.updateMany({
+        where: { supervisorId: userId, role: 'CARE_GIVER', organizationId: orgId },
+        data: { zoneId },
+      }),
+    ]);
+    return this.prisma.user.findUnique({
       where: { id: userId },
-      data: { zoneId },
       select: { id: true, displayName: true, zone: { select: { id: true, name: true, color: true } } },
     });
   }
