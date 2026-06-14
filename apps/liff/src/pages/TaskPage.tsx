@@ -128,7 +128,7 @@ export default function TaskPage() {
                   )}
                   {task.status !== 'DONE' && task.status !== 'NOT_FOUND' && task.formTemplate && (
                     <Link
-                      to={`/form/${task.id}/${task.formTemplate.id ?? 'default'}`}
+                      to={`/form/${task.id}/${task.formTemplate.id ?? 'default'}?token=${task.liffToken ?? ''}`}
                       className="flex-1 text-center text-xs font-semibold py-2 px-3 bg-purple-600 text-white rounded-lg"
                     >
                       กรอกแบบฟอร์ม

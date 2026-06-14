@@ -23,13 +23,35 @@ export class TasksService {
         patient: { select: { id: true, hn: true, nameEnc: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
         formTemplate: { select: { id: true, title: true, fields: true } },
         event: { select: { id: true, title: true, note: true, startDate: true, endDate: true, priority: true } },
-        liffToken: true,
-        tokenExp: true,
       },
       orderBy: { createdAt: 'asc' },
     });
+
+    // Refresh LIFF tokens for tasks that have a form but no valid token in Redis
+    await Promise.all(
+      tasks
+        .filter((t) => t.formTemplateId)
+        .map(async (t) => {
+          if (!t.liffToken) {
+            await this.generateLiffToken(t.id);
+            return;
+          }
+          const key = `liff:task:${t.id}:${t.liffToken}`;
+          const exists = await this.redis.exists(key);
+          if (!exists) await this.generateLiffToken(t.id);
+        }),
+    );
+
+    // Re-fetch to get updated liffTokens after any regeneration
+    const refreshed = await this.prisma.eventTask.findMany({
+      where: { id: { in: tasks.map((t) => t.id) } },
+      select: { id: true, liffToken: true },
+    });
+    const tokenMap = Object.fromEntries(refreshed.map((t) => [t.id, t.liffToken]));
+
     return tasks.map((t: any) => ({
       ...t,
+      liffToken: tokenMap[t.id] ?? t.liffToken,
       patient: t.patient ? { ...t.patient, name: this.crypto.decrypt(t.patient.nameEnc), nameEnc: undefined } : null,
     }));
   }
