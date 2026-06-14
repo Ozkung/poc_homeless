@@ -12,8 +12,10 @@ export default function MedVolInventoryPage() {
   const [adjModal, setAdjModal] = useState<string | null>(null);
   const [historyModal, setHistoryModal] = useState<string | null>(null);
   const [historyData, setHistoryData] = useState<any[]>([]);
+  const [createModal, setCreateModal] = useState(false);
   const [stockForm] = Form.useForm();
   const [adjForm] = Form.useForm();
+  const [createForm] = Form.useForm();
 
   const load = async () => {
     if (!token) return;
@@ -64,6 +66,17 @@ export default function MedVolInventoryPage() {
       body: JSON.stringify({ status: approved ? 'APPROVED' : 'REJECTED' }),
     });
     if (res.ok) { message.success(approved ? 'อนุมัติแล้ว' : 'ปฏิเสธแล้ว'); load(); }
+    else message.error('เกิดข้อผิดพลาด');
+  };
+
+  const handleCreate = async () => {
+    const values = await createForm.validateFields();
+    const res = await fetch('/api/inventory', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(values),
+    });
+    if (res.ok) { message.success('เพิ่มยา/วัสดุสำเร็จ'); setCreateModal(false); createForm.resetFields(); load(); }
     else message.error('เกิดข้อผิดพลาด');
   };
 
@@ -123,7 +136,10 @@ export default function MedVolInventoryPage() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 20, fontSize: 22, fontWeight: 700 }}>Inventory</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Inventory</h1>
+        <Button type="primary" onClick={() => setCreateModal(true)}>+ เพิ่มยา / วัสดุใหม่</Button>
+      </div>
 
       <Tabs
         items={[
@@ -156,6 +172,23 @@ export default function MedVolInventoryPage() {
           </Form.Item>
           <Form.Item name="reason" label="เหตุผล" rules={[{ required: true }]}>
             <Input.TextArea rows={3} placeholder="เช่น ยาหมดอายุ, ชำรุด, ตรวจนับผิดพลาด" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal title="เพิ่มยา / วัสดุใหม่" open={createModal} onOk={handleCreate} onCancel={() => { setCreateModal(false); createForm.resetFields(); }} okText="บันทึก">
+        <Form form={createForm} layout="vertical">
+          <Form.Item name="name" label="ชื่อยา / วัสดุ" rules={[{ required: true }]}><Input placeholder="เช่น Paracetamol 500mg" /></Form.Item>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Form.Item name="unit" label="หน่วย" rules={[{ required: true }]} style={{ flex: 1 }}>
+              <Select options={['เม็ด','แคปซูล','ขวด','ซอง','ชิ้น','กล่อง','ถุง','หลอด','อัน'].map((u) => ({ value: u, label: u }))} />
+            </Form.Item>
+            <Form.Item name="category" label="หมวดหมู่" rules={[{ required: true }]} style={{ flex: 1 }}>
+              <Select options={[{ value: 'DRUG', label: 'ยา' }, { value: 'SUPPLY', label: 'วัสดุ' }]} />
+            </Form.Item>
+          </div>
+          <Form.Item name="lowStockThreshold" label="เกณฑ์แจ้งเตือน Stock ต่ำ" rules={[{ required: true }]}>
+            <InputNumber min={0} style={{ width: '100%' }} addonAfter="หน่วย" />
           </Form.Item>
         </Form>
       </Modal>
