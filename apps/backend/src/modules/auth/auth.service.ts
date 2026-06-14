@@ -49,7 +49,7 @@ export class AuthService {
     await this.redis.del(`refresh:${refreshToken}`);
   }
 
-  private async verifyLineIdToken(idToken: string): Promise<{ sub: string }> {
+  private async verifyLineIdToken(idToken: string): Promise<{ sub: string; name?: string; picture?: string }> {
     const clientId = this.config.get<string>('line.channelId') ?? '';
     const body = new URLSearchParams({ id_token: idToken, client_id: clientId });
     const res = await fetch('https://api.line.me/oauth2/v2.1/verify', {
@@ -58,13 +58,24 @@ export class AuthService {
       body: body.toString(),
     });
     if (!res.ok) throw new UnauthorizedException('Invalid LIFF token');
-    return res.json() as Promise<{ sub: string }>;
+    return res.json() as Promise<{ sub: string; name?: string; picture?: string }>;
   }
 
   async verifyLiffToken(idToken: string) {
     const profile = await this.verifyLineIdToken(idToken);
     const user = await this.prisma.user.findUnique({ where: { lineUserId: profile.sub } });
     if (!user || !user.isActive) throw new UnauthorizedException('Line user not linked');
+
+    // Keep LINE profile in sync on every login
+    if (profile.name || profile.picture) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          ...(profile.name    && { lineDisplayName: profile.name }),
+          ...(profile.picture && { linePictureUrl: profile.picture }),
+        },
+      });
+    }
 
     const accessToken = await this.jwt.signAsync(
       { sub: user.id, email: user.email, role: user.role, orgId: user.organizationId },
@@ -97,6 +108,8 @@ export class AuthService {
         role: 'GUEST',
         displayName: `${data.firstName} ${data.lastName}`,
         lineUserId: profile.sub,
+        lineDisplayName: profile.name ?? null,
+        linePictureUrl: profile.picture ?? null,
         phone: data.phone,
         preferredZoneId: data.zoneId ?? null,
       },
@@ -128,7 +141,14 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
 
-    await this.prisma.user.update({ where: { id: user.id }, data: { lineUserId: profile.sub } });
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lineUserId: profile.sub,
+        lineDisplayName: profile.name ?? null,
+        linePictureUrl: profile.picture ?? null,
+      },
+    });
 
     this.sseService.emit(user.organizationId, ['CASE_MANAGER', 'DOCTOR'], {
       type: 'guest_joined',

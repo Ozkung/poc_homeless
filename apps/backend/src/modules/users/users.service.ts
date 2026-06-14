@@ -7,7 +7,7 @@ import * as bcrypt from 'bcrypt';
 const USER_SELECT = {
   id: true, email: true, displayName: true, role: true,
   phone: true, gender: true, avatarUrl: true,
-  isActive: true, lineUserId: true, createdAt: true, supervisorId: true,
+  isActive: true, lineUserId: true, lineDisplayName: true, linePictureUrl: true, createdAt: true, supervisorId: true,
   zone: { select: { id: true, name: true, color: true } },
   supervisor: { select: { zone: { select: { id: true, name: true, color: true } } } },
 } as const;

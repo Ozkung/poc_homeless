@@ -9,6 +9,8 @@ interface User {
   id: string; displayName: string; email: string; role: string;
   phone: string | null; gender: string | null; isActive: boolean;
   lineUserId: string | null;
+  lineDisplayName: string | null;
+  linePictureUrl: string | null;
   supervisorId?: string; zone?: Zone | null; supervisor?: { zone?: Zone | null };
   createdAt: string;
 }
@@ -154,10 +156,19 @@ export default function AdminUsersPage() {
             },
           },
           {
-            title: 'LINE', dataIndex: 'lineUserId', width: 90,
-            render: (v: string | null) => v
-              ? <Tag color="green" style={{ fontSize: 10, fontFamily: 'monospace' }}>✓ Linked</Tag>
-              : <span style={{ color: '#d9d9d9', fontSize: 12 }}>—</span>,
+            title: 'LINE', dataIndex: 'lineUserId', width: 160,
+            render: (_: any, record: User) => record.lineUserId ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {record.linePictureUrl ? (
+                  <img src={record.linePictureUrl} alt="LINE" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#06c755', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ color: '#fff', fontSize: 10, fontWeight: 700 }}>L</span>
+                  </div>
+                )}
+                <span style={{ fontSize: 12, color: '#111' }}>{record.lineDisplayName ?? '—'}</span>
+              </div>
+            ) : <span style={{ color: '#d9d9d9', fontSize: 12 }}>—</span>,
           },
           { title: 'สถานะ', dataIndex: 'isActive', render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Active' : 'Inactive'}</Tag> },
           {
@@ -207,9 +218,31 @@ export default function AdminUsersPage() {
             <Descriptions column={1} size="small" style={{ marginBottom: 20 }} bordered>
               <Descriptions.Item label="อีเมล">{editUser.email}</Descriptions.Item>
               <Descriptions.Item label="LINE">
-                {editUser.lineUserId
-                  ? <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#06c755' }}>{editUser.lineUserId}</span>
-                  : <span style={{ color: '#aaa', fontSize: 12 }}>ยังไม่ได้เชื่อมต่อ</span>}
+                {editUser.lineUserId ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {editUser.linePictureUrl ? (
+                      <img
+                        src={editUser.linePictureUrl}
+                        alt="LINE"
+                        style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                      />
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#06c755', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>L</span>
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>
+                        {editUser.lineDisplayName ?? '—'}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#aaa', fontFamily: 'monospace' }}>
+                        {editUser.lineUserId.slice(0, 16)}…
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <span style={{ color: '#aaa', fontSize: 12 }}>ยังไม่ได้เชื่อมต่อ</span>
+                )}
               </Descriptions.Item>
               <Descriptions.Item label="เข้าร่วม">
                 {new Date(editUser.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}

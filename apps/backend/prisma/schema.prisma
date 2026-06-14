@@ -117,7 +117,9 @@ model User {
   passwordHash   String
   role           UserRole
   displayName    String
-  lineUserId     String?      @unique
+  lineUserId      String?      @unique
+  lineDisplayName String?
+  linePictureUrl  String?
   phone          String?
   gender         Gender?
   birthDate      DateTime?
