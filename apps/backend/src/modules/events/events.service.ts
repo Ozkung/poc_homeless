@@ -103,6 +103,8 @@ export class EventsService {
       // LIFF token generation is best-effort; do not fail the request
     }
 
+    void this.audit.log({ orgId, actorId: userId, action: 'CREATE_EVENT', entity: 'Event', entityId: event.id, detail: data.title });
+
     // Step 4: Return event with tasks included
     return this.prisma.event.findUnique({
       where: { id: event.id },
@@ -115,8 +117,6 @@ export class EventsService {
         },
       },
     });
-    void this.audit.log({ orgId, actorId: userId, action: 'CREATE_EVENT', entity: 'Event', entityId: result.id, detail: data.title });
-    return result;
   }
 
   async update(id: string, orgId: string, data: any) {
