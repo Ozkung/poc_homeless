@@ -266,38 +266,41 @@ async function main() {
   console.log(`✓ Alerts: 5 records (OVERDUE ×3, SOS ×1, MISSING ×1)`);
 
   // ── Form Templates ────────────────────────────────────────────────────────
+  const form1Fields = [
+    { id: 'f1', type: 'number',   label: 'น้ำหนัก (กก.)',                required: true,  order: 0 },
+    { id: 'f2', type: 'number',   label: 'ส่วนสูง (ซม.)',                required: true,  order: 1 },
+    { id: 'f3', type: 'number',   label: 'ความดันโลหิต (Systolic)',       required: false, order: 2 },
+    { id: 'f4', type: 'number',   label: 'ความดันโลหิต (Diastolic)',      required: false, order: 3 },
+    { id: 'f5', type: 'select',   label: 'ระดับความเจ็บปวด (1-10)',      required: true,  order: 4, options: ['1','2','3','4','5','6','7','8','9','10'] },
+    { id: 'f6', type: 'textarea', label: 'อาการที่สังเกตพบ',              required: false, order: 5 },
+  ];
+  const form2Fields = [
+    { id: 'g1', type: 'radio',    label: 'มีที่พักอาศัยหรือไม่',            required: true,  order: 0, options: ['มี', 'ไม่มี'] },
+    { id: 'g2', type: 'radio',    label: 'มีรายได้ประจำหรือไม่',            required: true,  order: 1, options: ['มี', 'ไม่มี'] },
+    { id: 'g3', type: 'scale',    label: 'ระดับความปลอดภัยในพื้นที่ (1-5)', required: false, order: 2, min: 1, max: 5 },
+    { id: 'g4', type: 'text',     label: 'ญาติผู้ใกล้ชิดที่ติดต่อได้',     required: false, order: 3 },
+    { id: 'g5', type: 'textarea', label: 'ความต้องการเร่งด่วน',             required: false, order: 4 },
+  ];
+
   const form1 = await prisma.formTemplate.upsert({
     where:  { id: 'form-seed-001' },
-    update: {},
+    update: { fields: form1Fields },
     create: {
       id: 'form-seed-001', organizationId: org.id, createdById: admin.id,
       title: 'แบบประเมินสุขภาพเบื้องต้น',
       description: 'ใช้ประเมินสุขภาพผู้ป่วยในชุมชนครั้งแรก',
-      fields: [
-        { id: 'f1', type: 'number',   label: 'น้ำหนัก (กก.)',                required: true,  order: 0 },
-        { id: 'f2', type: 'number',   label: 'ส่วนสูง (ซม.)',                required: true,  order: 1 },
-        { id: 'f3', type: 'number',   label: 'ความดันโลหิต (Systolic)',       required: false, order: 2 },
-        { id: 'f4', type: 'number',   label: 'ความดันโลหิต (Diastolic)',      required: false, order: 3 },
-        { id: 'f5', type: 'select',   label: 'ระดับความเจ็บปวด (1-10)',      required: true,  order: 4, options: ['1','2','3','4','5','6','7','8','9','10'] },
-        { id: 'f6', type: 'textarea', label: 'อาการที่สังเกตพบ',              required: false, order: 5 },
-      ],
+      fields: form1Fields,
     },
   });
 
   const form2 = await prisma.formTemplate.upsert({
     where:  { id: 'form-seed-002' },
-    update: {},
+    update: { fields: form2Fields },
     create: {
       id: 'form-seed-002', organizationId: org.id, createdById: cm1.id,
       title: 'แบบประเมินความเสี่ยงและความต้องการ',
       description: 'ประเมินความเสี่ยงและความต้องการขั้นพื้นฐาน',
-      fields: [
-        { id: 'g1', type: 'radio',    label: 'มีที่พักอาศัยหรือไม่',          required: true,  order: 0 },
-        { id: 'g2', type: 'radio',    label: 'มีรายได้ประจำหรือไม่',          required: true,  order: 1 },
-        { id: 'g3', type: 'scale',    label: 'ระดับความปลอดภัยในพื้นที่ (1-5)', required: false, order: 2 },
-        { id: 'g4', type: 'text',     label: 'ญาติผู้ใกล้ชิดที่ติดต่อได้',   required: false, order: 3 },
-        { id: 'g5', type: 'textarea', label: 'ความต้องการเร่งด่วน',           required: false, order: 4 },
-      ],
+      fields: form2Fields,
     },
   });
   console.log(`✓ Form templates: 2 records`);
