@@ -49,11 +49,7 @@ export default function AdminUsersPage() {
     });
     if (res.ok) {
       message.success('กำหนด Zone แล้ว');
-      setUsers((prev) => prev.map((u) => {
-        if (u.id !== userId) return u;
-        const zone = zones.find((z) => z.id === zoneId) ?? null;
-        return { ...u, zone };
-      }));
+      load();
     } else {
       message.error('เกิดข้อผิดพลาด');
     }
