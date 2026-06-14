@@ -1,16 +1,27 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Badge, Card, Collapse, Empty, Spin, Tag, Typography } from 'antd';
+import { Badge, Button, Card, Collapse, Empty, Form, Modal, Spin, Tag, Typography, message } from 'antd';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, MapPin, User, ClipboardList, AlertCircle } from 'lucide-react';
 import { STATUS_COLOR as PATIENT_STATUS_COLOR, STATUS_LABEL as PATIENT_STATUS_LABEL } from '@/lib/patientStatus';
+import { FormFieldRenderer } from '@/components/FormFieldRenderer';
+import type { FormField } from '@homemed/shared-types';
 
 const { Text, Title } = Typography;
 
 const STATUS_COLOR: Record<string, string> = { PENDING: 'orange', IN_PROGRESS: 'blue', DONE: 'green', NOT_FOUND: 'red' };
 const STATUS_LABEL: Record<string, string> = { PENDING: 'รอดำเนินการ', IN_PROGRESS: 'กำลังดำเนินการ', DONE: 'เสร็จแล้ว', NOT_FOUND: 'ไม่พบผู้ป่วย' };
-const PRIORITY_COLOR: Record<string, string> = { HIGH: 'red', MEDIUM: 'orange', LOW: 'green' };
+const PRIORITY_COLOR: Record<string, string> = { CRITICAL: 'red', URGENT: 'orange', NORMAL: 'blue' };
+
+interface FormState {
+  taskId: string;
+  liffToken: string;
+  formTitle: string;
+  patientName: string;
+  patientHn: string;
+  fields: FormField[];
+}
 
 export default function FWTasksPage() {
   const { data: session } = useSession();
@@ -19,14 +30,64 @@ export default function FWTasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // Form modal state
+  const [formState, setFormState] = useState<FormState | null>(null);
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadTasks = () => {
     if (!token) return;
     fetch('/api/tasks/my', { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.ok ? r.json() : [])
       .then((d) => setTasks(Array.isArray(d) ? d : []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [token]);
+  };
+
+  useEffect(() => { loadTasks(); }, [token]);
+
+  const openForm = (task: any) => {
+    setAnswers({});
+    setFormState({
+      taskId: task.id,
+      liffToken: task.liffToken ?? '',
+      formTitle: task.formTemplate.title,
+      patientName: task.patient?.name ?? '—',
+      patientHn: task.patient?.hn ?? '—',
+      fields: (task.formTemplate.fields as FormField[]).slice().sort((a, b) => a.order - b.order),
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (!formState) return;
+
+    const missing = formState.fields.filter((f) => f.required && !answers[f.id]);
+    if (missing.length > 0) {
+      message.warning(`กรุณากรอกข้อมูล: ${missing.map((f) => f.label).join(', ')}`);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const answerArray = Object.entries(answers).map(([fieldId, value]) => ({ fieldId, value }));
+      const res = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: formState.taskId, token: formState.liffToken, answers: answerArray }),
+      });
+      if (res.ok) {
+        message.success('ส่งแบบฟอร์มสำเร็จ');
+        setFormState(null);
+        setLoading(true);
+        loadTasks();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        message.error(err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Group tasks by event
   const eventGroups = tasks.reduce((acc: Record<string, any>, t: any) => {
@@ -133,9 +194,19 @@ export default function FWTasksPage() {
                       </div>
                     )}
                     {task.formTemplate && (
-                      <div style={{ display: 'flex', gap: 6, fontSize: 13 }}>
-                        <ClipboardList size={13} color="#888" style={{ flexShrink: 0, marginTop: 2 }} />
-                        <Text>แบบฟอร์ม: <strong>{task.formTemplate.title}</strong></Text>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                        <ClipboardList size={13} color="#888" style={{ flexShrink: 0 }} />
+                        <Text style={{ flex: 1 }}>แบบฟอร์ม: <strong>{task.formTemplate.title}</strong></Text>
+                        {task.status !== 'DONE' && task.status !== 'NOT_FOUND' && (
+                          <Button
+                            size="small"
+                            type="primary"
+                            icon={<ClipboardList size={11} />}
+                            onClick={() => openForm(task)}
+                          >
+                            กรอกแบบฟอร์ม
+                          </Button>
+                        )}
                       </div>
                     )}
                     <div style={{ marginTop: 4 }}>
@@ -153,6 +224,51 @@ export default function FWTasksPage() {
           </Card>
         ))
       )}
+
+      {/* Form fill modal */}
+      <Modal
+        open={!!formState}
+        title={
+          formState && (
+            <div>
+              <div style={{ fontWeight: 700 }}>{formState.formTitle}</div>
+              <div style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>
+                ผู้ป่วย: {formState.patientName} (HN {formState.patientHn})
+              </div>
+            </div>
+          )
+        }
+        onCancel={() => { setFormState(null); setAnswers({}); }}
+        footer={[
+          <Button key="cancel" onClick={() => { setFormState(null); setAnswers({}); }}>ยกเลิก</Button>,
+          <Button key="submit" type="primary" loading={submitting} onClick={handleSubmit}>ส่งแบบฟอร์ม</Button>,
+        ]}
+        width={520}
+        destroyOnClose
+      >
+        {formState && (
+          <Form layout="vertical" style={{ marginTop: 8 }}>
+            {formState.fields.map((field) => (
+              <Form.Item
+                key={field.id}
+                label={
+                  <span>
+                    {field.label}
+                    {field.required && <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>}
+                  </span>
+                }
+                style={{ marginBottom: 16 }}
+              >
+                <FormFieldRenderer
+                  field={field}
+                  value={answers[field.id]}
+                  onChange={(id, val) => setAnswers((prev) => ({ ...prev, [id]: val }))}
+                />
+              </Form.Item>
+            ))}
+          </Form>
+        )}
+      </Modal>
     </div>
   );
 }

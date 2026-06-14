@@ -1,10 +1,25 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Table, Tag, Button, Modal, Form, Input, Select, DatePicker, message } from 'antd';
+import { Table, Tag, Button, Modal, Form, Input, Select, DatePicker, Drawer, Descriptions, Radio, Popconfirm, Space, message } from 'antd';
+import { EditOutlined, StopOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useSession } from 'next-auth/react';
 
 interface Zone { id: string; name: string; color: string }
-interface User { id: string; displayName: string; email: string; role: string; isActive: boolean; supervisorId?: string; zone?: Zone | null; supervisor?: { zone?: Zone | null } }
+interface User {
+  id: string; displayName: string; email: string; role: string;
+  phone: string | null; gender: string | null; isActive: boolean;
+  supervisorId?: string; zone?: Zone | null; supervisor?: { zone?: Zone | null };
+  createdAt: string;
+}
+
+const ROLE_COLOR: Record<string, string> = {
+  SUPER_ADMIN: 'purple', ADMIN: 'geekblue', CASE_MANAGER: 'green',
+  CARE_GIVER: 'orange', MEDICAL_VOLUNTEER: 'blue', DOCTOR: 'cyan',
+};
+const ROLE_LABEL: Record<string, string> = {
+  SUPER_ADMIN: 'SUPER ADMIN', ADMIN: 'ADMIN', CASE_MANAGER: 'CASE MANAGER',
+  CARE_GIVER: 'CARE GIVER', MEDICAL_VOLUNTEER: 'MED VOLUNTEER', DOCTOR: 'DOCTOR',
+};
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
@@ -14,6 +29,11 @@ export default function AdminUsersPage() {
   const [createModal, setCreateModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [form] = Form.useForm();
+
+  // Profile drawer state
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [editForm] = Form.useForm();
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     if (!token) return;
@@ -26,6 +46,56 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => { load(); }, [token]);
+
+  const openEdit = (user: User) => {
+    setEditUser(user);
+    editForm.setFieldsValue({
+      displayName: user.displayName,
+      phone: user.phone ?? '',
+      gender: user.gender ?? undefined,
+      role: user.role,
+      isActive: user.isActive,
+    });
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editUser) return;
+    const values = await editForm.validateFields();
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/users/${editUser.id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          displayName: values.displayName,
+          phone: values.phone || null,
+          gender: values.gender ?? null,
+          role: values.role,
+          isActive: values.isActive,
+        }),
+      });
+      if (res.ok) {
+        message.success('บันทึกข้อมูลแล้ว');
+        setEditUser(null);
+        load();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        message.error(err.message ?? 'เกิดข้อผิดพลาด');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleActive = async (user: User) => {
+    const res = await fetch(`/api/users/${user.id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: !user.isActive }),
+    });
+    if (res.ok) { message.success(user.isActive ? 'ปิดการใช้งานแล้ว' : 'เปิดการใช้งานแล้ว'); load(); }
+    else message.error('เกิดข้อผิดพลาด');
+  };
 
   const handleCreate = async () => {
     const values = await form.validateFields();
@@ -47,17 +117,8 @@ export default function AdminUsersPage() {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ zoneId }),
     });
-    if (res.ok) {
-      message.success('กำหนด Zone แล้ว');
-      load();
-    } else {
-      message.error('เกิดข้อผิดพลาด');
-    }
-  };
-
-  const roleColor: Record<string, string> = {
-    SUPER_ADMIN: 'purple', ADMIN: 'geekblue', CASE_MANAGER: 'green',
-    CARE_GIVER: 'orange', MEDICAL_VOLUNTEER: 'blue', DOCTOR: 'cyan',
+    if (res.ok) { message.success('กำหนด Zone แล้ว'); load(); }
+    else message.error('เกิดข้อผิดพลาด');
   };
 
   return (
@@ -66,26 +127,25 @@ export default function AdminUsersPage() {
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>ผู้ใช้งาน</h1>
         <Button type="primary" onClick={() => setCreateModal(true)}>+ เพิ่มผู้ใช้</Button>
       </div>
+
       <Table
         dataSource={users} rowKey="id" size="small"
         columns={[
-          { title: 'ชื่อ', dataIndex: 'displayName' },
+          { title: 'ชื่อ', dataIndex: 'displayName', render: (v, r) => (
+            <span>
+              <span style={{ fontWeight: 600 }}>{v}</span>
+              {r.phone && <div style={{ fontSize: 11, color: '#aaa' }}>{r.phone}</div>}
+            </span>
+          )},
           { title: 'อีเมล', dataIndex: 'email' },
-          { title: 'Role', dataIndex: 'role', render: (r) => <Tag color={roleColor[r] ?? 'default'}>{r}</Tag> },
-          // { title: 'สังกัด CM', dataIndex: 'supervisorId', render: (id) => cms.find((c) => c.id === id)?.displayName ?? '-' },
+          { title: 'Role', dataIndex: 'role', render: (r) => <Tag color={ROLE_COLOR[r] ?? 'default'}>{ROLE_LABEL[r] ?? r}</Tag> },
           {
-            title: 'Zone',
-            dataIndex: 'zone',
+            title: 'Zone', dataIndex: 'zone',
             render: (zone: Zone | null, record: User) => {
               const effectiveZone = zone ?? record.supervisor?.zone ?? null;
               if (record.role !== 'CASE_MANAGER') return effectiveZone ? <Tag color={effectiveZone.color ?? 'default'}>{effectiveZone.name}</Tag> : <span style={{ color: '#ccc' }}>-</span>;
               return (
-                <Select
-                  size="small"
-                  style={{ width: 150 }}
-                  value={zone?.id ?? null}
-                  allowClear
-                  placeholder="เลือก Zone"
+                <Select size="small" style={{ width: 150 }} value={zone?.id ?? null} allowClear placeholder="เลือก Zone"
                   onChange={(val) => handleAssignZone(record.id, val ?? null)}
                   options={zones.map((z) => ({ value: z.id, label: z.name }))}
                 />
@@ -93,8 +153,87 @@ export default function AdminUsersPage() {
             },
           },
           { title: 'สถานะ', dataIndex: 'isActive', render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Active' : 'Inactive'}</Tag> },
+          {
+            title: '',
+            width: 80,
+            render: (_: any, record: User) => (
+              <Space size={4}>
+                <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)} />
+                <Popconfirm
+                  title={record.isActive ? 'ปิดการใช้งานผู้ใช้นี้?' : 'เปิดการใช้งานผู้ใช้นี้?'}
+                  onConfirm={() => handleToggleActive(record)}
+                  okText="ยืนยัน" cancelText="ยกเลิก"
+                  okButtonProps={{ danger: record.isActive }}
+                >
+                  <Button
+                    size="small"
+                    danger={record.isActive}
+                    icon={record.isActive ? <StopOutlined /> : <CheckCircleOutlined />}
+                  />
+                </Popconfirm>
+              </Space>
+            ),
+          },
         ]}
       />
+
+      {/* Profile edit drawer */}
+      <Drawer
+        title={
+          <span>
+            แก้ไขโปรไฟล์
+            {editUser && <Tag color={ROLE_COLOR[editUser.role] ?? 'default'} style={{ marginLeft: 8, fontSize: 11 }}>{ROLE_LABEL[editUser.role] ?? editUser.role}</Tag>}
+          </span>
+        }
+        open={!!editUser}
+        onClose={() => setEditUser(null)}
+        width={400}
+        footer={
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <Button onClick={() => setEditUser(null)}>ยกเลิก</Button>
+            <Button type="primary" loading={saving} onClick={handleSaveProfile}>บันทึก</Button>
+          </div>
+        }
+      >
+        {editUser && (
+          <>
+            <Descriptions column={1} size="small" style={{ marginBottom: 20 }} bordered>
+              <Descriptions.Item label="อีเมล">{editUser.email}</Descriptions.Item>
+              <Descriptions.Item label="เข้าร่วม">
+                {new Date(editUser.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </Descriptions.Item>
+            </Descriptions>
+
+            <Form form={editForm} layout="vertical">
+              <Form.Item name="displayName" label="ชื่อแสดง" rules={[{ required: true }]}>
+                <Input />
+              </Form.Item>
+              <Form.Item name="phone" label="เบอร์โทรศัพท์">
+                <Input placeholder="0812345678" />
+              </Form.Item>
+              <Form.Item name="gender" label="เพศ">
+                <Radio.Group>
+                  <Radio.Button value="MALE">ชาย</Radio.Button>
+                  <Radio.Button value="FEMALE">หญิง</Radio.Button>
+                  <Radio.Button value="OTHER">อื่นๆ</Radio.Button>
+                </Radio.Group>
+              </Form.Item>
+              <Form.Item name="role" label="Role" rules={[{ required: true }]}>
+                <Select options={['CASE_MANAGER','CARE_GIVER','MEDICAL_VOLUNTEER','DOCTOR','ADMIN','SUPER_ADMIN'].map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r }))} />
+              </Form.Item>
+              <Form.Item name="isActive" label="สถานะ">
+                <Radio.Group>
+                  <Radio.Button value={true}>Active</Radio.Button>
+                  <Radio.Button value={false}>Inactive</Radio.Button>
+                </Radio.Group>
+              </Form.Item>
+            </Form>
+
+          </>
+        )}
+      </Drawer>
+
+      {/* Create user modal */}
       <Modal title="เพิ่มผู้ใช้" open={createModal} onOk={handleCreate} onCancel={() => { setCreateModal(false); form.resetFields(); setSelectedRole(''); }} okText="สร้าง">
         <Form form={form} layout="vertical">
           <Form.Item name="role" label="Role" rules={[{ required: true }]}>
