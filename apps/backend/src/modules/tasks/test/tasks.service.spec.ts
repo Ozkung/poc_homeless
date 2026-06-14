@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { TasksService } from '../tasks.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AesGcmService } from '../../../common/crypto/aes-gcm.service';
 
 // The @nestjs-modules/ioredis @InjectRedis() decorator resolves to this token
 // (getRedisConnectionToken() returns `${connection || 'default'}_IORedisModuleConnectionToken`)
@@ -16,6 +17,7 @@ const mockPrisma = {
     create: jest.fn(),
     update: jest.fn(),
   },
+  user: { findFirst: jest.fn() },
   activity: { create: jest.fn() },
 };
 
@@ -23,7 +25,12 @@ const mockRedis = {
   get: jest.fn(),
   setex: jest.fn(),
   getdel: jest.fn(),
+  exists: jest.fn().mockResolvedValue(1),
   del: jest.fn(),
+};
+
+const mockCrypto = {
+  decrypt: jest.fn((v: string) => v),
 };
 
 const mockConfig = {
@@ -40,6 +47,7 @@ describe('TasksService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: REDIS_TOKEN, useValue: mockRedis },
         { provide: ConfigService, useValue: mockConfig },
+        { provide: AesGcmService, useValue: mockCrypto },
       ],
     }).compile();
 

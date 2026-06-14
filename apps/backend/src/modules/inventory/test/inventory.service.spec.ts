@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { InventoryService } from '../inventory.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { NotificationsService } from '../../notifications/notifications.service';
+import { AuditLogService } from '../../audit-log/audit-log.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 const mockPrisma: any = {
@@ -23,6 +24,7 @@ const mockPrisma: any = {
     findFirst: jest.fn(), update: jest.fn(),
   },
   user: { findMany: jest.fn(), findUnique: jest.fn() },
+  activity: { create: jest.fn().mockResolvedValue({ id: 'act1' }) },
   $transaction: jest.fn((fnOrOps: any) => {
     if (typeof fnOrOps === 'function') return fnOrOps(mockPrisma);
     return Promise.all(fnOrOps);
@@ -36,6 +38,10 @@ const mockNotifications = {
   enqueueLowStock: jest.fn().mockResolvedValue(undefined),
 };
 
+const mockAuditLog = {
+  log: jest.fn().mockResolvedValue(undefined),
+};
+
 describe('InventoryService', () => {
   let service: InventoryService;
 
@@ -45,6 +51,7 @@ describe('InventoryService', () => {
         InventoryService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationsService, useValue: mockNotifications },
+        { provide: AuditLogService, useValue: mockAuditLog },
       ],
     }).compile();
     service = module.get(InventoryService);
