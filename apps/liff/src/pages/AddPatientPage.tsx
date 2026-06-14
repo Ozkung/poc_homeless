@@ -19,7 +19,7 @@ const CONDITIONS = ['เบาหวาน', 'ความดัน', 'โรค
 export default function AddPatientPage() {
   const [form, setForm] = useState({
     name: '', age: '', gender: '', phone: '',
-    initialComplaint: '', locationText: '',
+    initialComplaint: '', locationText: '', status: 'PENDING',
   });
   const [conditions, setConditions] = useState<string[]>([]);
   const [customCondition, setCustomCondition] = useState('');
@@ -47,6 +47,7 @@ export default function AddPatientPage() {
         name: form.name.trim(),
         age: form.age ? Number(form.age) : undefined,
         gender: form.gender || undefined,
+        status: form.status || undefined,
         phone: form.phone || undefined,
         initialComplaint: form.initialComplaint || undefined,
         locationText: form.locationText || undefined,
@@ -78,7 +79,7 @@ export default function AddPatientPage() {
         <div style={{ fontSize: 22, fontWeight: 800, color: '#1d4ed8', fontFamily: 'monospace' }}>{done.hn}</div>
       </div>
       <button style={btn(false)} onClick={() => liff.closeWindow()}>ปิดหน้าต่าง</button>
-      <button style={btn(true)} onClick={() => { setDone(null); setForm({ name: '', age: '', gender: '', phone: '', initialComplaint: '', locationText: '' }); setConditions([]); }}>
+      <button style={btn(true)} onClick={() => { setDone(null); setForm({ name: '', age: '', gender: '', phone: '', initialComplaint: '', locationText: '', status: 'PENDING' }); setConditions([]); }}>
         เพิ่มผู้ป่วยอีกคน
       </button>
     </div>
@@ -114,6 +115,16 @@ export default function AddPatientPage() {
       <div style={{ marginBottom: 14 }}>
         <label style={lbl}>เบอร์โทรศัพท์</label>
         <input style={inp} type="tel" placeholder="08x-xxx-xxxx" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <label style={lbl}>ระดับ Triage *</label>
+        <select style={inp} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+          <option value="CRITICAL">L1 ฉุกเฉินวิกฤติ (สีแดง)</option>
+          <option value="PENDING">L2 ฉุกเฉินเร่งด่วน (สีเหลือง)</option>
+          <option value="STABLE">L3 ไม่เร่งด่วน (สีเขียว)</option>
+          <option value="MISSING">L4 ทั่วไป (สีฟ้า)</option>
+        </select>
       </div>
 
       <div style={{ marginBottom: 14 }}>

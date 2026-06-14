@@ -67,7 +67,7 @@ export const api = {
       body: JSON.stringify(data),
     }),
   createPatient: (data: {
-    name: string; age?: number; gender?: string;
+    name: string; age?: number; gender?: string; status?: string;
     conditions?: string[]; initialComplaint?: string;
     locationText?: string; phone?: string;
   }) => request<{ id: string; hn: string }>('/patients', { method: 'POST', body: JSON.stringify(data) }),

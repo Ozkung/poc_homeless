@@ -7,6 +7,7 @@ import {
 } from 'antd';
 import Link from 'next/link';
 import dayjs from 'dayjs';
+import { STATUS_OPTIONS } from '@/lib/patientStatus';
 
 const { Title } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -130,12 +131,8 @@ export default function NewPatientPage() {
           </Row>
 
           {/* ── สถานะ ── */}
-          <Form.Item name="status" label="สถานะ" rules={[{ required: true }]}>
-            <Select options={[
-              { value: 'STABLE',   label: 'ปกติ' },
-              { value: 'PENDING',  label: 'รอดำเนินการ' },
-              { value: 'CRITICAL', label: 'วิกฤต' },
-            ]} />
+          <Form.Item name="status" label="สถานะ (Triage)" rules={[{ required: true }]}>
+            <Select options={STATUS_OPTIONS} />
           </Form.Item>
 
           {/* ── สถานที่ / โรคประจำตัว ── */}
