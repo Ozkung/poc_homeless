@@ -15,6 +15,11 @@ export class TasksController {
     return this.tasks.findMyTasks(user.sub);
   }
 
+  @Get('zone')
+  zoneTasks(@CurrentUser() user: JwtPayload) {
+    return this.tasks.findZoneTasks(user.sub, user.orgId);
+  }
+
   @Post(':id/checkin')
   checkin(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.tasks.checkin(id, user.sub);

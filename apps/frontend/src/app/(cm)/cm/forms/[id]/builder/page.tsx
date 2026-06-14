@@ -12,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button, Card, Checkbox, Input, InputNumber, Spin, Tag, Typography, message } from 'antd';
 import { HolderOutlined, CloseOutlined, CopyOutlined } from '@ant-design/icons';
 import {
-  Type, Hash, ChevronDown, Circle, BarChart2, Calendar, AlignLeft, ClipboardList,
+  Type, Hash, ChevronDown, Circle, BarChart2, Calendar, AlignLeft, ClipboardList, CheckSquare,
 } from 'lucide-react';
 import type { FormField, FieldType } from '@homemed/shared-types';
 
@@ -29,6 +29,7 @@ const FIELD_TYPES: { type: FieldType; label: string; icon: React.ReactNode }[] =
   { type: 'scale',    label: 'สเกล',       icon: <BarChart2 size={14} /> },
   { type: 'date',     label: 'วันที่',     icon: <Calendar size={14} /> },
   { type: 'textarea', label: 'ข้อความยาว', icon: <AlignLeft size={14} /> },
+  { type: 'checkbox', label: 'Checkbox',    icon: <CheckSquare size={14} /> },
 ];
 
 function SortableField({ field, onUpdate, onRemove, onDuplicate }: {

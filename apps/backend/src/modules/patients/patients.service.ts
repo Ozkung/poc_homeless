@@ -101,7 +101,7 @@ export class PatientsService {
     await this.findOne(id, orgId);
     return this.prisma.submission.findMany({
       where: { patientId: id },
-      include: { formTemplate: { select: { title: true } }, submittedBy: { select: { displayName: true } } },
+      include: { formTemplate: { select: { title: true, fields: true } }, submittedBy: { select: { displayName: true } } },
       orderBy: { submittedAt: 'desc' },
     });
   }

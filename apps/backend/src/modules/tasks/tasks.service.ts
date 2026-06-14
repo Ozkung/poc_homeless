@@ -16,44 +16,59 @@ export class TasksService {
     @InjectRedis() private redis: Redis,
   ) {}
 
-  async findMyTasks(userId: string) {
-    const tasks = await this.prisma.eventTask.findMany({
-      where: { assigneeId: userId, status: { in: ['PENDING', 'IN_PROGRESS'] } },
-      include: {
-        patient: { select: { id: true, hn: true, nameEnc: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
-        formTemplate: { select: { id: true, title: true, fields: true } },
-        event: { select: { id: true, title: true, note: true, startDate: true, endDate: true, priority: true } },
-      },
-      orderBy: { createdAt: 'asc' },
-    });
+  private readonly TASK_INCLUDE = {
+    patient: { select: { id: true, hn: true, nameEnc: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
+    formTemplate: { select: { id: true, title: true, fields: true } },
+    event: { select: { id: true, title: true, note: true, startDate: true, endDate: true, priority: true } },
+  } as const;
 
-    // Refresh LIFF tokens for tasks that have a form but no valid token in Redis
+  private async refreshTokensAndDecrypt(tasks: any[]) {
     await Promise.all(
       tasks
         .filter((t) => t.formTemplateId)
         .map(async (t) => {
-          if (!t.liffToken) {
-            await this.generateLiffToken(t.id);
-            return;
-          }
-          const key = `liff:task:${t.id}:${t.liffToken}`;
-          const exists = await this.redis.exists(key);
+          if (!t.liffToken) { await this.generateLiffToken(t.id); return; }
+          const exists = await this.redis.exists(`liff:task:${t.id}:${t.liffToken}`);
           if (!exists) await this.generateLiffToken(t.id);
         }),
     );
-
-    // Re-fetch to get updated liffTokens after any regeneration
     const refreshed = await this.prisma.eventTask.findMany({
       where: { id: { in: tasks.map((t) => t.id) } },
       select: { id: true, liffToken: true },
     });
     const tokenMap = Object.fromEntries(refreshed.map((t) => [t.id, t.liffToken]));
-
     return tasks.map((t: any) => ({
       ...t,
       liffToken: tokenMap[t.id] ?? t.liffToken,
       patient: t.patient ? { ...t.patient, name: this.crypto.decrypt(t.patient.nameEnc), nameEnc: undefined } : null,
     }));
+  }
+
+  async findMyTasks(userId: string) {
+    const tasks = await this.prisma.eventTask.findMany({
+      where: { assigneeId: userId, status: { in: ['PENDING', 'IN_PROGRESS'] } },
+      include: this.TASK_INCLUDE,
+      orderBy: { createdAt: 'asc' },
+    });
+    return this.refreshTokensAndDecrypt(tasks);
+  }
+
+  async findZoneTasks(userId: string, orgId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, organizationId: orgId },
+      select: { zoneId: true },
+    });
+    if (!user?.zoneId) return [];
+
+    const tasks = await this.prisma.eventTask.findMany({
+      where: {
+        status: { in: ['PENDING', 'IN_PROGRESS'] },
+        patient: { zoneId: user.zoneId, organizationId: orgId },
+      },
+      include: this.TASK_INCLUDE,
+      orderBy: { event: { startDate: 'asc' } },
+    });
+    return this.refreshTokensAndDecrypt(tasks);
   }
 
   async findOne(id: string) {
