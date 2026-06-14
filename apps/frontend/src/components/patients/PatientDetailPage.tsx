@@ -65,11 +65,13 @@ interface Props {
 export default async function PatientDetailPage({
   id, token, backHref, backLabel = '← ผู้ป่วย', showCarePlan = false, CarePlanTabComponent, showStatusUpdate = false,
 }: Props) {
-  const [patient, activities, submissions] = await Promise.all([
+  const [patient, activities, submissions, assessmentRes] = await Promise.all([
     get<Patient>(`${API_URL}/patients/${id}`, token),
     get<Activity[]>(`${API_URL}/patients/${id}/activities`, token),
     get<Submission[]>(`${API_URL}/patients/${id}/submissions`, token),
+    get<{ data: { healthcareRight?: string }[] }>(`${API_URL}/patients/${id}/assessment?skip=0&limit=1`, token),
   ]);
+  const healthcareRight = assessmentRes?.data?.[0]?.healthcareRight ?? null;
 
   if (!patient) {
     return (
@@ -104,6 +106,7 @@ export default async function PatientDetailPage({
           <Descriptions.Item label="สถานะ">
             <Tag color={STATUS_COLOR[patient.status]}>{STATUS_LABEL[patient.status]}</Tag>
           </Descriptions.Item>
+          {healthcareRight && <Descriptions.Item label="สิทธิรักษาพยาบาล">{healthcareRight}</Descriptions.Item>}
           {patient.conditions.length > 0 && (
             <Descriptions.Item label="โรคประจำตัว" span={3}>
               {patient.conditions.map((c) => <Tag key={c} style={{ marginRight: 4 }}>{c}</Tag>)}
