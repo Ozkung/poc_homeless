@@ -33,6 +33,31 @@ async function main() {
   });
   console.log(`✓ Organisation: ${org.name}`);
 
+  // ── Zones ──────────────────────────────────────────────────────────────────
+  // Must be created BEFORE users so zoneId foreign keys resolve
+  const zonePhraNakhon = await prisma.zone.upsert({
+    where:  { id: 'zone-seed-001' },
+    update: { name: 'เขตพระนคร', description: 'บริเวณสนามหลวง, ท่าช้าง, ท่าพระจันทร์ และวัดโพธิ์' },
+    create: { id: 'zone-seed-001', organizationId: org.id, name: 'เขตพระนคร', description: 'บริเวณสนามหลวง, ท่าช้าง, ท่าพระจันทร์ และวัดโพธิ์', color: '#7c3aed' },
+  });
+  const zonePomPrab = await prisma.zone.upsert({
+    where:  { id: 'zone-seed-002' },
+    update: { name: 'เขตป้อมปราบศัตรูพ่าย', description: 'บริเวณสถานีหัวลำโพง, บ้านหม้อ และชุมชนริมทางรถไฟ' },
+    create: { id: 'zone-seed-002', organizationId: org.id, name: 'เขตป้อมปราบศัตรูพ่าย', description: 'บริเวณสถานีหัวลำโพง, บ้านหม้อ และชุมชนริมทางรถไฟ', color: '#dc2626' },
+  });
+  const zoneNongChok = await prisma.zone.upsert({
+    where:  { id: 'zone-seed-003' },
+    update: { name: 'เขตหนองจอก', description: 'ชุมชนแรงงาน, ริมคลองแสนแสบ และพื้นที่อุตสาหกรรม' },
+    create: { id: 'zone-seed-003', organizationId: org.id, name: 'เขตหนองจอก', description: 'ชุมชนแรงงาน, ริมคลองแสนแสบ และพื้นที่อุตสาหกรรม', color: '#d97706' },
+  });
+  const zoneSamphan = await prisma.zone.upsert({
+    where:  { id: 'zone-seed-004' },
+    update: { name: 'เขตสัมพันธวงศ์', description: 'ย่านเยาวราช, ตลาดน้อย และสะพานเหลือง' },
+    create: { id: 'zone-seed-004', organizationId: org.id, name: 'เขตสัมพันธวงศ์', description: 'ย่านเยาวราช, ตลาดน้อย และสะพานเหลือง', color: '#059669' },
+  });
+  console.log(`✓ Zones: เขตพระนคร, เขตป้อมปราบศัตรูพ่าย, เขตหนองจอก, เขตสัมพันธวงศ์`);
+  void zonePhraNakhon; void zonePomPrab; void zoneNongChok; void zoneSamphan;
+
   // ── Users (with phone + gender) ───────────────────────────────────────────
   const [adminPw, saPw, cmPw, fwPw, mvPw, docPw] = await Promise.all([
     hash('Admin1234!'), hash('SuperAdmin1!'), hash('CaseManager1!'),
@@ -155,30 +180,7 @@ async function main() {
   });
 
   console.log(`✓ Users: admin, sa, cm1, cm2, fw1, fw2, fw3, mv1, doc1, doc2`);
-
-  // ── Zones ──────────────────────────────────────────────────────────────────
-  const zonePhraNakhon = await prisma.zone.upsert({
-    where:  { id: 'zone-seed-001' },
-    update: { name: 'เขตพระนคร', description: 'บริเวณสนามหลวง, ท่าช้าง, ท่าพระจันทร์ และวัดโพธิ์' },
-    create: { id: 'zone-seed-001', organizationId: org.id, name: 'เขตพระนคร', description: 'บริเวณสนามหลวง, ท่าช้าง, ท่าพระจันทร์ และวัดโพธิ์', color: '#7c3aed' },
-  });
-  const zonePomPrab = await prisma.zone.upsert({
-    where:  { id: 'zone-seed-002' },
-    update: { name: 'เขตป้อมปราบศัตรูพ่าย', description: 'บริเวณสถานีหัวลำโพง, บ้านหม้อ และชุมชนริมทางรถไฟ' },
-    create: { id: 'zone-seed-002', organizationId: org.id, name: 'เขตป้อมปราบศัตรูพ่าย', description: 'บริเวณสถานีหัวลำโพง, บ้านหม้อ และชุมชนริมทางรถไฟ', color: '#dc2626' },
-  });
-  const zoneNongChok = await prisma.zone.upsert({
-    where:  { id: 'zone-seed-003' },
-    update: { name: 'เขตหนองจอก', description: 'ชุมชนแรงงาน, ริมคลองแสนแสบ และพื้นที่อุตสาหกรรม' },
-    create: { id: 'zone-seed-003', organizationId: org.id, name: 'เขตหนองจอก', description: 'ชุมชนแรงงาน, ริมคลองแสนแสบ และพื้นที่อุตสาหกรรม', color: '#d97706' },
-  });
-  const zoneSamphan = await prisma.zone.upsert({
-    where:  { id: 'zone-seed-004' },
-    update: { name: 'เขตสัมพันธวงศ์', description: 'ย่านเยาวราช, ตลาดน้อย และสะพานเหลือง' },
-    create: { id: 'zone-seed-004', organizationId: org.id, name: 'เขตสัมพันธวงศ์', description: 'ย่านเยาวราช, ตลาดน้อย และสะพานเหลือง', color: '#059669' },
-  });
-  console.log(`✓ Zones: เขตพระนคร, เขตป้อมปราบศัตรูพ่าย, เขตหนองจอก, เขตสัมพันธวงศ์`);
-  void fw2; void fw3; void zonePhraNakhon; void zonePomPrab; void zoneNongChok; void zoneSamphan; void doc2;
+  void fw2; void fw3; void doc2;
 
   // ── Patients ──────────────────────────────────────────────────────────────
   const patientsData = [

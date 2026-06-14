@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { UsersService } from '../users.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AuditLogService } from '../../audit-log/audit-log.service';
 import { BadRequestException } from '@nestjs/common';
 
 const mockPrisma = {
@@ -10,7 +11,12 @@ const mockPrisma = {
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
+};
+
+const mockAudit = {
+  log: jest.fn().mockResolvedValue(undefined),
 };
 
 describe('UsersService', () => {
@@ -21,6 +27,7 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: AuditLogService, useValue: mockAudit },
       ],
     }).compile();
     service = module.get(UsersService);

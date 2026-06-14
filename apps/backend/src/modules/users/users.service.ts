@@ -1,33 +1,55 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 
-const USER_SELECT = {
+// Core fields — safe to query even before lineDisplayName/linePictureUrl migration
+const USER_SELECT_CORE = {
   id: true, email: true, displayName: true, role: true,
   phone: true, gender: true, avatarUrl: true,
-  isActive: true, lineUserId: true, lineDisplayName: true, linePictureUrl: true, createdAt: true, supervisorId: true,
+  isActive: true, lineUserId: true, createdAt: true, supervisorId: true,
   zone: { select: { id: true, name: true, color: true } },
   supervisor: { select: { zone: { select: { id: true, name: true, color: true } } } },
 } as const;
 
+// Extended fields added by migration 20260614050000_add_line_profile
+const LINE_PROFILE_SELECT = {
+  lineDisplayName: true,
+  linePictureUrl: true,
+} as const;
+
+const USER_SELECT = { ...USER_SELECT_CORE, ...LINE_PROFILE_SELECT } as const;
+
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditLogService,
+  ) {}
 
   async findAll(orgId: string) {
-    return this.prisma.user.findMany({
-      where: { organizationId: orgId },
-      select: USER_SELECT,
-      orderBy: { createdAt: 'asc' },
-    });
+    // Try full select with LINE profile fields; fall back to core if migration not yet applied
+    try {
+      return await this.prisma.user.findMany({
+        where: { organizationId: orgId },
+        select: USER_SELECT,
+        orderBy: { createdAt: 'asc' },
+      });
+    } catch {
+      return this.prisma.user.findMany({
+        where: { organizationId: orgId },
+        select: USER_SELECT_CORE,
+        orderBy: { createdAt: 'asc' },
+      });
+    }
   }
 
   async findOne(id: string, orgId: string) {
     const user = await this.prisma.user.findFirst({
       where: { id, organizationId: orgId },
-      select: USER_SELECT,
+      select: USER_SELECT_CORE,
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
@@ -48,7 +70,7 @@ export class UsersService {
         specialty: data.specialty,
         organizationId: data.orgId,
       },
-      select: USER_SELECT,
+      select: USER_SELECT_CORE,
     });
   }
 
@@ -90,18 +112,33 @@ export class UsersService {
   }
 
   async update(id: string, orgId: string, actorId: string, dto: UpdateUserDto) {
-    await this.findOne(id, orgId);
+    const target = await this.findOne(id, orgId);
     if (dto.role !== undefined && id === actorId) {
       throw new BadRequestException('ไม่สามารถเปลี่ยนสิทธิ์ของตนเองได้');
     }
     if (dto.role === 'GUEST') {
       throw new BadRequestException('ไม่สามารถกำหนด Role เป็น GUEST ได้');
     }
-    return this.prisma.user.update({
+
+    const updated = await this.prisma.user.update({
       where: { id },
       data: dto as any,
-      select: USER_SELECT,
+      select: USER_SELECT_CORE,
     });
+
+    // Audit role changes (GUEST → real role = approval)
+    if (dto.role && dto.role !== target.role) {
+      void this.audit.log({
+        orgId,
+        actorId,
+        action: target.role === 'GUEST' ? 'APPROVE_GUEST' : 'CHANGE_ROLE',
+        entity: 'User',
+        entityId: id,
+        detail: `${target.displayName}: ${target.role} → ${dto.role}`,
+      });
+    }
+
+    return updated;
   }
 
   async assignZone(userId: string, zoneId: string | null, orgId: string) {
