@@ -16,9 +16,10 @@ interface Activity {
   payload?: Record<string, string>;
   actor: { displayName: string };
 }
+interface FieldDef { id: string; label: string; type: string }
 interface Submission {
   id: string; submittedAt: string; answers?: any[];
-  formTemplate: { title: string };
+  formTemplate: { title: string; fields?: FieldDef[] };
   submittedBy: { displayName: string };
 }
 
@@ -157,15 +158,25 @@ export default async function PatientDetailPage({
               </div>
             ),
             children: (
-              <div style={{ display: 'grid', gap: 8 }}>
-                {Array.isArray(s.answers) && (s.answers as any[]).map((ans: any, i: number) => (
-                  <div key={i}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#555' }}>{ans.fieldId}</div>
-                    <div style={{ fontSize: 12, padding: '3px 8px', background: '#f5f5f5', borderRadius: 4, display: 'inline-block', marginTop: 2 }}>
-                      {String(ans.value)}
+              <div style={{ display: 'grid', gap: 10 }}>
+                {Array.isArray(s.answers) && (s.answers as any[]).map((ans: any, i: number) => {
+                  const fieldDef = s.formTemplate.fields?.find((f) => f.id === ans.fieldId);
+                  const label = fieldDef?.label ?? ans.fieldId;
+                  const raw = ans.value;
+                  const display = Array.isArray(raw)
+                    ? (raw as string[]).join(', ')
+                    : raw === null || raw === undefined || raw === ''
+                      ? '—'
+                      : String(raw);
+                  return (
+                    <div key={i}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 2 }}>{label}</div>
+                      <div style={{ fontSize: 12, padding: '4px 10px', background: '#f5f5f5', borderRadius: 6, display: 'inline-block', color: '#333' }}>
+                        {display}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ),
           }))} />,

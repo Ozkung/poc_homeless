@@ -278,7 +278,7 @@ async function main() {
         { id: 'f2', type: 'number',   label: 'ส่วนสูง (ซม.)',                required: true,  order: 1 },
         { id: 'f3', type: 'number',   label: 'ความดันโลหิต (Systolic)',       required: false, order: 2 },
         { id: 'f4', type: 'number',   label: 'ความดันโลหิต (Diastolic)',      required: false, order: 3 },
-        { id: 'f5', type: 'select',   label: 'ระดับความเจ็บปวด (1-10)',      required: true,  order: 4 },
+        { id: 'f5', type: 'select',   label: 'ระดับความเจ็บปวด (1-10)',      required: true,  order: 4, options: ['1','2','3','4','5','6','7','8','9','10'] },
         { id: 'f6', type: 'textarea', label: 'อาการที่สังเกตพบ',              required: false, order: 5 },
       ],
     },
