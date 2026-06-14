@@ -182,6 +182,46 @@ async function main() {
   console.log(`✓ Users: admin, sa, cm1, cm2, fw1, fw2, fw3, mv1, doc1, doc2`);
   void fw2; void fw3; void doc2;
 
+  // ── GUEST users (simulate LINE OA registration, awaiting approval) ──────────
+  const [guestPw1, guestPw2, guestPw3] = await Promise.all([
+    hash('Guest001!'), hash('Guest002!'), hash('Guest003!'),
+  ]);
+  await prisma.user.upsert({
+    where:  { email: 'guest1@line.th' },
+    update: { displayName: 'นายสมชาย อาสาใหม่' },
+    create: {
+      id: 'user-seed-guest1', organizationId: org.id,
+      email: 'guest1@line.th', passwordHash: guestPw1,
+      role: 'GUEST', displayName: 'นายสมชาย อาสาใหม่',
+      phone: '091-111-0001', gender: 'MALE',
+      lineUserId: 'Uguest0000000001',
+    },
+  });
+  await prisma.user.upsert({
+    where:  { email: 'guest2@line.th' },
+    update: { displayName: 'น.ส.วารี ใจดี' },
+    create: {
+      id: 'user-seed-guest2', organizationId: org.id,
+      email: 'guest2@line.th', passwordHash: guestPw2,
+      role: 'GUEST', displayName: 'น.ส.วารี ใจดี',
+      phone: '091-111-0002', gender: 'FEMALE',
+      lineUserId: 'Uguest0000000002',
+    },
+  });
+  await prisma.user.upsert({
+    where:  { email: 'guest3@line.th' },
+    update: { displayName: 'นายปิยะ สมัครใจ' },
+    create: {
+      id: 'user-seed-guest3', organizationId: org.id,
+      email: 'guest3@line.th', passwordHash: guestPw3,
+      role: 'GUEST', displayName: 'นายปิยะ สมัครใจ',
+      phone: '091-111-0003', gender: 'MALE',
+      lineUserId: 'Uguest0000000003',
+    },
+  });
+  console.log(`✓ GUEST users: 3 records (รออนุมัติ)`);
+  console.log(`  → ทดสอบ Assign Role ที่ /admin/users (login ด้วย sa@hospital.th)`);
+
   // ── Patients ──────────────────────────────────────────────────────────────
   const patientsData = [
     { id: 'pat-seed-001', hn: 'HN000001', name: 'นายสมศักดิ์ พลัดถิ่น',   age: 54, gender: 'MALE'   as const, status: 'CRITICAL' as const, locationText: 'ใต้สะพานพระปิ่นเกล้า ฝั่งพระนคร',    conditions: ['เบาหวาน', 'ความดันโลหิตสูง'], cmId: cm1.id, zoneId: 'zone-seed-001' },

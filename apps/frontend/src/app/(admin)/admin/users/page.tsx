@@ -24,7 +24,7 @@ const ROLE_LABEL: Record<string, string> = {
   CARE_GIVER: 'CARE GIVER', MEDICAL_VOLUNTEER: 'MED VOLUNTEER', DOCTOR: 'DOCTOR', GUEST: 'GUEST',
 };
 
-const ASSIGNABLE_ROLES = ['CASE_MANAGER', 'CARE_GIVER', 'MEDICAL_VOLUNTEER', 'DOCTOR', 'ADMIN', 'SUPER_ADMIN'];
+const ASSIGNABLE_ROLES = ['GUEST', 'CASE_MANAGER', 'CARE_GIVER', 'MEDICAL_VOLUNTEER', 'DOCTOR', 'ADMIN', 'SUPER_ADMIN'];
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
@@ -45,6 +45,10 @@ export default function AdminUsersPage() {
   const [promoteRole, setPromoteRole] = useState<string>('CARE_GIVER');
   const [promoting, setPromoting] = useState(false);
 
+  // Password reset
+  const [newPassword, setNewPassword] = useState('');
+  const [resettingPw, setResettingPw] = useState(false);
+
   const load = async () => {
     if (!token) return;
     const [uRes, zRes] = await Promise.all([
@@ -63,7 +67,7 @@ export default function AdminUsersPage() {
       displayName: user.displayName,
       phone: user.phone ?? '',
       gender: user.gender ?? undefined,
-      role: user.role === 'GUEST' ? undefined : user.role,
+      role: user.role,
       isActive: user.isActive,
     });
   };
@@ -105,6 +109,23 @@ export default function AdminUsersPage() {
     });
     if (res.ok) { message.success(user.isActive ? 'ปิดการใช้งานแล้ว' : 'เปิดการใช้งานแล้ว'); load(); }
     else message.error('เกิดข้อผิดพลาด');
+  };
+
+  const handleResetPassword = async () => {
+    if (!editUser) return;
+    if (newPassword.length < 8) { message.warning('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร'); return; }
+    setResettingPw(true);
+    try {
+      const res = await fetch(`/api/users/${editUser.id}/password`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      if (res.ok) { message.success('รีเซ็ตรหัสผ่านแล้ว'); setNewPassword(''); }
+      else { const err = await res.json().catch(() => ({})); message.error(err.message ?? 'เกิดข้อผิดพลาด'); }
+    } finally {
+      setResettingPw(false);
+    }
   };
 
   const handlePromote = async () => {
@@ -252,7 +273,7 @@ export default function AdminUsersPage() {
           </span>
         }
         open={!!editUser}
-        onClose={() => setEditUser(null)}
+        onClose={() => { setEditUser(null); setNewPassword(''); }}
         width={400}
         footer={
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -311,21 +332,8 @@ export default function AdminUsersPage() {
                   <Radio.Button value="OTHER">อื่นๆ</Radio.Button>
                 </Radio.Group>
               </Form.Item>
-              <Form.Item
-                name="role"
-                label="Role"
-                rules={[
-                  { required: true, message: 'กรุณาเลือก Role' },
-                  { validator: (_, v) => v === 'GUEST' ? Promise.reject('ไม่สามารถกำหนด Role เป็น GUEST ได้') : Promise.resolve() },
-                ]}
-              >
-                <Select
-                  placeholder={editUser?.role === 'GUEST' ? 'เลือก Role ใหม่...' : undefined}
-                  options={[
-                    ...(editUser?.role === 'GUEST' ? [{ value: 'GUEST', label: '⏳ GUEST (รออนุมัติ)', disabled: true }] : []),
-                    ...ASSIGNABLE_ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r })),
-                  ]}
-                />
+              <Form.Item name="role" label="Role" rules={[{ required: true, message: 'กรุณาเลือก Role' }]}>
+                <Select options={ASSIGNABLE_ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r }))} />
               </Form.Item>
               <Form.Item name="isActive" label="สถานะ">
                 <Radio.Group>
@@ -335,6 +343,30 @@ export default function AdminUsersPage() {
               </Form.Item>
             </Form>
 
+            {/* Password reset */}
+            <div style={{ borderTop: '1px solid #f5f5f5', marginTop: 16, paddingTop: 16 }}>
+              <div style={{ fontSize: 11, color: '#faad14', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 10 }}>
+                รีเซ็ตรหัสผ่าน
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Input.Password
+                  placeholder="รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  style={{ flex: 1 }}
+                  size="small"
+                />
+                <Button
+                  size="small"
+                  danger
+                  loading={resettingPw}
+                  disabled={newPassword.length < 8}
+                  onClick={handleResetPassword}
+                >
+                  รีเซ็ต
+                </Button>
+              </div>
+            </div>
           </>
         )}
       </Drawer>

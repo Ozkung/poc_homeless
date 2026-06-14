@@ -116,10 +116,6 @@ export class UsersService {
     if (dto.role !== undefined && id === actorId) {
       throw new BadRequestException('ไม่สามารถเปลี่ยนสิทธิ์ของตนเองได้');
     }
-    if (dto.role === 'GUEST') {
-      throw new BadRequestException('ไม่สามารถกำหนด Role เป็น GUEST ได้');
-    }
-
     const updated = await this.prisma.user.update({
       where: { id },
       data: dto as any,
@@ -158,6 +154,23 @@ export class UsersService {
     return this.prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, displayName: true, zone: { select: { id: true, name: true, color: true } } },
+    });
+  }
+
+  async resetPassword(id: string, orgId: string, actorId: string, newPassword: string) {
+    if (!newPassword || newPassword.length < 8) {
+      throw new BadRequestException('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+    }
+    await this.findOne(id, orgId);
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.prisma.user.update({ where: { id }, data: { passwordHash } });
+    void this.audit.log({
+      orgId,
+      actorId,
+      action: 'RESET_PASSWORD',
+      entity: 'User',
+      entityId: id,
+      detail: `รีเซ็ตรหัสผ่านโดย SUPER_ADMIN`,
     });
   }
 

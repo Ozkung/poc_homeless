@@ -8,7 +8,7 @@ const ACTION_COLOR: Record<string, string> = {
   CREATE_ITEM: 'green', STOCK_IN: 'cyan',
   CREATE_PATIENT: 'purple', DELETE_PATIENT: 'red',
   CREATE_USER: 'geekblue', DEACTIVATE_USER: 'orange',
-  APPROVE_GUEST: 'green', CHANGE_ROLE: 'volcano',
+  APPROVE_GUEST: 'green', CHANGE_ROLE: 'volcano', RESET_PASSWORD: 'magenta',
   CARE_PLAN: 'gold', DISPENSE: 'lime',
 };
 
@@ -17,7 +17,7 @@ const ACTION_LABEL: Record<string, string> = {
   CREATE_ITEM: 'เพิ่มยา/วัสดุ', STOCK_IN: 'รับยาเข้า',
   CREATE_PATIENT: 'เพิ่มผู้ป่วย', DELETE_PATIENT: 'ลบผู้ป่วย',
   CREATE_USER: 'เพิ่มผู้ใช้', DEACTIVATE_USER: 'ปิดการใช้งาน',
-  APPROVE_GUEST: 'อนุมัติ Guest', CHANGE_ROLE: 'เปลี่ยน Role',
+  APPROVE_GUEST: 'อนุมัติ Guest', CHANGE_ROLE: 'เปลี่ยน Role', RESET_PASSWORD: 'Reset Password',
   CARE_PLAN: 'ทำ Care Plan', DISPENSE: 'จ่ายยา',
 };
 

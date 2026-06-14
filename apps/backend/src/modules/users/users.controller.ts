@@ -62,6 +62,17 @@ export class UsersController {
     return this.users.transferFW(id, supervisorId, user.orgId);
   }
 
+  @Patch(':id/password')
+  @Roles(UserRole.SUPER_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  resetPassword(
+    @Param('id') id: string,
+    @Body('password') password: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.users.resetPassword(id, user.orgId, user.sub, password);
+  }
+
   @Patch(':id')
   @Roles(UserRole.SUPER_ADMIN)
   update(
