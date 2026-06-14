@@ -66,15 +66,15 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { lineUserId: profile.sub } });
     if (!user || !user.isActive) throw new UnauthorizedException('Line user not linked');
 
-    // Keep LINE profile in sync on every login
+    // Best-effort: sync LINE profile — non-fatal if migration not yet applied
     if (profile.name || profile.picture) {
-      await this.prisma.user.update({
+      this.prisma.user.update({
         where: { id: user.id },
         data: {
           ...(profile.name    && { lineDisplayName: profile.name }),
           ...(profile.picture && { linePictureUrl: profile.picture }),
         },
-      });
+      }).catch(() => {});
     }
 
     const accessToken = await this.jwt.signAsync(

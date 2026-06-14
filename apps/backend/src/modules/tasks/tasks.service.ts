@@ -58,17 +58,37 @@ export class TasksService {
       where: { id: userId, organizationId: orgId },
       select: { zoneId: true },
     });
-    if (!user?.zoneId) return [];
 
-    const tasks = await this.prisma.eventTask.findMany({
-      where: {
-        status: { in: ['PENDING', 'IN_PROGRESS'] },
-        patient: { zoneId: user.zoneId, organizationId: orgId },
-      },
-      include: this.TASK_INCLUDE,
-      orderBy: { event: { startDate: 'asc' } },
-    });
-    return this.refreshTokensAndDecrypt(tasks);
+    // If user has no zone assigned, fall back to tasks explicitly assigned to them
+    if (!user?.zoneId) {
+      return this.findMyTasks(userId);
+    }
+
+    // Merge zone-based tasks + tasks explicitly assigned to this user (dedup by id)
+    const [zoneTasks, myTasks] = await Promise.all([
+      this.prisma.eventTask.findMany({
+        where: {
+          status: { in: ['PENDING', 'IN_PROGRESS'] },
+          patient: { zoneId: user.zoneId, organizationId: orgId },
+        },
+        include: this.TASK_INCLUDE,
+        orderBy: { event: { startDate: 'asc' } },
+      }),
+      this.prisma.eventTask.findMany({
+        where: {
+          assigneeId: userId,
+          status: { in: ['PENDING', 'IN_PROGRESS'] },
+        },
+        include: this.TASK_INCLUDE,
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    // Deduplicate: zone tasks take priority, add assigned tasks not already in zone list
+    const seen = new Set(zoneTasks.map((t) => t.id));
+    const merged = [...zoneTasks, ...myTasks.filter((t) => !seen.has(t.id))];
+
+    return this.refreshTokensAndDecrypt(merged);
   }
 
   async findOne(id: string) {
