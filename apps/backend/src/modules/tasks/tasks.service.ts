@@ -23,6 +23,8 @@ export class TasksService {
         patient: { select: { id: true, hn: true, nameEnc: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
         formTemplate: { select: { id: true, title: true, fields: true } },
         event: { select: { id: true, title: true, note: true, startDate: true, endDate: true, priority: true } },
+        liffToken: true,
+        tokenExp: true,
       },
       orderBy: { createdAt: 'asc' },
     });
