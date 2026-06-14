@@ -74,7 +74,7 @@ export class PatientsController {
     @Body() body: { title: string; frequency: string; priority: string; assigneeName?: string },
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.patients.addCarePlanItem(id, user.orgId, body);
+    return this.patients.addCarePlanItem(id, user.orgId, user.sub, body);
   }
 
   @Patch(':id/care-plan/:itemId')
@@ -128,7 +128,7 @@ export class PatientsController {
     @Body() dto: UpsertCarePlanAssessmentDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.patients.createCarePlanAssessment(id, user.orgId, dto);
+    return this.patients.createCarePlanAssessment(id, user.orgId, user.sub, dto);
   }
 
   @Patch(':id/assessment/:assessmentId')

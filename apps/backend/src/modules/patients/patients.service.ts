@@ -117,12 +117,17 @@ export class PatientsService {
   async addCarePlanItem(
     patientId: string,
     orgId: string,
+    actorId: string,
     data: { title: string; frequency: string; priority: string; assigneeName?: string },
   ) {
     await this.findOne(patientId, orgId);
-    return this.prisma.carePlanItem.create({
-      data: { patientId, ...data },
-    });
+    const [item] = await this.prisma.$transaction([
+      this.prisma.carePlanItem.create({ data: { patientId, ...data } }),
+      this.prisma.activity.create({
+        data: { actorId, patientId, type: 'CARE_PLAN', payload: { title: data.title, frequency: data.frequency } },
+      }),
+    ]);
+    return item;
   }
 
   async updateCarePlanItem(
@@ -164,15 +169,17 @@ export class PatientsService {
     return this.prisma.carePlanAssessment.findFirst({ where: { id: assessmentId, patientId } });
   }
 
-  async createCarePlanAssessment(patientId: string, orgId: string, dto: any) {
+  async createCarePlanAssessment(patientId: string, orgId: string, actorId: string, dto: any) {
     await this.findOne(patientId, orgId);
-    return this.prisma.carePlanAssessment.create({
-      data: {
-        patientId,
-        ...dto,
-        assessmentDate: dto.assessmentDate ? new Date(dto.assessmentDate) : undefined,
-      },
-    });
+    const [assessment] = await this.prisma.$transaction([
+      this.prisma.carePlanAssessment.create({
+        data: { patientId, ...dto, assessmentDate: dto.assessmentDate ? new Date(dto.assessmentDate) : undefined },
+      }),
+      this.prisma.activity.create({
+        data: { actorId, patientId, type: 'CARE_PLAN', payload: { note: 'บันทึก Care Plan Assessment' } },
+      }),
+    ]);
+    return assessment;
   }
 
   async updateCarePlanAssessment(patientId: string, assessmentId: string, orgId: string, dto: any) {

@@ -27,12 +27,14 @@ const ACTIVITY_COLOR: Record<string, string> = {
   CHECK_IN: '#1677ff', NOTE: '#722ed1', FORM_SUBMIT: '#13c2c2',
   ASSIGN: '#faad14', STATUS_CHANGE: '#ff4d4f', SOS: '#ff0000',
   DIAGNOSIS: '#0ea5e9', PRESCRIPTION: '#7c3aed', DISPENSE: '#059669',
+  CARE_PLAN: '#f97316',
 };
 
 const ACTIVITY_LABEL: Record<string, string> = {
-  CHECK_IN: 'เช็คอิน', NOTE: 'บันทึก', FORM_SUBMIT: 'ส่งแบบฟอร์ม',
+  CHECK_IN: 'เช็คอิน', NOTE: 'บันทึก', FORM_SUBMIT: 'ทำแบบฟอร์ม',
   ASSIGN: 'มอบหมาย', STATUS_CHANGE: 'เปลี่ยนสถานะ', SOS: 'SOS',
-  DIAGNOSIS: 'วินิจฉัย', PRESCRIPTION: 'สั่งยา', DISPENSE: 'จ่ายยา',
+  DIAGNOSIS: 'วินิจฉัยโรค', PRESCRIPTION: 'สั่งยา', DISPENSE: 'จ่ายยา',
+  CARE_PLAN: 'ทำ Care Plan',
 };
 
 function activityDetail(a: Activity): string | null {
@@ -41,6 +43,7 @@ function activityDetail(a: Activity): string | null {
   if (a.type === 'PRESCRIPTION' && p.medications) return `💊 ${p.medications}`;
   if (a.type === 'DISPENSE' && p.itemName) return `📦 ${p.itemName}${p.quantity ? ` × ${p.quantity}` : ''}`;
   if (a.type === 'STATUS_CHANGE' && p.status) return `→ ${p.status}`;
+  if (a.type === 'CARE_PLAN' && p.title) return `📋 ${p.title}${p.frequency ? ` (${p.frequency})` : ''}`;
   if (p.note) return p.note;
   return null;
 }
