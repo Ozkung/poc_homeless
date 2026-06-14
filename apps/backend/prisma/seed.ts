@@ -870,6 +870,72 @@ async function main() {
   }
   console.log(`✓ Care plan assessments: ${assessmentsData.length} records`);
 
+  // ── Audit Logs ────────────────────────────────────────────────────────────
+  const auditLogsData = [
+    // ── User management ──
+    { id: 'audit-001', actorId: 'user-seed-sa',    action: 'CREATE_USER',      entity: 'User',          entityId: 'user-seed-fw2',   detail: 'น.ส.สุกัญญา ช่วยเหลือ (CARE_GIVER)',               createdAt: ago(60) },
+    { id: 'audit-002', actorId: 'user-seed-sa',    action: 'CREATE_USER',      entity: 'User',          entityId: 'user-seed-fw3',   detail: 'นายพิทักษ์ ดูแลชุมชน (CARE_GIVER)',                createdAt: ago(58) },
+    { id: 'audit-003', actorId: 'user-seed-sa',    action: 'CREATE_USER',      entity: 'User',          entityId: 'user-seed-doc2',  detail: 'พญ.อารีย์ สุขสวัสดิ์ (DOCTOR)',                   createdAt: ago(55) },
+    { id: 'audit-004', actorId: 'user-seed-sa',    action: 'DEACTIVATE_USER',  entity: 'User',          entityId: 'user-seed-fw3',   detail: 'นายพิทักษ์ ดูแลชุมชน — ลาออก',                    createdAt: ago(10) },
+    // ── Patient management ──
+    { id: 'audit-005', actorId: 'user-seed-cm1',   action: 'CREATE_PATIENT',   entity: 'Patient',       entityId: 'pat-seed-001',    detail: 'HN000001 นายสมศักดิ์ พลัดถิ่น',                   createdAt: ago(90) },
+    { id: 'audit-006', actorId: 'user-seed-cm1',   action: 'CREATE_PATIENT',   entity: 'Patient',       entityId: 'pat-seed-002',    detail: 'HN000002 นางสาวอรุณี ไร้ที่พัก',                  createdAt: ago(88) },
+    { id: 'audit-007', actorId: 'user-seed-cm2',   action: 'CREATE_PATIENT',   entity: 'Patient',       entityId: 'pat-seed-003',    detail: 'HN000003 นายวิชัย สนามหลวง',                      createdAt: ago(85) },
+    { id: 'audit-008', actorId: 'user-seed-cm2',   action: 'CREATE_PATIENT',   entity: 'Patient',       entityId: 'pat-seed-004',    detail: 'HN000004 นางมะลิ แรงงานหนองจอก',                  createdAt: ago(80) },
+    { id: 'audit-009', actorId: 'user-seed-cm1',   action: 'CREATE_PATIENT',   entity: 'Patient',       entityId: 'pat-seed-005',    detail: 'HN000005 นายอานนท์ เยาวราช',                      createdAt: ago(75) },
+    { id: 'audit-010', actorId: 'user-seed-cm2',   action: 'CREATE_PATIENT',   entity: 'Patient',       entityId: 'pat-seed-006',    detail: 'HN000006 นางรัตนา คลองแสนแสบ',                    createdAt: ago(70) },
+    { id: 'audit-011', actorId: 'user-seed-cm2',   action: 'CREATE_PATIENT',   entity: 'Patient',       entityId: 'pat-seed-007',    detail: 'HN000007 นายบุญมี ท่าพระจันทร์',                  createdAt: ago(65) },
+    { id: 'audit-012', actorId: 'user-seed-cm1',   action: 'CREATE_PATIENT',   entity: 'Patient',       entityId: 'pat-seed-008',    detail: 'HN000008 นายธนากร บ้านหม้อ',                      createdAt: ago(60) },
+    // ── Events ──
+    { id: 'audit-013', actorId: 'user-seed-cm1',   action: 'CREATE_EVENT',     entity: 'Event',         entityId: 'evt-old-001',     detail: 'สำรวจผู้ป่วยใหม่ในชุมชน',                         createdAt: ago(50) },
+    { id: 'audit-014', actorId: 'user-seed-cm1',   action: 'CREATE_EVENT',     entity: 'Event',         entityId: 'evt-old-002',     detail: 'แจกยาและตรวจสุขภาพประจำเดือน (กุมภาพันธ์)',       createdAt: ago(35) },
+    { id: 'audit-015', actorId: 'user-seed-cm1',   action: 'CREATE_EVENT',     entity: 'Event',         entityId: 'evt-old-003',     detail: 'ติดตามผู้ป่วยวัณโรคและ HIV',                      createdAt: ago(25) },
+    { id: 'audit-016', actorId: 'user-seed-cm2',   action: 'CREATE_EVENT',     entity: 'Event',         entityId: 'evt-old-004',     detail: 'แจกยาและตรวจสุขภาพประจำเดือน (มีนาคม)',           createdAt: ago(18) },
+    { id: 'audit-017', actorId: 'user-seed-cm1',   action: 'CREATE_EVENT',     entity: 'Event',         entityId: 'evt-old-005',     detail: 'เยี่ยมผู้ป่วยฉุกเฉิน — ตามสัญญาณ SOS',           createdAt: ago(7) },
+    { id: 'audit-018', actorId: 'user-seed-cm1',   action: 'CREATE_EVENT',     entity: 'Event',         entityId: 'evt-curr-001',    detail: 'ลงพื้นที่เยี่ยมผู้ป่วยวิกฤต',                     createdAt: ago(1) },
+    { id: 'audit-019', actorId: 'user-seed-cm2',   action: 'CREATE_EVENT',     entity: 'Event',         entityId: 'evt-curr-002',    detail: 'ติดตามผู้ป่วยกลุ่มเบาหวาน',                       createdAt: ago(1) },
+    { id: 'audit-020', actorId: 'user-seed-cm1',   action: 'DELETE_EVENT',     entity: 'Event',         entityId: 'evt-deleted-x1',  detail: 'ประชุมทีม (ยกเลิก)',                               createdAt: ago(20) },
+    // ── Inventory ──
+    { id: 'audit-021', actorId: 'user-seed-admin', action: 'CREATE_ITEM',      entity: 'InventoryItem', entityId: 'inv-item-001',    detail: 'Metformin 500mg (เม็ด)',                            createdAt: ago(120) },
+    { id: 'audit-022', actorId: 'user-seed-admin', action: 'CREATE_ITEM',      entity: 'InventoryItem', entityId: 'inv-item-005',    detail: 'Isoniazid 300mg (เม็ด)',                            createdAt: ago(120) },
+    { id: 'audit-023', actorId: 'user-seed-admin', action: 'CREATE_ITEM',      entity: 'InventoryItem', entityId: 'inv-item-007',    detail: 'Efavirenz 600mg (เม็ด)',                            createdAt: ago(120) },
+    { id: 'audit-024', actorId: 'user-seed-admin', action: 'STOCK_IN',         entity: 'InventoryItem', entityId: 'inv-item-001',    detail: 'Metformin 500mg +200 เม็ด (RX-2026-002)',           createdAt: ago(90) },
+    { id: 'audit-025', actorId: 'user-seed-admin', action: 'STOCK_IN',         entity: 'InventoryItem', entityId: 'inv-item-003',    detail: 'Paracetamol 500mg +500 เม็ด (RX-2026-002)',         createdAt: ago(90) },
+    { id: 'audit-026', actorId: 'user-seed-admin', action: 'STOCK_IN',         entity: 'InventoryItem', entityId: 'inv-item-005',    detail: 'Isoniazid 300mg +150 เม็ด (RX-2026-002)',           createdAt: ago(90) },
+    { id: 'audit-027', actorId: 'user-seed-admin', action: 'STOCK_IN',         entity: 'InventoryItem', entityId: 'inv-item-007',    detail: 'Efavirenz 600mg +120 เม็ด (RX-2026-002)',           createdAt: ago(90) },
+    { id: 'audit-028', actorId: 'user-seed-mv1',   action: 'STOCK_IN',         entity: 'InventoryItem', entityId: 'inv-item-002',    detail: 'Amlodipine 5mg +300 เม็ด (RX-2026-003)',            createdAt: ago(60) },
+    { id: 'audit-029', actorId: 'user-seed-mv1',   action: 'STOCK_IN',         entity: 'InventoryItem', entityId: 'inv-item-008',    detail: 'Atenolol 50mg +250 เม็ด (RX-2026-003)',             createdAt: ago(60) },
+    // ── Care plans ──
+    { id: 'audit-030', actorId: 'user-seed-cm1',   action: 'CARE_PLAN',        entity: 'CarePlanItem',  entityId: 'cp-001-1',        detail: 'ตรวจระดับน้ำตาลในเลือด (HN000001)',                createdAt: ago(88) },
+    { id: 'audit-031', actorId: 'user-seed-cm1',   action: 'CARE_PLAN',        entity: 'CarePlanItem',  entityId: 'cp-002-1',        detail: 'ให้ยา Isoniazid + Rifampicin (HN000002)',           createdAt: ago(44) },
+    { id: 'audit-032', actorId: 'user-seed-cm2',   action: 'CARE_PLAN',        entity: 'CarePlanItem',  entityId: 'cp-007-1',        detail: 'ตรวจ EKG (HN000007)',                              createdAt: ago(30), adminNote: 'ผลปกติ EF 40%' },
+    { id: 'audit-033', actorId: 'user-seed-cm1',   action: 'CARE_PLAN',        entity: 'CarePlanItem',  entityId: 'cp-005-3',        detail: 'ตรวจ CD4 (HN000005)',                              createdAt: ago(13) },
+    // ── Dispense ──
+    { id: 'audit-034', actorId: 'user-seed-fw1',   action: 'DISPENSE',         entity: 'InventoryItem', entityId: 'inv-item-001',    detail: 'จ่าย Metformin 500mg ×60 เม็ด ให้ HN000001',       createdAt: ago(29) },
+    { id: 'audit-035', actorId: 'user-seed-fw1',   action: 'DISPENSE',         entity: 'InventoryItem', entityId: 'inv-item-002',    detail: 'จ่าย Amlodipine 5mg ×30 เม็ด ให้ HN000001',        createdAt: ago(29) },
+    { id: 'audit-036', actorId: 'user-seed-mv1',   action: 'DISPENSE',         entity: 'InventoryItem', entityId: 'inv-item-006',    detail: 'จ่าย Rifampicin 600mg ×30 เม็ด ให้ HN000002',      createdAt: ago(20) },
+    { id: 'audit-037', actorId: 'user-seed-fw1',   action: 'DISPENSE',         entity: 'InventoryItem', entityId: 'inv-item-007',    detail: 'จ่าย Efavirenz 600mg ×30 เม็ด ให้ HN000005',       createdAt: ago(13) },
+    { id: 'audit-038', actorId: 'user-seed-fw1',   action: 'DISPENSE',         entity: 'InventoryItem', entityId: 'inv-item-001',    detail: 'จ่าย Metformin 500mg ×60 เม็ด ให้ HN000006',       createdAt: ago(13) },
+    { id: 'audit-039', actorId: 'user-seed-mv1',   action: 'DISPENSE',         entity: 'InventoryItem', entityId: 'inv-item-008',    detail: 'จ่าย Atenolol 50mg ×30 เม็ด ให้ HN000007',         createdAt: ago(13), adminNote: 'ส่งมอบที่ท่าพระจันทร์' },
+    { id: 'audit-040', actorId: 'user-seed-cm1',   action: 'DISPENSE',         entity: 'InventoryItem', entityId: 'inv-item-007',    detail: 'จ่าย Efavirenz 600mg ×30 เม็ด ให้ HN000005',       createdAt: ago(7) },
+  ];
+
+  await prisma.auditLog.createMany({
+    skipDuplicates: true,
+    data: auditLogsData.map(({ id, actorId, action, entity, entityId, detail, createdAt, adminNote }) => ({
+      id,
+      organizationId: org.id,
+      actorId,
+      action,
+      entity,
+      entityId,
+      detail,
+      adminNote,
+      createdAt,
+    })),
+  });
+  console.log(`✓ Audit logs: ${auditLogsData.length} records`);
+
   console.log('\n✅ Seed complete!\n');
   console.log('องค์กร: มูลนิธิเพื่อคนไร้บ้านแห่งกรุงเทพ');
   console.log('Zones: เขตพระนคร, เขตป้อมปราบศัตรูพ่าย, เขตหนองจอก, เขตสัมพันธวงศ์\n');
