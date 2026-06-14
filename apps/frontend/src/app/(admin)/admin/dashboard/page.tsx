@@ -74,8 +74,8 @@ export default function AdminDashboard() {
   const overviewTab = (
     <>
       <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}><Card><Statistic title="ผู้ป่วยทั้งหมด" value={stats?.patients.total ?? '-'} /></Card></Col>
-        <Col span={6}><Card><Statistic title="CRITICAL" value={stats?.patients.critical ?? '-'} valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="ผู้ป่วยทั้งหมด" value={stats?.patients?.total ?? '-'} /></Card></Col>
+        <Col span={6}><Card><Statistic title="CRITICAL" value={stats?.patients?.critical ?? '-'} valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
         <Col span={6}><Card><Statistic title="Task Completion" value={stats ? `${stats.taskSuccessRate}%` : '-'} valueStyle={{ color: '#52c41a' }} /></Card></Col>
         <Col span={6}><Card><Statistic title="Active CM / FW" value={stats ? `${stats.activeCM} / ${stats.activeFW}` : '-'} /></Card></Col>
       </Row>
@@ -93,9 +93,9 @@ export default function AdminDashboard() {
         <Col span={12}>
           <Card title="Patient Status">
             <Row gutter={8}>
-              <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: '#52c41a' }}>{stats?.patients.stable ?? '-'}</div><div>STABLE</div></Card></Col>
-              <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: '#faad14' }}>{stats?.patients.pending ?? '-'}</div><div>PENDING</div></Card></Col>
-              <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: '#ff4d4f' }}>{stats?.patients.critical ?? '-'}</div><div>CRITICAL</div></Card></Col>
+              <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: '#52c41a' }}>{stats?.patients?.stable ?? '-'}</div><div>STABLE</div></Card></Col>
+              <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: '#faad14' }}>{stats?.patients?.pending ?? '-'}</div><div>PENDING</div></Card></Col>
+              <Col span={8}><Card size="small" style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 700, color: '#ff4d4f' }}>{stats?.patients?.critical ?? '-'}</div><div>CRITICAL</div></Card></Col>
             </Row>
           </Card>
         </Col>
