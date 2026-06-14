@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, message, Tag } from 'antd';
+import { Table, Button, Modal, Form, Input, DatePicker, message, Tag } from 'antd';
 import { useSession } from 'next-auth/react';
 
 interface FW { id: string; displayName: string; email: string; role: string }
@@ -22,10 +22,13 @@ export default function CMUsersPage() {
 
   const handleCreate = async () => {
     const values = await form.validateFields();
+    const payload: any = { ...values };
+    if (values.lastName) { payload.displayName = `${values.displayName} ${values.lastName}`; delete payload.lastName; }
+    if (values.birthDate) { payload.birthDate = values.birthDate.toISOString(); }
     const res = await fetch('/api/users/fw', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
+      body: JSON.stringify(payload),
     });
     if (res.ok) { message.success('เพิ่ม CARE_GIVER สำเร็จ'); setModalOpen(false); form.resetFields(); load(); }
     else message.error('เกิดข้อผิดพลาด');
@@ -45,11 +48,19 @@ export default function CMUsersPage() {
           { title: 'Role', render: () => <Tag color="orange">CARE_GIVER</Tag> },
         ]}
       />
-      <Modal title="เพิ่ม CARE_GIVER" open={modalOpen} onOk={handleCreate} onCancel={() => setModalOpen(false)} okText="สร้าง">
+      <Modal title="เพิ่ม CARE_GIVER" open={modalOpen} onOk={handleCreate} onCancel={() => { setModalOpen(false); form.resetFields(); }} okText="สร้าง">
         <Form form={form} layout="vertical">
-          <Form.Item name="displayName" label="ชื่อ" rules={[{ required: true }]}><Input /></Form.Item>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Form.Item name="displayName" label="ชื่อ" rules={[{ required: true }]} style={{ flex: 1 }}><Input placeholder="ชื่อ" /></Form.Item>
+            <Form.Item name="lastName" label="นามสกุล" style={{ flex: 1 }}><Input placeholder="นามสกุล" /></Form.Item>
+          </div>
           <Form.Item name="email" label="อีเมล" rules={[{ required: true, type: 'email' }]}><Input /></Form.Item>
           <Form.Item name="password" label="รหัสผ่าน" rules={[{ required: true, min: 8 }]}><Input.Password /></Form.Item>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Form.Item name="birthDate" label="วันเกิด" style={{ flex: 1 }}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item>
+            <Form.Item name="phone" label="เบอร์โทร" style={{ flex: 1 }}><Input placeholder="08x-xxx-xxxx" /></Form.Item>
+          </div>
+          <Form.Item name="address" label="ที่อยู่"><Input.TextArea rows={2} placeholder="บ้านเลขที่ ถนน แขวง เขต จังหวัด" /></Form.Item>
         </Form>
       </Modal>
     </div>

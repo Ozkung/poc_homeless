@@ -8,4 +8,7 @@ export class CreateUserDto {
   @IsEnum(UserRole) role: UserRole;
   @IsOptional() @IsString() phone?: string;
   @IsOptional() @IsEnum(Gender) gender?: Gender;
+  @IsOptional() @IsString() birthDate?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsString() specialty?: string;
 }

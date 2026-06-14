@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Query, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -42,5 +42,17 @@ export class DashboardController {
   getMedVol(@CurrentUser() user: JwtPayload, @Query('from') from?: string, @Query('to') to?: string) {
     const { fromDate, toDate } = parseDateRange(from, to);
     return this.dashboard.getMedVolStats(user.orgId, fromDate, toDate);
+  }
+
+  @Get('kpi')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  getKpi(@CurrentUser() user: JwtPayload) {
+    return this.dashboard.getKpiSettings(user.orgId);
+  }
+
+  @Patch('kpi')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  updateKpi(@CurrentUser() user: JwtPayload, @Body() body: { followUp?: number; medication?: number; completion?: number }) {
+    return this.dashboard.updateKpiSettings(user.orgId, body);
   }
 }

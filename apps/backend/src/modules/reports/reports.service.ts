@@ -37,19 +37,20 @@ export class ReportsService {
 
     const patients = await this.prisma.patient.findMany({
       where: { organizationId: orgId },
-      select: { id: true, hn: true, status: true, conditions: true },
+      select: { id: true, hn: true, status: true, conditions: true, followUpTarget: true },
     });
 
     const patientStats = patients.map((p) => {
       const pTasks = tasks.filter((t) => t.patientId === p.id);
       const pDone  = pTasks.filter((t) => t.status === 'DONE').length;
       return {
-        id:           p.id,
-        hn:           p.hn,
-        status:       p.status,
-        conditions:   p.conditions,
-        followUpDone: pDone,
+        id:            p.id,
+        hn:            p.hn,
+        status:        p.status,
+        conditions:    p.conditions,
+        followUpDone:  pDone,
         followUpTotal: pTasks.length,
+        followUpTarget: p.followUpTarget ?? null,
       };
     });
 

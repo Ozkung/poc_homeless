@@ -260,4 +260,17 @@ export class DashboardService {
       pendingRequestsList,
     };
   }
+
+  async getKpiSettings(orgId: string) {
+    const org = await this.prisma.organization.findUnique({ where: { id: orgId }, select: { kpiSettings: true } });
+    const defaults = { followUp: 80, medication: 75, completion: 70 };
+    return { ...defaults, ...(org?.kpiSettings as object ?? {}) };
+  }
+
+  async updateKpiSettings(orgId: string, settings: { followUp?: number; medication?: number; completion?: number }) {
+    const current = await this.getKpiSettings(orgId);
+    const merged = { ...current, ...settings };
+    await this.prisma.organization.update({ where: { id: orgId }, data: { kpiSettings: merged } });
+    return merged;
+  }
 }

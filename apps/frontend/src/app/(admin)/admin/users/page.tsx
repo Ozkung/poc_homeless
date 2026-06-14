@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Table, Tag, Button, Modal, Form, Input, Select, message } from 'antd';
+import { Table, Tag, Button, Modal, Form, Input, Select, DatePicker, message } from 'antd';
 import { useSession } from 'next-auth/react';
 
 interface Zone { id: string; name: string; color: string }
@@ -12,6 +12,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   const [createModal, setCreateModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>('');
   const [form] = Form.useForm();
 
   const load = async () => {
@@ -28,12 +29,15 @@ export default function AdminUsersPage() {
 
   const handleCreate = async () => {
     const values = await form.validateFields();
+    const payload: any = { ...values };
+    if (values.lastName) { payload.displayName = `${values.displayName} ${values.lastName}`; delete payload.lastName; }
+    if (values.birthDate) { payload.birthDate = values.birthDate.toISOString(); }
     const res = await fetch('/api/users', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
+      body: JSON.stringify(payload),
     });
-    if (res.ok) { message.success('สร้างผู้ใช้สำเร็จ'); setCreateModal(false); form.resetFields(); load(); }
+    if (res.ok) { message.success('สร้างผู้ใช้สำเร็จ'); setCreateModal(false); form.resetFields(); setSelectedRole(''); load(); }
     else message.error('เกิดข้อผิดพลาด');
   };
 
@@ -95,14 +99,46 @@ export default function AdminUsersPage() {
           { title: 'สถานะ', dataIndex: 'isActive', render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Active' : 'Inactive'}</Tag> },
         ]}
       />
-      <Modal title="เพิ่มผู้ใช้" open={createModal} onOk={handleCreate} onCancel={() => setCreateModal(false)} okText="สร้าง">
+      <Modal title="เพิ่มผู้ใช้" open={createModal} onOk={handleCreate} onCancel={() => { setCreateModal(false); form.resetFields(); setSelectedRole(''); }} okText="สร้าง">
         <Form form={form} layout="vertical">
-          <Form.Item name="displayName" label="ชื่อ" rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="role" label="Role" rules={[{ required: true }]}>
+            <Select
+              options={['CASE_MANAGER','CARE_GIVER','MEDICAL_VOLUNTEER','DOCTOR','ADMIN'].map((r) => ({ value: r, label: r }))}
+              onChange={(v) => setSelectedRole(v)}
+            />
+          </Form.Item>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Form.Item name="displayName" label="ชื่อ" rules={[{ required: true }]} style={{ flex: 1 }}><Input placeholder="ชื่อ" /></Form.Item>
+            {(selectedRole === 'CARE_GIVER' || selectedRole === 'DOCTOR') && (
+              <Form.Item name="lastName" label="นามสกุล" style={{ flex: 1 }}><Input placeholder="นามสกุล" /></Form.Item>
+            )}
+          </div>
           <Form.Item name="email" label="อีเมล" rules={[{ required: true, type: 'email' }]}><Input /></Form.Item>
           <Form.Item name="password" label="รหัสผ่าน" rules={[{ required: true, min: 8 }]}><Input.Password /></Form.Item>
-          <Form.Item name="role" label="Role" rules={[{ required: true }]}>
-            <Select options={['CASE_MANAGER','CARE_GIVER','MEDICAL_VOLUNTEER','DOCTOR','ADMIN'].map((r) => ({ value: r, label: r }))} />
-          </Form.Item>
+
+          {selectedRole === 'CARE_GIVER' && (
+            <>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <Form.Item name="birthDate" label="วันเกิด" style={{ flex: 1 }}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item>
+                <Form.Item name="phone" label="เบอร์โทร" style={{ flex: 1 }}><Input placeholder="08x-xxx-xxxx" /></Form.Item>
+              </div>
+              <Form.Item name="address" label="ที่อยู่"><Input.TextArea rows={2} placeholder="บ้านเลขที่ ถนน แขวง เขต จังหวัด" /></Form.Item>
+            </>
+          )}
+
+          {selectedRole === 'DOCTOR' && (
+            <>
+              <Form.Item name="phone" label="เบอร์โทร"><Input placeholder="08x-xxx-xxxx" /></Form.Item>
+              <Form.Item name="address" label="ที่อยู่"><Input.TextArea rows={2} placeholder="บ้านเลขที่ ถนน แขวง เขต จังหวัด" /></Form.Item>
+              <Form.Item name="specialty" label="ประเภทของแพทย์">
+                <Select allowClear placeholder="เลือกสาขา" options={[
+                  'อายุรกรรม', 'ศัลยกรรม', 'กุมารเวชกรรม', 'สูติ-นรีเวชกรรม',
+                  'จักษุวิทยา', 'หู คอ จมูก', 'ออร์โธปิดิกส์', 'จิตเวชศาสตร์',
+                  'ผิวหนัง', 'ทันตกรรม', 'รังสีวิทยา', 'แพทย์ฉุกเฉิน', 'เวชศาสตร์ครอบครัว',
+                ].map((s) => ({ value: s, label: s }))} />
+              </Form.Item>
+            </>
+          )}
         </Form>
       </Modal>
     </div>

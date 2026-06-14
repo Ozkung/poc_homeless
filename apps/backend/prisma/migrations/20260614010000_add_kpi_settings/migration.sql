@@ -1,0 +1,2 @@
+ALTER TABLE "Patient" ADD COLUMN IF NOT EXISTS "followUpTarget" INTEGER;
+ALTER TABLE "Organization" ADD COLUMN IF NOT EXISTS "kpiSettings" JSONB;
