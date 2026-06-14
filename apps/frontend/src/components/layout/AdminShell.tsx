@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Map, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Map, Users, LogOut, ClipboardList } from 'lucide-react';
 import type { MenuProps } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -16,9 +16,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const isMobile = useIsMobile();
 
   const navItems: MenuProps['items'] = [
-    { key: '/admin/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={ICON_SIZE} /> },
-    { key: '/admin/zones',     label: 'Zones',      icon: <Map size={ICON_SIZE} /> },
-    { key: '/admin/users',     label: 'ผู้ใช้งาน',  icon: <Users size={ICON_SIZE} /> },
+    { key: '/admin/dashboard',  label: 'Dashboard',  icon: <LayoutDashboard size={ICON_SIZE} /> },
+    { key: '/admin/zones',      label: 'Zones',       icon: <Map size={ICON_SIZE} /> },
+    { key: '/admin/users',      label: 'ผู้ใช้งาน',   icon: <Users size={ICON_SIZE} /> },
+    { key: '/admin/audit-log',  label: 'Audit Log',   icon: <ClipboardList size={ICON_SIZE} /> },
   ];
 
   const selectedKey = navItems.find((i) => i && pathname.startsWith((i as any).key))?.key as string ?? '/admin/dashboard';

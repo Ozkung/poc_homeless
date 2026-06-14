@@ -92,6 +92,7 @@ model Organization {
   inventoryItems  InventoryItem[]
   zones           Zone[]
   doctorSchedules DoctorSchedule[]
+  auditLogs       AuditLog[]
 }
 
 model Zone {
@@ -141,6 +142,7 @@ model User {
   activities        Activity[]
   formTemplates     FormTemplate[]
 
+  auditLogs            AuditLog[]         @relation("AuditActor")
   stockTransactions    StockTransaction[] @relation("StockActor")
   adjRequestsMade      AdjRequest[]       @relation("AdjRequester")
   adjRequestsReviewed  AdjRequest[]       @relation("AdjReviewer")
@@ -460,4 +462,20 @@ model InventoryLot {
   expiredBy   User?         @relation("LotExpirer", fields: [expiredById], references: [id])
 
   transactions StockTransaction[]
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  actorId        String
+  actor          User         @relation("AuditActor", fields: [actorId], references: [id])
+  action         String
+  entity         String
+  entityId       String?
+  detail         String?
+  adminNote      String?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt(sort: Desc)])
 }

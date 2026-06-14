@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { UserRole } from '@prisma/client';
 import { CreateItemDto } from './dto/create-item.dto';
 import { StockInDto } from './dto/stock-in.dto';
@@ -12,12 +13,15 @@ export class InventoryService {
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
+    private audit: AuditLogService,
   ) {}
 
-  async createItem(orgId: string, dto: CreateItemDto) {
-    return this.prisma.inventoryItem.create({
+  async createItem(orgId: string, dto: CreateItemDto, actorId?: string) {
+    const item = await this.prisma.inventoryItem.create({
       data: { ...dto, organizationId: orgId, lowStockThreshold: dto.lowStockThreshold ?? 10 },
     });
+    if (actorId) void this.audit.log({ orgId, actorId, action: 'CREATE_ITEM', entity: 'InventoryItem', entityId: item.id, detail: `${item.name} (${item.unit})` });
+    return item;
   }
 
   async listItems(orgId: string, category?: string) {
@@ -159,6 +163,7 @@ export class InventoryService {
         },
       });
     });
+    void this.audit.log({ orgId, actorId, action: 'STOCK_IN', entity: 'InventoryItem', entityId: itemId, detail: `${item.name} +${dto.quantity} ${item.unit}${dto.receiptNo ? ` (${dto.receiptNo})` : ''}` });
   }
 
   async deduct(

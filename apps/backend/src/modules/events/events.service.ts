@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TasksService } from '../tasks/tasks.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     private prisma: PrismaService,
     private tasks: TasksService,
+    private audit: AuditLogService,
   ) {}
 
   findAll(orgId: string, month?: number, year?: number) {
@@ -113,6 +115,8 @@ export class EventsService {
         },
       },
     });
+    void this.audit.log({ orgId, actorId: userId, action: 'CREATE_EVENT', entity: 'Event', entityId: result.id, detail: data.title });
+    return result;
   }
 
   async update(id: string, orgId: string, data: any) {
@@ -120,8 +124,9 @@ export class EventsService {
     return this.prisma.event.update({ where: { id }, data });
   }
 
-  async remove(id: string, orgId: string) {
-    await this.findOne(id, orgId);
+  async remove(id: string, orgId: string, actorId: string) {
+    const ev = await this.findOne(id, orgId);
+    await this.audit.log({ orgId, actorId, action: 'DELETE_EVENT', entity: 'Event', entityId: id, detail: (ev as any).title });
     return this.prisma.event.delete({ where: { id } });
   }
 }

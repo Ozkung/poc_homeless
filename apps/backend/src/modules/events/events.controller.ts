@@ -35,6 +35,6 @@ export class EventsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.events.remove(id, user.orgId);
+    return this.events.remove(id, user.orgId, user.sub);
   }
 }

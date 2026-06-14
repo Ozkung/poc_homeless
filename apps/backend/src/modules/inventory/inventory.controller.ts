@@ -28,7 +28,7 @@ export class InventoryController {
   @Post()
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   createItem(@Body() dto: CreateItemDto, @CurrentUser() user: JwtPayload) {
-    return this.inventory.createItem(user.orgId, dto);
+    return this.inventory.createItem(user.orgId, dto, user.sub);
   }
 
   @Get('low-stock')

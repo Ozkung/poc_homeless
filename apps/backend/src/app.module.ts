@@ -22,6 +22,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { ZonesModule } from './modules/zones/zones.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DoctorModule } from './modules/doctor/doctor.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { DoctorModule } from './modules/doctor/doctor.module';
     ZonesModule,
     DashboardModule,
     DoctorModule,
+    AuditLogModule,
   ],
 })
 export class AppModule {}
