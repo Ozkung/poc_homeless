@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import liff from '@line/liff';
 import { initLiff } from './lib/liff';
 import { api, setToken } from './lib/api';
@@ -17,6 +17,7 @@ function AppRoutes() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     async function init() {
@@ -30,7 +31,9 @@ function AppRoutes() {
           setReady(true);
         } catch (e: any) {
           if (e.status === 401 || e.message?.includes('not linked')) {
-            navigate('/auth');
+            // Preserve current path so AuthPage can redirect back after auth
+            const from = location.pathname !== '/auth' ? location.pathname : '/';
+            navigate('/auth', { state: { from } });
             setReady(true);
           } else {
             throw e;

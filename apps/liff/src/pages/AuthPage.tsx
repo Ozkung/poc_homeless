@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import liff from '@line/liff';
 import { api, setToken } from '../lib/api';
 
@@ -171,6 +172,9 @@ export default function AuthPage() {
   const [idToken, setIdToken] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfo>({ name: '', role: '', email: '' });
   const [pendingData, setPendingData] = useState<PendingData>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo: string = (location.state as any)?.from ?? '/';
 
   useEffect(() => {
     const token = liff.getIDToken();
@@ -232,8 +236,13 @@ export default function AuthPage() {
             try { payload = JSON.parse(atob(parts[1])); } catch {}
             info = { name: payload.displayName ?? pendingData.email, email: pendingData.email, role: payload.role ?? 'UNKNOWN' };
           }
-          setUserInfo(info);
-          setStep('done');
+          // If user was trying to access a specific page, go back there; otherwise show done screen
+          if (redirectTo && redirectTo !== '/' && redirectTo !== '/auth') {
+            navigate(redirectTo, { replace: true });
+          } else {
+            setUserInfo(info);
+            setStep('done');
+          }
         } catch (err: any) {
           alert(err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่');
           setStep('choice');
