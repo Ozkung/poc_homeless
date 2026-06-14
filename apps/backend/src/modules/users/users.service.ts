@@ -94,6 +94,9 @@ export class UsersService {
     if (dto.role !== undefined && id === actorId) {
       throw new BadRequestException('ไม่สามารถเปลี่ยนสิทธิ์ของตนเองได้');
     }
+    if (dto.role === 'GUEST') {
+      throw new BadRequestException('ไม่สามารถกำหนด Role เป็น GUEST ได้');
+    }
     return this.prisma.user.update({
       where: { id },
       data: dto as any,

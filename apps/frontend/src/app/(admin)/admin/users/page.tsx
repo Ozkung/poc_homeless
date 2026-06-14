@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
       displayName: user.displayName,
       phone: user.phone ?? '',
       gender: user.gender ?? undefined,
-      role: user.role,
+      role: user.role === 'GUEST' ? undefined : user.role,
       isActive: user.isActive,
     });
   };
@@ -311,10 +311,18 @@ export default function AdminUsersPage() {
                   <Radio.Button value="OTHER">อื่นๆ</Radio.Button>
                 </Radio.Group>
               </Form.Item>
-              <Form.Item name="role" label="Role" rules={[{ required: true }]}>
+              <Form.Item
+                name="role"
+                label="Role"
+                rules={[
+                  { required: true, message: 'กรุณาเลือก Role' },
+                  { validator: (_, v) => v === 'GUEST' ? Promise.reject('ไม่สามารถกำหนด Role เป็น GUEST ได้') : Promise.resolve() },
+                ]}
+              >
                 <Select
+                  placeholder={editUser?.role === 'GUEST' ? 'เลือก Role ใหม่...' : undefined}
                   options={[
-                    ...(editUser?.role === 'GUEST' ? [{ value: 'GUEST', label: 'GUEST (รออนุมัติ)', disabled: false }] : []),
+                    ...(editUser?.role === 'GUEST' ? [{ value: 'GUEST', label: '⏳ GUEST (รออนุมัติ)', disabled: true }] : []),
                     ...ASSIGNABLE_ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r })),
                   ]}
                 />
