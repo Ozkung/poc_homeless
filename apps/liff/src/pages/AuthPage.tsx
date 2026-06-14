@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import liff from '@line/liff';
-import { api, setToken } from '../lib/api';
+import { api, setToken, getToken } from '../lib/api';
 
 type Step = 'choice' | 'register' | 'link' | 'tou' | 'done';
 interface UserInfo { name: string; role: string; email: string; zone?: string }
@@ -179,6 +179,18 @@ export default function AuthPage() {
   useEffect(() => {
     const token = liff.getIDToken();
     if (token) setIdToken(token);
+
+    // If user is already authenticated (has a valid JWT token), redirect to profile
+    const jwt = getToken();
+    if (jwt) {
+      try {
+        const payload = JSON.parse(atob(jwt.split('.')[1]));
+        if (payload?.sub) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch { /* ignore */ }
+    }
   }, []);
 
   const wrap = (children: React.ReactNode) => (

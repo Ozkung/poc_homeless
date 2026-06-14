@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, getToken } from '../lib/api';
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'รอดำเนินการ',
@@ -20,11 +20,18 @@ const PRIORITY_BADGE: Record<string, { bg: string; text: string; label: string }
   NORMAL:   { bg: 'bg-blue-100', text: 'text-blue-700', label: 'ปกติ' },
 };
 
+function useJwtPayload() {
+  const token = getToken();
+  if (!token) return null;
+  try { return JSON.parse(atob(token.split('.')[1])); } catch { return null; }
+}
+
 export default function TaskPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sosLoading, setSosLoading] = useState(false);
   const [sosSent, setSosSent] = useState(false);
+  const me = useJwtPayload();
 
   useEffect(() => {
     api.getMyTasks()
@@ -103,10 +110,22 @@ export default function TaskPage() {
     <div style={{ paddingBottom: 72 }}>
       <div className="max-w-lg mx-auto p-4">
         {/* Header */}
-        <div className="mb-5">
-          <p className="text-xs text-purple-600 font-mono uppercase tracking-wider">HomeMed Connect</p>
-          <h1 className="text-xl font-bold text-gray-900 mt-1">งานในพื้นที่</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{tasks.length} ผู้ป่วย · {groups.length} กิจกรรม</p>
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs text-purple-600 font-mono uppercase tracking-wider">HomeMed Connect</p>
+            <h1 className="text-xl font-bold text-gray-900 mt-1">งานในพื้นที่</h1>
+            <p className="text-sm text-gray-400 mt-0.5">{tasks.length} ผู้ป่วย · {groups.length} กิจกรรม</p>
+          </div>
+          {me && (
+            <Link to="/profile" className="flex flex-col items-center gap-1 flex-shrink-0">
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>
+                  {(me.displayName ?? me.email ?? '?')[0].toUpperCase()}
+                </span>
+              </div>
+              <span className="text-xs text-gray-400">โปรไฟล์</span>
+            </Link>
+          )}
         </div>
 
         {groups.length === 0 ? (

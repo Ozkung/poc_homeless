@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Table, Tag, Button, Modal, Form, Input, Select, DatePicker, Drawer, Descriptions, Radio, Popconfirm, Space, message } from 'antd';
-import { EditOutlined, StopOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Table, Tag, Button, Modal, Form, Input, Select, DatePicker, Drawer, Descriptions, Radio, Popconfirm, Space, Badge, message } from 'antd';
+import { EditOutlined, StopOutlined, CheckCircleOutlined, UserSwitchOutlined } from '@ant-design/icons';
 import { useSession } from 'next-auth/react';
 
 interface Zone { id: string; name: string; color: string }
@@ -17,12 +17,14 @@ interface User {
 
 const ROLE_COLOR: Record<string, string> = {
   SUPER_ADMIN: 'purple', ADMIN: 'geekblue', CASE_MANAGER: 'green',
-  CARE_GIVER: 'orange', MEDICAL_VOLUNTEER: 'blue', DOCTOR: 'cyan',
+  CARE_GIVER: 'orange', MEDICAL_VOLUNTEER: 'blue', DOCTOR: 'cyan', GUEST: 'gold',
 };
 const ROLE_LABEL: Record<string, string> = {
   SUPER_ADMIN: 'SUPER ADMIN', ADMIN: 'ADMIN', CASE_MANAGER: 'CASE MANAGER',
-  CARE_GIVER: 'CARE GIVER', MEDICAL_VOLUNTEER: 'MED VOLUNTEER', DOCTOR: 'DOCTOR',
+  CARE_GIVER: 'CARE GIVER', MEDICAL_VOLUNTEER: 'MED VOLUNTEER', DOCTOR: 'DOCTOR', GUEST: 'GUEST',
 };
+
+const ASSIGNABLE_ROLES = ['CASE_MANAGER', 'CARE_GIVER', 'MEDICAL_VOLUNTEER', 'DOCTOR', 'ADMIN', 'SUPER_ADMIN'];
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
@@ -37,6 +39,11 @@ export default function AdminUsersPage() {
   const [editUser, setEditUser] = useState<User | null>(null);
   const [editForm] = Form.useForm();
   const [saving, setSaving] = useState(false);
+
+  // Promote GUEST modal
+  const [promoteUser, setPromoteUser] = useState<User | null>(null);
+  const [promoteRole, setPromoteRole] = useState<string>('CARE_GIVER');
+  const [promoting, setPromoting] = useState(false);
 
   const load = async () => {
     if (!token) return;
@@ -100,6 +107,28 @@ export default function AdminUsersPage() {
     else message.error('เกิดข้อผิดพลาด');
   };
 
+  const handlePromote = async () => {
+    if (!promoteUser) return;
+    setPromoting(true);
+    try {
+      const res = await fetch(`/api/users/${promoteUser.id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: promoteRole }),
+      });
+      if (res.ok) {
+        message.success(`เปลี่ยน Role เป็น ${ROLE_LABEL[promoteRole] ?? promoteRole} แล้ว`);
+        setPromoteUser(null);
+        load();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        message.error(err.message ?? 'เกิดข้อผิดพลาด');
+      }
+    } finally {
+      setPromoting(false);
+    }
+  };
+
   const handleCreate = async () => {
     const values = await form.validateFields();
     const payload: any = { ...values };
@@ -126,17 +155,26 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>ผู้ใช้งาน</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>ผู้ใช้งาน</h1>
+          {users.filter((u) => u.role === 'GUEST').length > 0 && (
+            <Badge count={users.filter((u) => u.role === 'GUEST').length} color="#faad14">
+              <Tag color="gold" style={{ fontSize: 12 }}>รออนุมัติ</Tag>
+            </Badge>
+          )}
+        </div>
         <Button type="primary" onClick={() => setCreateModal(true)}>+ เพิ่มผู้ใช้</Button>
       </div>
 
       <Table
         dataSource={users} rowKey="id" size="small"
+        rowClassName={(r) => r.role === 'GUEST' ? 'bg-amber-50' : ''}
         columns={[
           { title: 'ชื่อ', dataIndex: 'displayName', render: (v, r) => (
             <span>
               <span style={{ fontWeight: 600 }}>{v}</span>
+              {r.role === 'GUEST' && <Tag color="gold" style={{ fontSize: 10, marginLeft: 6 }}>รออนุมัติ</Tag>}
               {r.phone && <div style={{ fontSize: 11, color: '#aaa' }}>{r.phone}</div>}
             </span>
           )},
@@ -173,9 +211,19 @@ export default function AdminUsersPage() {
           { title: 'สถานะ', dataIndex: 'isActive', render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Active' : 'Inactive'}</Tag> },
           {
             title: '',
-            width: 80,
+            width: 100,
             render: (_: any, record: User) => (
               <Space size={4}>
+                {record.role === 'GUEST' && (
+                  <Button
+                    size="small"
+                    type="primary"
+                    icon={<UserSwitchOutlined />}
+                    style={{ background: '#faad14', borderColor: '#faad14' }}
+                    title="Assign Role"
+                    onClick={() => { setPromoteUser(record); setPromoteRole('CARE_GIVER'); }}
+                  />
+                )}
                 <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)} />
                 <Popconfirm
                   title={record.isActive ? 'ปิดการใช้งานผู้ใช้นี้?' : 'เปิดการใช้งานผู้ใช้นี้?'}
@@ -264,7 +312,12 @@ export default function AdminUsersPage() {
                 </Radio.Group>
               </Form.Item>
               <Form.Item name="role" label="Role" rules={[{ required: true }]}>
-                <Select options={['CASE_MANAGER','CARE_GIVER','MEDICAL_VOLUNTEER','DOCTOR','ADMIN','SUPER_ADMIN'].map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r }))} />
+                <Select
+                  options={[
+                    ...(editUser?.role === 'GUEST' ? [{ value: 'GUEST', label: 'GUEST (รออนุมัติ)', disabled: false }] : []),
+                    ...ASSIGNABLE_ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r })),
+                  ]}
+                />
               </Form.Item>
               <Form.Item name="isActive" label="สถานะ">
                 <Radio.Group>
@@ -277,6 +330,46 @@ export default function AdminUsersPage() {
           </>
         )}
       </Drawer>
+
+      {/* Promote GUEST modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UserSwitchOutlined style={{ color: '#faad14' }} />
+            <span>Assign Role</span>
+            {promoteUser && <Tag color="gold" style={{ marginLeft: 4 }}>{promoteUser.displayName}</Tag>}
+          </div>
+        }
+        open={!!promoteUser}
+        onCancel={() => setPromoteUser(null)}
+        onOk={handlePromote}
+        okText="ยืนยัน"
+        confirmLoading={promoting}
+        okButtonProps={{ style: { background: '#faad14', borderColor: '#faad14' } }}
+      >
+        {promoteUser && (
+          <div>
+            {promoteUser.lineDisplayName && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#f9fafb', borderRadius: 10, marginBottom: 16 }}>
+                {promoteUser.linePictureUrl && (
+                  <img src={promoteUser.linePictureUrl} alt="LINE" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+                )}
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{promoteUser.lineDisplayName}</div>
+                  <div style={{ fontSize: 12, color: '#888' }}>{promoteUser.email}</div>
+                </div>
+              </div>
+            )}
+            <div style={{ marginBottom: 8, fontSize: 13, color: '#555' }}>เลือก Role ที่ต้องการ Assign</div>
+            <Select
+              style={{ width: '100%' }}
+              value={promoteRole}
+              onChange={(v) => setPromoteRole(v)}
+              options={ASSIGNABLE_ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] ?? r }))}
+            />
+          </div>
+        )}
+      </Modal>
 
       {/* Create user modal */}
       <Modal title="เพิ่มผู้ใช้" open={createModal} onOk={handleCreate} onCancel={() => { setCreateModal(false); form.resetFields(); setSelectedRole(''); }} okText="สร้าง">
