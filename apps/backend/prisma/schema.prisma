@@ -80,15 +80,15 @@ enum AdjStatus {
 }
 
 model Organization {
-  id           String        @id @default(uuid())
-  name         String
-  kpiSettings  Json?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  users        User[]
-  patients     Patient[]
-  formTemplates FormTemplate[]
-  events       Event[]
+  id              String           @id @default(uuid())
+  name            String
+  kpiSettings     Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  users           User[]
+  patients        Patient[]
+  formTemplates   FormTemplate[]
+  events          Event[]
   inventoryItems  InventoryItem[]
   zones           Zone[]
   doctorSchedules DoctorSchedule[]
@@ -96,93 +96,93 @@ model Organization {
 }
 
 model Zone {
-  id             String       @id @default(uuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  name           String
-  description    String?
-  color          String?
-  createdAt      DateTime     @default(now())
-  patients         Patient[]
-  doctorSchedules  DoctorSchedule[]
-  guestUsers       User[]           @relation("GuestZone")
-  caseManagers     User[]           @relation("CMZone")
+  id              String           @id @default(uuid())
+  organizationId  String
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  name            String
+  description     String?
+  color           String?
+  createdAt       DateTime         @default(now())
+  patients        Patient[]
+  doctorSchedules DoctorSchedule[]
+  guestUsers      User[]           @relation("GuestZone")
+  caseManagers    User[]           @relation("CMZone")
 }
 
 model User {
-  id             String       @id @default(uuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  email          String       @unique
-  passwordHash   String
-  role           UserRole
-  displayName    String
+  id              String       @id @default(uuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  email           String       @unique
+  passwordHash    String
+  role            UserRole
+  displayName     String
   lineUserId      String?      @unique
   lineDisplayName String?
   linePictureUrl  String?
-  phone          String?
-  gender         Gender?
-  birthDate      DateTime?
-  address        String?
-  specialty      String?
-  avatarUrl      String?
+  phone           String?
+  gender          Gender?
+  birthDate       DateTime?
+  address         String?
+  specialty       String?
+  avatarUrl       String?
   zoneId          String?
-  zone            Zone?   @relation("CMZone", fields: [zoneId], references: [id])
+  zone            Zone?        @relation("CMZone", fields: [zoneId], references: [id])
   preferredZoneId String?
-  preferredZone   Zone?   @relation("GuestZone", fields: [preferredZoneId], references: [id])
-  supervisorId   String?
-  supervisor     User?   @relation("Supervisor", fields: [supervisorId], references: [id])
-  subordinates   User[]  @relation("Supervisor")
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  preferredZone   Zone?        @relation("GuestZone", fields: [preferredZoneId], references: [id])
+  supervisorId    String?
+  supervisor      User?        @relation("Supervisor", fields: [supervisorId], references: [id])
+  subordinates    User[]       @relation("Supervisor")
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
-  assignedTasks     EventTask[]  @relation("AssignedTasks")
-  createdEvents     Event[]      @relation("CreatedEvents")
-  managedPatients   Patient[]    @relation("ManagedPatients")
-  submissions       Submission[]
-  activities        Activity[]
-  formTemplates     FormTemplate[]
+  assignedTasks   EventTask[]    @relation("AssignedTasks")
+  createdEvents   Event[]        @relation("CreatedEvents")
+  managedPatients Patient[]      @relation("ManagedPatients")
+  submissions     Submission[]
+  activities      Activity[]
+  formTemplates   FormTemplate[]
 
-  auditLogs            AuditLog[]         @relation("AuditActor")
-  stockTransactions    StockTransaction[] @relation("StockActor")
-  adjRequestsMade      AdjRequest[]       @relation("AdjRequester")
-  adjRequestsReviewed  AdjRequest[]       @relation("AdjReviewer")
-  lotsReceived         InventoryLot[]     @relation("LotReceiver")
-  lotsExpired          InventoryLot[]     @relation("LotExpirer")
+  auditLogs           AuditLog[]         @relation("AuditActor")
+  stockTransactions   StockTransaction[] @relation("StockActor")
+  adjRequestsMade     AdjRequest[]       @relation("AdjRequester")
+  adjRequestsReviewed AdjRequest[]       @relation("AdjReviewer")
+  lotsReceived        InventoryLot[]     @relation("LotReceiver")
+  lotsExpired         InventoryLot[]     @relation("LotExpirer")
 
-  diagnoses            Diagnosis[]        @relation("DoctorDiagnoses")
-  prescriptions        Prescription[]     @relation("DoctorPrescriptions")
-  doctorSchedules      DoctorSchedule[]   @relation("DoctorSchedules")
+  diagnoses       Diagnosis[]      @relation("DoctorDiagnoses")
+  prescriptions   Prescription[]   @relation("DoctorPrescriptions")
+  doctorSchedules DoctorSchedule[] @relation("DoctorSchedules")
 }
 
 model Patient {
-  id             String        @id @default(uuid())
-  organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id])
-  caseManagerId  String?
-  caseManager    User?         @relation("ManagedPatients", fields: [caseManagerId], references: [id])
+  id               String        @id @default(uuid())
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id])
+  caseManagerId    String?
+  caseManager      User?         @relation("ManagedPatients", fields: [caseManagerId], references: [id])
   // AES-256-GCM: "iv:authTag:ciphertext" hex string
-  nameEnc        String
-  hn             String        @unique
-  age            Int?
-  gender         Gender?
-  status         PatientStatus @default(PENDING)
-  conditions        String[]
-  initialComplaint  String?
-  locationText      String?
-  phone             String?
-  birthDate         DateTime?
-  nationalIdEnc     String?
-  followUpTarget    Int?
-  zoneId  String?
-  zone    Zone?   @relation(fields: [zoneId], references: [id])
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  nameEnc          String
+  hn               String        @unique
+  age              Int?
+  gender           Gender?
+  status           PatientStatus @default(PENDING)
+  conditions       String[]
+  initialComplaint String?
+  locationText     String?
+  phone            String?
+  birthDate        DateTime?
+  nationalIdEnc    String?
+  followUpTarget   Int?
+  zoneId           String?
+  zone             Zone?         @relation(fields: [zoneId], references: [id])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  submissions Submission[]
-  activities  Activity[]
-  eventTasks  EventTask[]
+  submissions         Submission[]
+  activities          Activity[]
+  eventTasks          EventTask[]
   carePlanItems       CarePlanItem[]
   carePlanAssessments CarePlanAssessment[]
   alerts              Alert[]
@@ -204,8 +204,8 @@ model FormTemplate {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  eventTasks   EventTask[]
-  submissions  Submission[]
+  eventTasks  EventTask[]
+  submissions Submission[]
 }
 
 model Event {
@@ -227,20 +227,20 @@ model Event {
 }
 
 model EventTask {
-  id               String      @id @default(uuid())
-  eventId          String
-  event            Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  patientId        String
-  patient          Patient     @relation(fields: [patientId], references: [id])
-  assigneeId       String
-  assignee         User        @relation("AssignedTasks", fields: [assigneeId], references: [id])
-  formTemplateId   String?
-  formTemplate     FormTemplate? @relation(fields: [formTemplateId], references: [id])
-  status           TaskStatus  @default(PENDING)
-  liffToken        String?
-  tokenExp         DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id             String        @id @default(uuid())
+  eventId        String
+  event          Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  patientId      String
+  patient        Patient       @relation(fields: [patientId], references: [id])
+  assigneeId     String
+  assignee       User          @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  formTemplateId String?
+  formTemplate   FormTemplate? @relation(fields: [formTemplateId], references: [id])
+  status         TaskStatus    @default(PENDING)
+  liffToken      String?
+  tokenExp       DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   submissions Submission[]
   activities  Activity[]
@@ -262,18 +262,18 @@ model Submission {
 }
 
 model Activity {
-  id         String       @id @default(uuid())
-  actorId    String
-  actor      User         @relation(fields: [actorId], references: [id])
-  patientId  String?
-  patient    Patient?     @relation(fields: [patientId], references: [id])
-  eventId    String?
-  event      Event?       @relation(fields: [eventId], references: [id])
-  taskId     String?
-  task       EventTask?   @relation(fields: [taskId], references: [id])
-  type       ActivityType
-  payload    Json?
-  createdAt  DateTime     @default(now())
+  id        String       @id @default(uuid())
+  actorId   String
+  actor     User         @relation(fields: [actorId], references: [id])
+  patientId String?
+  patient   Patient?     @relation(fields: [patientId], references: [id])
+  eventId   String?
+  event     Event?       @relation(fields: [eventId], references: [id])
+  taskId    String?
+  task      EventTask?   @relation(fields: [taskId], references: [id])
+  type      ActivityType
+  payload   Json?
+  createdAt DateTime     @default(now())
 }
 
 enum AlertType {
@@ -283,16 +283,16 @@ enum AlertType {
 }
 
 model Alert {
-  id          String    @id @default(uuid())
-  patientId   String
-  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  type        AlertType
-  daysMissed  Int?
-  lat         Float?
-  lng         Float?
-  sentAt      DateTime  @default(now())
-  resolvedAt  DateTime?
-  resolvedBy  String?
+  id         String    @id @default(uuid())
+  patientId  String
+  patient    Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type       AlertType
+  daysMissed Int?
+  lat        Float?
+  lng        Float?
+  sentAt     DateTime  @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
 }
 
 model CarePlanItem {
@@ -309,21 +309,21 @@ model CarePlanItem {
 }
 
 model CarePlanAssessment {
-  id                       String   @id @default(uuid())
-  patientId                String
-  patient                  Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id        String  @id @default(uuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
-  assessmentDate           DateTime?
-  locationFound            String?
-  careSetting              String?
-  referralSource           String?
-  status                   String?
-  helpGoal                 String?
-  homelessType             String?
-  notes                    String?
-  healthcareRight          String?
-  primaryCareUnit          String?
-  referralUnit             String?
+  assessmentDate  DateTime?
+  locationFound   String?
+  careSetting     String?
+  referralSource  String?
+  status          String?
+  helpGoal        String?
+  homelessType    String?
+  notes           String?
+  healthcareRight String?
+  primaryCareUnit String?
+  referralUnit    String?
 
   ncdConditions            String[]
   infectiousConditions     String[]
@@ -334,21 +334,21 @@ model CarePlanAssessment {
   conditionNote            String?
   mentalConditionNote      String?
 
-  medicalGoals             String[]
-  medicalGoalOther         String?
-  socialGoals              String[]
-  socialGoalOther          String?
+  medicalGoals     String[]
+  medicalGoalOther String?
+  socialGoals      String[]
+  socialGoalOther  String?
 
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Diagnosis {
-  id          String   @id @default(uuid())
-  patientId   String
-  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  doctorId    String
-  doctor      User     @relation("DoctorDiagnoses", fields: [doctorId], references: [id])
+  id             String   @id @default(uuid())
+  patientId      String
+  patient        Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId       String
+  doctor         User     @relation("DoctorDiagnoses", fields: [doctorId], references: [id])
   title          String
   description    String
   icd10          String?
@@ -425,24 +425,24 @@ model StockTransaction {
   unitCost     Float?
   reason       String?
   lotId        String?
-  lot          InventoryLot? @relation(fields: [lotId], references: [id])
+  lot          InventoryLot?   @relation(fields: [lotId], references: [id])
   createdAt    DateTime        @default(now())
 }
 
 model AdjRequest {
-  id              String        @id @default(uuid())
-  itemId          String
-  item            InventoryItem @relation(fields: [itemId], references: [id])
-  requestedById   String
-  requester       User          @relation("AdjRequester", fields: [requestedById], references: [id])
-  quantity        Int
-  reason          String
-  status          AdjStatus     @default(PENDING)
-  reviewedById    String?
-  reviewer        User?         @relation("AdjReviewer", fields: [reviewedById], references: [id])
-  reviewNote      String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            String        @id @default(uuid())
+  itemId        String
+  item          InventoryItem @relation(fields: [itemId], references: [id])
+  requestedById String
+  requester     User          @relation("AdjRequester", fields: [requestedById], references: [id])
+  quantity      Int
+  reason        String
+  status        AdjStatus     @default(PENDING)
+  reviewedById  String?
+  reviewer      User?         @relation("AdjReviewer", fields: [reviewedById], references: [id])
+  reviewNote    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model InventoryLot {
