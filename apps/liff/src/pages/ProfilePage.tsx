@@ -148,6 +148,19 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {info.role === 'GUEST' && (
+        <div style={{ marginTop: 16, background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 14, padding: '16px 18px' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e', marginBottom: 4 }}>🔗 มีบัญชีในระบบอยู่แล้วใช่ไหม?</div>
+          <div style={{ fontSize: 12, color: '#b45309', marginBottom: 12 }}>กดเพื่อเชื่อมบัญชีและอัปเกรด Role</div>
+          <button
+            onClick={() => navigate('/auth')}
+            style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: 'none', background: '#f59e0b', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+          >
+            เชื่อมบัญชีที่มีอยู่
+          </button>
+        </div>
+      )}
+
       <button
         onClick={() => liff.closeWindow()}
         style={{ width: '100%', marginTop: 20, padding: 13, borderRadius: 12, border: 'none', background: '#f3f4f6', color: '#374151', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
