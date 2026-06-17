@@ -57,7 +57,10 @@ export class AuthService {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
     });
-    if (!res.ok) throw new UnauthorizedException('Invalid LIFF token');
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      throw new UnauthorizedException(`Invalid LIFF token: ${errBody}`);
+    }
     return res.json() as Promise<{ sub: string; name?: string; picture?: string }>;
   }
 

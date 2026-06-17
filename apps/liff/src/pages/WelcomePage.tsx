@@ -193,11 +193,20 @@ export default function WelcomePage() {
           style={btn(true)}
           disabled={!checked || submitting}
           onClick={async () => {
+            // Get fresh token at submit time — LINE LIFF ID tokens expire after 10 min
+            const freshToken = liff.getIDToken() ?? '';
+            if (!freshToken) {
+              setError('เซสชั่นหมดอายุ กรุณาปิดแล้วเปิด LINE ใหม่อีกครั้ง');
+              setScrolled(false);
+              setChecked(false);
+              setStep('form');
+              return;
+            }
             setSubmitting(true);
             setError('');
             try {
               const { accessToken } = await api.guestRegister({
-                idToken,
+                idToken: freshToken,
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 email: formData.email,
@@ -207,7 +216,11 @@ export default function WelcomePage() {
               setToken(accessToken);
               setStep('done');
             } catch (err: any) {
-              setError(err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+              const msg = (err.message ?? '').toLowerCase();
+              const expired = msg.includes('expired') || msg.includes('invalid liff');
+              setError(expired
+                ? 'เซสชั่นหมดอายุ กรุณาปิดแล้วเปิด LINE ใหม่อีกครั้ง'
+                : (err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่'));
               setScrolled(false);
               setChecked(false);
               setStep('form');
