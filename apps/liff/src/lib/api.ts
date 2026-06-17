@@ -71,4 +71,19 @@ export const api = {
     conditions?: string[]; initialComplaint?: string;
     locationText?: string; phone?: string; healthcareRight?: string;
   }) => request<{ id: string; hn: string }>('/patients', { method: 'POST', body: JSON.stringify(data) }),
+  getMe: () =>
+    request<{
+      id: string;
+      email: string;
+      displayName?: string;
+      phone?: string | null;
+      birthDate?: string | null;
+      gender?: string | null;
+      role: string;
+    }>('/auth/me'),
+  updateMe: (data: { phone?: string; birthDate?: string; gender?: string }) =>
+    request<{ id: string; email: string; phone?: string; birthDate?: string; gender?: string }>('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
 };
