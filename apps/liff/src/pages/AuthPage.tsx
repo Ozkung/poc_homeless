@@ -134,7 +134,8 @@ export default function AuthPage() {
             const msg =
               err.status === 409 ? 'LINE Account นี้ผูกกับบัญชีอื่นอยู่แล้ว'
               : err.status === 403 ? 'บัญชีนี้ไม่รองรับการผูก LINE'
-              : 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+              : err.status === 401 ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+              : 'เกิดข้อผิดพลาด กรุณาเปิดแอปใหม่';
             setError(msg);
             setScrolled(false);
             setChecked(false);
@@ -146,7 +147,7 @@ export default function AuthPage() {
       >
         {submitting ? 'กำลังบันทึก...' : 'ยืนยัน ✓'}
       </button>
-      <button style={btn(false)} onClick={() => { setScrolled(false); setChecked(false); setStep('link'); }}>← ย้อนกลับ</button>
+      <button style={btn(false)} disabled={submitting} onClick={() => { setScrolled(false); setChecked(false); setStep('link'); }}>← ย้อนกลับ</button>
     </>
   );
 }
