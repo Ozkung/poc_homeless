@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
 import { initLiff } from './lib/liff';
 import { api, setToken } from './lib/api';
@@ -11,13 +11,13 @@ import NotePage from './pages/NotePage';
 import CarePlanPage from './pages/CarePlanPage';
 import AuthPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
+import WelcomePage from './pages/WelcomePage';
 import AddPatientPage from './pages/AddPatientPage';
 
 function AppRoutes() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     async function init() {
@@ -31,9 +31,7 @@ function AppRoutes() {
           setReady(true);
         } catch (e: any) {
           if (e.status === 401 || e.message?.includes('not linked')) {
-            // Preserve current path so AuthPage can redirect back after auth
-            const from = location.pathname !== '/auth' ? location.pathname : '/';
-            navigate('/auth', { state: { from } });
+            navigate('/welcome');
             setReady(true);
           } else {
             throw e;
@@ -65,6 +63,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<TaskPage />} />
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/checkin/:taskId" element={<CheckinPage />} />
       <Route path="/form/:taskId/:formId" element={<FormPage />} />
       <Route path="/note/:taskId" element={<NotePage />} />
