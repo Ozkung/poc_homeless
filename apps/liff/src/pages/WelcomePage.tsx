@@ -61,25 +61,12 @@ const wrap = (children: React.ReactNode) => (
   </div>
 );
 
-export default function WelcomePage() {
-  const [step, setStep] = useState<Step>('form');
-  const [lineProfile, setLineProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
-  const [formData, setFormData] = useState<FormData>({ firstName: '', lastName: '', email: '', phone: '', zoneId: '' });
-  const [zones, setZones] = useState<{ id: string; name: string }[]>([]);
-  const [error, setError] = useState('');
-  const [scrolled, setScrolled] = useState(false);
-  const [checked, setChecked] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const navigate = useNavigate();
+interface HeaderProps {
+  lineProfile: { displayName: string; pictureUrl?: string } | null;
+}
 
-  useEffect(() => {
-    liff.getProfile().then(setLineProfile).catch(() => {});
-    api.getPublicZones().then(setZones).catch(() => {});
-  }, []);
-
-  const idToken = liff.getIDToken() ?? '';
-
-  const Header = () => (
+function Header({ lineProfile }: HeaderProps) {
+  return (
     <div style={{ textAlign: 'center', marginBottom: 24 }}>
       {lineProfile?.pictureUrl ? (
         <img
@@ -96,6 +83,26 @@ export default function WelcomePage() {
       <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>ยินดีต้อนรับสู่โครงการ</div>
     </div>
   );
+}
+
+export default function WelcomePage() {
+  const [step, setStep] = useState<Step>('form');
+  const [lineProfile, setLineProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
+  const [formData, setFormData] = useState<FormData>({ firstName: '', lastName: '', email: '', phone: '', zoneId: '' });
+  const [zones, setZones] = useState<{ id: string; name: string }[]>([]);
+  const [error, setError] = useState('');
+  const [scrolled, setScrolled] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [idToken, setIdToken] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    liff.getProfile().then(setLineProfile).catch(() => {});
+    api.getPublicZones().then(setZones).catch(() => {});
+    const token = liff.getIDToken();
+    if (token) setIdToken(token);
+  }, []);
 
   if (step === 'form') {
     function handleSubmit(e: React.FormEvent) {
@@ -110,7 +117,7 @@ export default function WelcomePage() {
 
     return wrap(
       <>
-        <Header />
+        <Header lineProfile={lineProfile} />
         <form onSubmit={handleSubmit}>
           <h3 style={{ margin: '0 0 16px', fontSize: 17, fontWeight: 700 }}>สมัครสมาชิก</h3>
           {error && (
@@ -161,7 +168,7 @@ export default function WelcomePage() {
   if (step === 'tou') {
     return wrap(
       <>
-        <Header />
+        <Header lineProfile={lineProfile} />
         <h3 style={{ margin: '0 0 12px', fontSize: 17, fontWeight: 700 }}>ข้อกำหนดและนโยบาย</h3>
         {error && (
           <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#dc2626' }}>
@@ -201,6 +208,8 @@ export default function WelcomePage() {
               setStep('done');
             } catch (err: any) {
               setError(err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+              setScrolled(false);
+              setChecked(false);
               setStep('form');
             } finally {
               setSubmitting(false);
@@ -209,14 +218,14 @@ export default function WelcomePage() {
         >
           {submitting ? 'กำลังบันทึก...' : 'ยืนยัน ✓'}
         </button>
-        <button style={btn(false)} onClick={() => setStep('form')}>← ย้อนกลับ</button>
+        <button style={btn(false)} onClick={() => { setScrolled(false); setChecked(false); setStep('form'); }}>← ย้อนกลับ</button>
       </>
     );
   }
 
   return wrap(
     <div style={{ textAlign: 'center' }}>
-      <Header />
+      <Header lineProfile={lineProfile} />
       <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
       <h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 700 }}>ยินดีต้อนรับ!</h2>
       <p style={{ margin: '0 0 20px', fontSize: 13, color: '#9ca3af' }}>สมัครสมาชิกสำเร็จแล้ว</p>
