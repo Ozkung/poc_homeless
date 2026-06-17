@@ -1,4 +1,4 @@
-import { IsDateString, IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsISO8601, IsOptional, IsString } from 'class-validator';
 import { Gender } from '@prisma/client';
 
 export class UpdateMeDto {
@@ -7,5 +7,5 @@ export class UpdateMeDto {
   @IsOptional() @IsString() currentPassword?: string;
   @IsOptional() @IsString() phone?: string;
   @IsOptional() @IsEnum(Gender) gender?: Gender;
-  @IsOptional() @IsDateString() birthDate?: string;
+  @IsOptional() @IsISO8601({ strict: true }) birthDate?: string;
 }
