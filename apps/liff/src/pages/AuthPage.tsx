@@ -64,12 +64,12 @@ export default function AuthPage() {
   const navigate = useNavigate();
 
   if (step === 'link') {
-    function handleSubmit(e: React.FormEvent) {
+    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (!form.email || !form.password) { setError('กรุณากรอกข้อมูลให้ครบ'); return; }
       setError('');
       setStep('tou');
-    }
+    };
 
     return wrap(
       <form onSubmit={handleSubmit}>

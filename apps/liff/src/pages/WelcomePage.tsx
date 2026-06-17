@@ -105,7 +105,7 @@ export default function WelcomePage() {
   }, []);
 
   if (step === 'form') {
-    function handleSubmit(e: React.FormEvent) {
+    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (!formData.firstName || !formData.lastName || !formData.email) {
         setError('กรุณากรอกข้อมูลให้ครบ');
@@ -113,7 +113,7 @@ export default function WelcomePage() {
       }
       setError('');
       setStep('tou');
-    }
+    };
 
     return wrap(
       <>
@@ -218,7 +218,7 @@ export default function WelcomePage() {
         >
           {submitting ? 'กำลังบันทึก...' : 'ยืนยัน ✓'}
         </button>
-        <button style={btn(false)} onClick={() => { setScrolled(false); setChecked(false); setStep('form'); }}>← ย้อนกลับ</button>
+        <button style={btn(false)} disabled={submitting} onClick={() => { setScrolled(false); setChecked(false); setStep('form'); }}>← ย้อนกลับ</button>
       </>
     );
   }
