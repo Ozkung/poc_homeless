@@ -210,7 +210,7 @@ export class AuthService {
       select: {
         id: true, email: true, displayName: true, role: true,
         phone: true, gender: true, avatarUrl: true,
-        lineUserId: true, isActive: true, createdAt: true,
+        lineUserId: true, isActive: true, createdAt: true, birthDate: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -221,8 +221,11 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({ where: { id: userId, organizationId: orgId } });
     if (!user) throw new NotFoundException('User not found');
 
-    const { email, currentPassword, ...rest } = dto;
+    const { email, currentPassword, birthDate, ...rest } = dto;
     const updateData: Record<string, unknown> = { ...rest };
+    if (birthDate !== undefined) {
+      updateData.birthDate = birthDate ? new Date(birthDate) : null;
+    }
 
     if (email) {
       if (!currentPassword) throw new BadRequestException('กรุณายืนยันรหัสผ่านก่อนเปลี่ยน email');
@@ -234,7 +237,7 @@ export class AuthService {
     return this.prisma.user.update({
       where: { id: userId },
       data: updateData as any,
-      select: { id: true, email: true, displayName: true, phone: true, gender: true, avatarUrl: true, role: true },
+      select: { id: true, email: true, displayName: true, phone: true, gender: true, avatarUrl: true, role: true, birthDate: true },
     });
   }
 
