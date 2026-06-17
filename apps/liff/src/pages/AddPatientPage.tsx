@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import liff from '@line/liff';
 import { api } from '../lib/api';
 
@@ -23,6 +23,11 @@ export default function AddPatientPage() {
   });
   const [conditions, setConditions] = useState<string[]>([]);
   const [customCondition, setCustomCondition] = useState('');
+  const [lineProfile, setLineProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
+
+  useEffect(() => {
+    liff.getProfile().then(p => setLineProfile({ displayName: p.displayName, pictureUrl: p.pictureUrl ?? undefined })).catch(() => {});
+  }, []);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ hn: string; name: string } | null>(null);
   const [error, setError] = useState('');
@@ -87,6 +92,19 @@ export default function AddPatientPage() {
 
   return wrap(
     <form onSubmit={handleSubmit}>
+      {/* LINE profile header */}
+      {lineProfile && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdf4', borderRadius: 10, padding: '8px 12px', marginBottom: 16 }}>
+          {lineProfile.pictureUrl ? (
+            <img src={lineProfile.pictureUrl} alt="LINE" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #bbf7d0', flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#06c755', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#fff', fontSize: 14, flexShrink: 0 }}>
+              {lineProfile.displayName[0]?.toUpperCase()}
+            </div>
+          )}
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#166534' }}>{lineProfile.displayName}</div>
+        </div>
+      )}
       <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700 }}>เพิ่มผู้ป่วยใหม่</h2>
 
       {error && <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#dc2626' }}>{error}</div>}

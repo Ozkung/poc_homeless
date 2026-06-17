@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import liff from '@line/liff';
 import { api, getToken } from '../lib/api';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -76,12 +77,12 @@ export default function TaskPage() {
   const [sosLoading, setSosLoading] = useState(false);
   const [sosSent, setSosSent] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [lineProfile, setLineProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
   const me = useJwtPayload();
 
   useEffect(() => {
-    api.getMyTasks()
-      .then(setTasks)
-      .finally(() => setLoading(false));
+    api.getMyTasks().then(setTasks).finally(() => setLoading(false));
+    liff.getProfile().then(p => setLineProfile({ displayName: p.displayName, pictureUrl: p.pictureUrl ?? undefined })).catch(() => {});
   }, []);
 
   // Group tasks by event
@@ -155,11 +156,19 @@ export default function TaskPage() {
             </div>
             {me && (
               <Link to="/profile" className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>
-                    {(me.displayName ?? me.email ?? '?')[0].toUpperCase()}
-                  </span>
-                </div>
+                {lineProfile?.pictureUrl ? (
+                  <img
+                    src={lineProfile.pictureUrl}
+                    alt="profile"
+                    style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e9d5ff' }}
+                  />
+                ) : (
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>
+                      {(lineProfile?.displayName ?? me.displayName ?? me.email ?? '?')[0].toUpperCase()}
+                    </span>
+                  </div>
+                )}
                 <span className="text-xs text-gray-400">โปรไฟล์</span>
               </Link>
             )}
