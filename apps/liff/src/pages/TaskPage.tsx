@@ -41,12 +41,33 @@ const TILE_BORDER: Record<string, string> = {
 const TILE_BG: Record<string, string> = {
   CRITICAL: 'linear-gradient(145deg, #fff5f5, #fff)',
   URGENT:   'linear-gradient(145deg, #fffbeb, #fff)',
+  NORMAL:   'linear-gradient(145deg, #f0f9ff, #fff)',
 };
 
 function useJwtPayload() {
   const token = getToken();
   if (!token) return null;
   try { return JSON.parse(atob(token.split('.')[1])); } catch { return null; }
+}
+
+function SosBar({ sosLoading, onSos }: { sosLoading: boolean; onSos: () => void }) {
+  return (
+    <div
+      onClick={!sosLoading ? onSos : undefined}
+      style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        background: sosLoading ? '#d9363e' : '#ff4d4f',
+        padding: '14px 16px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        cursor: sosLoading ? 'not-allowed' : 'pointer', zIndex: 100,
+      }}
+    >
+      <span style={{ fontSize: 18 }}>🚨</span>
+      <span style={{ color: '#fff', fontWeight: 700, fontSize: 14, letterSpacing: 0.5 }}>
+        {sosLoading ? 'กำลังส่ง SOS…' : 'SOS ฉุกเฉิน'}
+      </span>
+    </div>
+  );
 }
 
 export default function TaskPage() {
@@ -101,24 +122,6 @@ export default function TaskPage() {
     }
   }
 
-  const SosBar = () => (
-    <div
-      onClick={!sosLoading ? handleSos : undefined}
-      style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: sosLoading ? '#d9363e' : '#ff4d4f',
-        padding: '14px 16px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        cursor: sosLoading ? 'not-allowed' : 'pointer', zIndex: 100,
-      }}
-    >
-      <span style={{ fontSize: 18 }}>🚨</span>
-      <span style={{ color: '#fff', fontWeight: 700, fontSize: 14, letterSpacing: 0.5 }}>
-        {sosLoading ? 'กำลังส่ง SOS…' : 'SOS ฉุกเฉิน'}
-      </span>
-    </div>
-  );
-
   if (sosSent) return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="text-center">
@@ -134,7 +137,7 @@ export default function TaskPage() {
       <div className="max-w-lg mx-auto p-4 space-y-3 mt-4">
         {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-gray-100 animate-pulse rounded-xl" />)}
       </div>
-      <SosBar />
+      <SosBar sosLoading={sosLoading} onSos={handleSos} />
     </div>
   );
 
@@ -210,6 +213,11 @@ export default function TaskPage() {
                         </span>
                         <span>{groupTasks.length} ผู้ป่วย</span>
                       </div>
+                      {event?.note && (
+                        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 3, lineHeight: 1.4 }}>
+                          {event.note}
+                        </div>
+                      )}
                     </div>
                     <span style={{
                       color: 'rgba(255,255,255,0.8)',
@@ -230,7 +238,7 @@ export default function TaskPage() {
                       gap: 8,
                       padding: 10,
                     }}>
-                      {groupTasks.map((task) => {
+                      {groupTasks.map((task, index) => {
                         const canAct = task.status !== 'DONE' && task.status !== 'NOT_FOUND';
                         const glow = PRIORITY_GLOW[priority];
 
@@ -238,7 +246,9 @@ export default function TaskPage() {
                           <div
                             key={task.id}
                             style={{
-                              gridColumn: allFullWidth ? 'span 2' : 'span 1',
+                              gridColumn: (allFullWidth || (groupTasks.length % 2 !== 0 && index === groupTasks.length - 1))
+                                ? 'span 2'
+                                : 'span 1',
                               background: TILE_BG[priority] ?? '#f8fafc',
                               borderRadius: 14,
                               padding: 10,
@@ -333,7 +343,7 @@ export default function TaskPage() {
         )}
       </div>
 
-      <SosBar />
+      <SosBar sosLoading={sosLoading} onSos={handleSos} />
     </div>
   );
 }
