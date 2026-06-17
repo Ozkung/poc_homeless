@@ -69,9 +69,13 @@ export default function RegisterPage() {
           gender: me.gender ?? '',
         });
         setStep('form');
-      } catch {
-        setError('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่');
-        setStep('form');
+      } catch (e: any) {
+        if (e?.status === 401) {
+          navigate('/welcome', { replace: true });
+        } else {
+          setError('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่');
+          setStep('form');
+        }
       }
     }
     load();
@@ -121,7 +125,7 @@ export default function RegisterPage() {
           )}
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{lineProfile?.displayName ?? '...'}</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>LINE Account เชื่อมต่อแล้ว ✓</div>
+            {lineProfile && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>LINE Account เชื่อมต่อแล้ว ✓</div>}
           </div>
         </div>
 
@@ -134,6 +138,15 @@ export default function RegisterPage() {
         {error && (
           <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '8px 12px', marginBottom: 14, fontSize: 13, color: '#dc2626' }}>
             {error}
+            {!email && (
+              <button
+                type="button"
+                onClick={() => liff.closeWindow()}
+                style={{ display: 'block', marginTop: 8, fontSize: 12, color: '#dc2626', background: 'none', border: '1px solid #fca5a5', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+              >
+                ปิดและลองใหม่
+              </button>
+            )}
           </div>
         )}
 
