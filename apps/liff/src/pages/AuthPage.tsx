@@ -124,13 +124,9 @@ export default function AuthPage() {
         style={btn(true)}
         disabled={!checked || submitting}
         onClick={async () => {
-          // Get fresh token at submit time — LINE LIFF ID tokens expire after 10 min
           const freshToken = liff.getIDToken() ?? '';
           if (!freshToken) {
-            setError('เซสชั่นหมดอายุ กรุณาปิดแล้วเปิด LINE ใหม่อีกครั้ง');
-            setScrolled(false);
-            setChecked(false);
-            setStep('link');
+            liff.login({ redirectUri: window.location.href });
             return;
           }
           setSubmitting(true);
@@ -141,9 +137,11 @@ export default function AuthPage() {
             navigate('/profile', { replace: true });
           } catch (err: any) {
             const errMsg: string = err.message ?? '';
-            const expired = errMsg.toLowerCase().includes('expired') || errMsg.toLowerCase().includes('invalid liff');
-            const msg = expired ? 'เซสชั่นหมดอายุ กรุณาปิดแล้วเปิด LINE ใหม่อีกครั้ง'
-              : err.status === 409 ? 'LINE Account นี้ผูกกับบัญชีอื่นอยู่แล้ว'
+            if (errMsg.toLowerCase().includes('expired') || errMsg.toLowerCase().includes('invalid liff')) {
+              liff.login({ redirectUri: window.location.href });
+              return;
+            }
+            const msg = err.status === 409 ? 'LINE Account นี้ผูกกับบัญชีอื่นอยู่แล้ว'
               : err.status === 403 ? 'บัญชีนี้ไม่รองรับการผูก LINE'
               : err.status === 401 ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
               : 'เกิดข้อผิดพลาด กรุณาเปิดแอปใหม่';
