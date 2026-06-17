@@ -27,6 +27,7 @@ interface Info {
   pictureUrl?: string;
   role: string;
   email: string;
+  linked: boolean;
 }
 
 export default function ProfilePage() {
@@ -40,6 +41,7 @@ export default function ProfilePage() {
         const lineProfile = await liff.getProfile();
         const token = getToken();
         let role = '', email = '';
+        const linked = !!token;
         if (token) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
@@ -52,6 +54,7 @@ export default function ProfilePage() {
           pictureUrl: lineProfile.pictureUrl ?? undefined,
           role,
           email,
+          linked,
         });
       } catch {
         setError('ไม่สามารถโหลดข้อมูลได้');
@@ -85,12 +88,56 @@ export default function ProfilePage() {
     <div style={{ textAlign: 'center', color: '#aaa', fontSize: 13, padding: '16px 0' }}>กำลังโหลด...</div>
   );
 
-  const roleColor = ROLE_COLOR[info.role] ?? '#888';
-  const initials = info.displayName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  const roleColor = ROLE_COLOR[info.role] ?? '#7c3aed';
+  const initials = info.displayName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase() || info.displayName[0]?.toUpperCase() || '?';
 
+  // ── Unlinked: แสดง LINE profile + ปุ่มสมัคร/เชื่อม ──
+  if (!info.linked) return wrap(
+    <div>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        {info.pictureUrl ? (
+          <img src={info.pictureUrl} alt="LINE profile" style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid #f0f0f0', marginBottom: 14 }} />
+        ) : (
+          <div style={{ width: 88, height: 88, borderRadius: '50%', background: '#06c755', margin: '0 auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700, color: '#fff' }}>
+            {initials}
+          </div>
+        )}
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#111', marginBottom: 4 }}>{info.displayName}</div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#f0fdf4', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+          <span>🟢</span> LINE เชื่อมต่อแล้ว
+        </div>
+      </div>
+
+      <div style={{ background: '#f9fafb', borderRadius: 14, padding: '14px 16px', marginBottom: 16, fontSize: 13, color: '#6b7280', textAlign: 'center' }}>
+        ยังไม่มีบัญชีในระบบ<br />กดสมัครสมาชิกเพื่อเริ่มใช้งาน
+      </div>
+
+      <button
+        onClick={() => navigate('/welcome')}
+        style={{ width: '100%', padding: 13, borderRadius: 12, border: 'none', background: '#7c3aed', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginBottom: 10 }}
+      >
+        สมัครสมาชิก
+      </button>
+
+      <button
+        onClick={() => navigate('/auth')}
+        style={{ width: '100%', padding: 13, borderRadius: 12, border: '1.5px solid #e2e8f0', background: '#fff', color: '#374151', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 10 }}
+      >
+        มีบัญชีอยู่แล้ว — เชื่อมบัญชี
+      </button>
+
+      <button
+        onClick={() => liff.closeWindow()}
+        style={{ width: '100%', padding: 13, borderRadius: 12, border: 'none', background: '#f3f4f6', color: '#9ca3af', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+      >
+        ปิดหน้าต่าง
+      </button>
+    </div>
+  );
+
+  // ── Linked: แสดง profile เต็ม ──
   return wrap(
     <div>
-      {/* Back button */}
       <button
         onClick={() => navigate('/')}
         style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: 13, cursor: 'pointer', marginBottom: 20, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
@@ -98,30 +145,20 @@ export default function ProfilePage() {
         ← กลับ
       </button>
 
-      {/* Avatar + name */}
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         {info.pictureUrl ? (
-          <img
-            src={info.pictureUrl}
-            alt="profile"
-            style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '3px solid #f0f0f0', marginBottom: 12 }}
-          />
+          <img src={info.pictureUrl} alt="profile" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '3px solid #f0f0f0', marginBottom: 12 }} />
         ) : (
           <div style={{ width: 80, height: 80, borderRadius: '50%', background: roleColor, margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 700, color: '#fff' }}>
             {initials}
           </div>
         )}
-
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#111', marginBottom: 8 }}>
-          {info.displayName}
-        </div>
-
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#111', marginBottom: 8 }}>{info.displayName}</div>
         <span style={{ display: 'inline-block', background: roleColor, color: '#fff', borderRadius: 20, padding: '4px 16px', fontSize: 12, fontWeight: 700 }}>
           {ROLE_LABEL[info.role] ?? info.role}
         </span>
       </div>
 
-      {/* Info card */}
       <div style={{ background: '#f9fafb', borderRadius: 14, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {info.email && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

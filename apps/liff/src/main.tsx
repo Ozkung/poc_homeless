@@ -32,7 +32,7 @@ function AppRoutes() {
           setReady(true);
         } catch (e: any) {
           if (e.status === 401 || e.message?.includes('not linked')) {
-            navigate('/welcome');
+            navigate('/profile');
             setReady(true);
           } else {
             throw e;
