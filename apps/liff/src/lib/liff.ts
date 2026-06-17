@@ -4,7 +4,8 @@ const LIFF_ID = import.meta.env.VITE_LIFF_ID as string;
 
 export async function initLiff(): Promise<void> {
   await liff.init({ liffId: LIFF_ID });
-  if (!liff.isLoggedIn()) {
+  // Re-login if not logged in OR if the ID token has expired (getIDToken returns null)
+  if (!liff.isLoggedIn() || !liff.getIDToken()) {
     liff.login({ redirectUri: window.location.href });
   }
 }
