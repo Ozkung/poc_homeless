@@ -1,4 +1,4 @@
-import liff from '@line/liff';
+import { liffLogin } from './liff';
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 
@@ -25,7 +25,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     // JWT expired — re-initiate LIFF login to get a fresh session
     if (res.status === 401 && accessToken) {
       accessToken = null;
-      liff.login({ redirectUri: window.location.href });
+      liffLogin();
       return new Promise(() => {}); // never resolves; page will redirect
     }
     const err = await res.json().catch(() => ({}));

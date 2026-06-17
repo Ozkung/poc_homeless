@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
 import { api, setToken } from '../lib/api';
+import { liffLogin } from '../lib/liff';
 
 type Step = 'link' | 'tou';
 
@@ -126,7 +127,7 @@ export default function AuthPage() {
         onClick={async () => {
           const freshToken = liff.getIDToken() ?? '';
           if (!freshToken) {
-            liff.login({ redirectUri: window.location.href });
+            liffLogin();
             return;
           }
           setSubmitting(true);
@@ -138,7 +139,7 @@ export default function AuthPage() {
           } catch (err: any) {
             const errMsg: string = err.message ?? '';
             if (errMsg.toLowerCase().includes('expired') || errMsg.toLowerCase().includes('invalid liff')) {
-              liff.login({ redirectUri: window.location.href });
+              liffLogin();
               return;
             }
             const msg = err.status === 409 ? 'LINE Account นี้ผูกกับบัญชีอื่นอยู่แล้ว'

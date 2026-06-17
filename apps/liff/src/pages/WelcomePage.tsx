@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
 import { api, setToken } from '../lib/api';
+import { liffLogin } from '../lib/liff';
 
 type Step = 'form' | 'tou' | 'done';
 
@@ -195,7 +196,7 @@ export default function WelcomePage() {
           onClick={async () => {
             const freshToken = liff.getIDToken() ?? '';
             if (!freshToken) {
-              liff.login({ redirectUri: window.location.href });
+              liffLogin();
               return;
             }
             setSubmitting(true);
@@ -214,7 +215,7 @@ export default function WelcomePage() {
             } catch (err: any) {
               const msg = (err.message ?? '').toLowerCase();
               if (msg.includes('expired') || msg.includes('invalid liff')) {
-                liff.login({ redirectUri: window.location.href });
+                liffLogin();
                 return;
               }
               setError(err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่');
