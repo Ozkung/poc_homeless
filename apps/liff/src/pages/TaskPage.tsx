@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import liff from '@line/liff';
 import { api, getToken } from '../lib/api';
+import { useProfileStore } from '../store/profileStore';
 
 const ACCENT = '#6366F1';
 
@@ -41,13 +41,12 @@ export default function TaskPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [lineProfile, setLineProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
+  const { lineProfile } = useProfileStore();
   const me = useJwtPayload();
   const navigate = useNavigate();
 
   useEffect(() => {
     api.getMyTasks().then(setTasks).finally(() => setLoading(false));
-    liff.getProfile().then(p => setLineProfile({ displayName: p.displayName, pictureUrl: p.pictureUrl ?? undefined })).catch(() => {});
   }, []);
 
   const eventGroups: Record<string, { event: any; tasks: any[] }> = {};
@@ -76,8 +75,6 @@ export default function TaskPage() {
     </div>
   );
 
-  const isGuest = me?.role === 'GUEST';
-
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: 32 }}>
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
@@ -90,11 +87,9 @@ export default function TaskPage() {
                 HomeMed Connect
               </p>
               <h1 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>งานในพื้นที่วันนี้</h1>
-              {!isGuest && (
-                <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 3, marginBottom: 0 }}>
-                  {groups.length} กิจกรรม · {tasks.length} ผู้ป่วย
-                </p>
-              )}
+              <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 3, marginBottom: 0 }}>
+                {groups.length} กิจกรรม · {tasks.length} ผู้ป่วย
+              </p>
             </div>
             {me && (
               <Link to="/profile" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textDecoration: 'none', flexShrink: 0 }}>
@@ -114,20 +109,7 @@ export default function TaskPage() {
           </div>
         </div>
 
-        {/* GUEST empty state */}
-        {isGuest && groups.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 24px' }}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FFFBEB', border: '1px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 16px' }}>⏳</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>รอการอนุมัติ</div>
-            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 24, lineHeight: 1.6 }}>
-              บัญชีของคุณอยู่ในสถานะ Guest<br />SuperAdmin จะอนุมัติ Role ให้เร็วๆ นี้
-            </div>
-            <Link to="/profile"
-              style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 10, background: ACCENT, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
-              ดูโปรไฟล์ของฉัน
-            </Link>
-          </div>
-        ) : groups.length === 0 ? (
+        {groups.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '64px 24px', color: '#94A3B8' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
             <p style={{ fontSize: 14, margin: 0 }}>ไม่มีงานในพื้นที่ขณะนี้</p>

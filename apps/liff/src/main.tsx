@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-ro
 import liff from '@line/liff';
 import { initLiff } from './lib/liff';
 import { api, setToken } from './lib/api';
+import { useProfileStore } from './store/profileStore';
 import TaskPage from './pages/TaskPage';
 import AuthPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
@@ -17,23 +18,35 @@ function AppRoutes() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+  const { setLineProfile, setSystemProfile, setZones } = useProfileStore();
 
   useEffect(() => {
     async function init() {
       try {
         await initLiff();
-        const token = liff.getIDToken();
-        if (!token) return; // liff.login() redirect in progress — stay on loading screen
+        const idToken = liff.getIDToken();
+        if (!idToken) return; // liff.login() redirect in progress — stay on loading screen
 
-        // Read ?to= param set by Rich Menu buttons (e.g. ?to=register)
+        // Load LINE profile into store
+        liff.getProfile().then((p) =>
+          setLineProfile({ userId: p.userId, displayName: p.displayName, pictureUrl: p.pictureUrl ?? undefined })
+        ).catch(() => {});
+
         const toParam = new URLSearchParams(window.location.search).get('to');
 
         try {
-          const { accessToken } = await api.verifyLiff(token);
+          const { accessToken } = await api.verifyLiff(idToken);
           setToken(accessToken);
-          // Already linked — route to requested page or stay on current
+
+          // Load system profile + zones into store (non-blocking for routing)
+          Promise.all([api.getMe(), api.getPublicZones()]).then(([me, zones]) => {
+            setSystemProfile(me);
+            setZones(zones);
+          }).catch(() => {});
+
+          // Route to requested page
           if (toParam === 'register') {
-            navigate('/profile', { replace: true }); // already registered → go to profile
+            navigate('/profile', { replace: true });
           } else if (toParam === 'profile') {
             navigate('/profile', { replace: true });
           } else if (toParam === 'add-patient') {
@@ -44,7 +57,6 @@ function AppRoutes() {
           setReady(true);
         } catch (e: any) {
           if (e.status === 401 || e.message?.includes('not linked')) {
-            // Not linked — always go to register regardless of ?to
             navigate('/register', { replace: true });
             setReady(true);
           } else {

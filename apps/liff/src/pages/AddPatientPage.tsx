@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
 import { api } from '../lib/api';
+import { useProfileStore } from '../store/profileStore';
 
 const ACCENT = '#6366F1';
 
@@ -16,26 +17,28 @@ const CONDITIONS = ['เบาหวาน', 'ความดัน', 'โรค
 
 export default function AddPatientPage() {
   const navigate = useNavigate();
-  const [guardState, setGuardState] = useState<'loading' | 'guest' | 'no-zone' | 'ok'>('loading');
+  const { lineProfile, systemProfile } = useProfileStore();
+  const [guardState, setGuardState] = useState<'loading' | 'no-zone' | 'ok'>('loading');
   const [form, setForm] = useState({
     name: '', age: '', gender: '', phone: '',
     initialComplaint: '', locationText: '', status: 'PENDING',
   });
   const [conditions, setConditions] = useState<string[]>([]);
   const [customCondition, setCustomCondition] = useState('');
-  const [lineProfile, setLineProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ hn: string; name: string } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    liff.getProfile().then(p => setLineProfile({ displayName: p.displayName, pictureUrl: p.pictureUrl ?? undefined })).catch(() => {});
-    api.getMe().then(me => {
-      if (me.role === 'GUEST') { setGuardState('guest'); return; }
-      if (!me.preferredZoneId) { setGuardState('no-zone'); return; }
-      setGuardState('ok');
-    }).catch(() => setGuardState('ok'));
-  }, []);
+    if (systemProfile) {
+      setGuardState(systemProfile.preferredZoneId ? 'ok' : 'no-zone');
+    } else {
+      // fallback: fetch if store is empty (e.g. deep link opened directly)
+      api.getMe().then(me => {
+        setGuardState(me.preferredZoneId ? 'ok' : 'no-zone');
+      }).catch(() => setGuardState('ok'));
+    }
+  }, [systemProfile?.id]);
 
   function toggleCondition(c: string) {
     setConditions(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
@@ -86,21 +89,6 @@ export default function AddPatientPage() {
   if (guardState === 'loading') return (
     <PageWrap>
       <div style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8', fontSize: 13 }}>กำลังโหลด...</div>
-    </PageWrap>
-  );
-
-  if (guardState === 'guest') return (
-    <PageWrap>
-      <div style={{ textAlign: 'center', padding: '32px 0' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FFFBEB', border: '1px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 16px' }}>⏳</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>รอการอนุมัติ Role</div>
-        <div style={{ fontSize: 13, color: '#64748B', marginBottom: 24, lineHeight: 1.6 }}>
-          บัญชีของคุณอยู่ในสถานะ Guest<br />SuperAdmin ต้องอนุมัติก่อนจึงจะเพิ่มผู้ป่วยได้
-        </div>
-        <button style={{ width: '100%', padding: 13, borderRadius: 12, border: '1px solid #E2E8F0', background: '#fff', color: '#475569', fontSize: 14, fontWeight: 600, cursor: 'pointer' }} onClick={() => navigate('/profile')}>
-          ดูโปรไฟล์
-        </button>
-      </div>
     </PageWrap>
   );
 
