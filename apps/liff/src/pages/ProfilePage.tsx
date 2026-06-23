@@ -160,11 +160,6 @@ export default function ProfilePage() {
           LINE เชื่อมต่อแล้ว
         </div>
         <span style={chipStyle}>{ROLE_LABEL[me?.role ?? ''] ?? me?.role}</span>
-        {me?.role === 'GUEST' && (
-          <p style={{ fontSize: 12, color: '#D97706', margin: 0, textAlign: 'center', lineHeight: 1.5 }}>
-            รอการอนุมัติ Role จาก SuperAdmin
-          </p>
-        )}
       </div>
 
       {/* Form */}
