@@ -8,4 +8,5 @@ export class UpdateMeDto {
   @IsOptional() @IsString() phone?: string;
   @IsOptional() @IsEnum(Gender) gender?: Gender;
   @IsOptional() @IsISO8601({ strict: true }) birthDate?: string;
+  @IsOptional() @IsString() preferredZoneId?: string;
 }

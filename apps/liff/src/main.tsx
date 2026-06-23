@@ -1,38 +1,41 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import liff from '@line/liff';
 import { initLiff } from './lib/liff';
 import { api, setToken } from './lib/api';
 import TaskPage from './pages/TaskPage';
-import CheckinPage from './pages/CheckinPage';
-import FormPage from './pages/FormPage';
-import NotePage from './pages/NotePage';
-import CarePlanPage from './pages/CarePlanPage';
 import AuthPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
-import WelcomePage from './pages/WelcomePage';
 import RegisterPage from './pages/RegisterPage';
 import AddPatientPage from './pages/AddPatientPage';
+import PatientDetailPage from './pages/PatientDetailPage';
+import SessionPage from './pages/SessionPage';
 
 function AppRoutes() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     async function init() {
       try {
         await initLiff();
         const token = liff.getIDToken();
-        if (!token) return; // liff.login() redirect is in progress — stay on loading screen
+        if (!token) return; // liff.login() redirect in progress — stay on loading screen
         try {
           const { accessToken } = await api.verifyLiff(token);
           setToken(accessToken);
+          // Already linked — if user opened the register page, bounce to profile
+          if (location.pathname === '/register') {
+            navigate('/profile', { replace: true });
+          }
           setReady(true);
         } catch (e: any) {
           if (e.status === 401 || e.message?.includes('not linked')) {
-            navigate('/profile');
+            // Not linked — send to registration
+            navigate('/register', { replace: true });
             setReady(true);
           } else {
             throw e;
@@ -62,16 +65,13 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<TaskPage />} />
-      <Route path="/auth" element={<AuthPage />} />
-      <Route path="/welcome" element={<WelcomePage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/checkin/:taskId" element={<CheckinPage />} />
-      <Route path="/form/:taskId/:formId" element={<FormPage />} />
-      <Route path="/note/:taskId" element={<NotePage />} />
-      <Route path="/care-plan/:patientId" element={<CarePlanPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/add-patient" element={<AddPatientPage />} />
+      <Route path="/"                element={<TaskPage />} />
+      <Route path="/register"        element={<RegisterPage />} />
+      <Route path="/auth"            element={<AuthPage />} />
+      <Route path="/profile"         element={<ProfilePage />} />
+      <Route path="/add-patient"     element={<AddPatientPage />} />
+      <Route path="/patient/:taskId" element={<PatientDetailPage />} />
+      <Route path="/session/:taskId" element={<SessionPage />} />
     </Routes>
   );
 }

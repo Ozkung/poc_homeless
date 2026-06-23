@@ -214,6 +214,8 @@ export class AuthService {
         id: true, email: true, displayName: true, role: true,
         phone: true, gender: true, avatarUrl: true,
         lineUserId: true, isActive: true, createdAt: true, birthDate: true,
+        preferredZoneId: true,
+        preferredZone: { select: { id: true, name: true, color: true } },
       },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -224,10 +226,13 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({ where: { id: userId, organizationId: orgId } });
     if (!user) throw new NotFoundException('User not found');
 
-    const { email, currentPassword, birthDate, ...rest } = dto;
+    const { email, currentPassword, birthDate, preferredZoneId, ...rest } = dto;
     const updateData: Record<string, unknown> = { ...rest };
     if (birthDate !== undefined) {
       updateData.birthDate = birthDate ? new Date(birthDate) : null;
+    }
+    if (preferredZoneId !== undefined) {
+      updateData.preferredZoneId = preferredZoneId || null;
     }
 
     if (email) {
@@ -240,7 +245,12 @@ export class AuthService {
     return this.prisma.user.update({
       where: { id: userId },
       data: updateData as any,
-      select: { id: true, email: true, displayName: true, phone: true, gender: true, avatarUrl: true, role: true, birthDate: true },
+      select: {
+        id: true, email: true, displayName: true, phone: true, gender: true,
+        avatarUrl: true, role: true, birthDate: true,
+        preferredZoneId: true,
+        preferredZone: { select: { id: true, name: true, color: true } },
+      },
     });
   }
 

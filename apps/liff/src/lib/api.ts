@@ -88,10 +88,24 @@ export const api = {
       birthDate?: string | null;
       gender?: string | null;
       role: string;
+      preferredZoneId?: string | null;
+      preferredZone?: { id: string; name: string; color: string } | null;
     }>('/auth/me'),
-  updateMe: (data: { phone?: string; birthDate?: string; gender?: string }) =>
-    request<{ id: string; email: string; phone?: string; birthDate?: string; gender?: string }>('/auth/me', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
+  updateMe: (data: {
+    displayName?: string;
+    email?: string;
+    currentPassword?: string;
+    phone?: string;
+    birthDate?: string;
+    gender?: string;
+    preferredZoneId?: string;
+  }) =>
+    request<{
+      id: string; email: string; displayName?: string; phone?: string;
+      birthDate?: string; gender?: string; role: string;
+      preferredZoneId?: string | null;
+      preferredZone?: { id: string; name: string; color: string } | null;
+    }>('/auth/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  getPatientActivities: (patientId: string) =>
+    request<any[]>(`/patients/${patientId}/activities`),
 };

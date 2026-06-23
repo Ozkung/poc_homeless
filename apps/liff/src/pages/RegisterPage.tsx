@@ -1,221 +1,232 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
-import { api, getToken } from '../lib/api';
+import { api, setToken, getToken } from '../lib/api';
+import { liffLogin } from '../lib/liff';
 
-type Step = 'loading' | 'form' | 'submitting';
+const ACCENT = '#6366F1';
+type Step = 'form' | 'tou';
 
-interface Me {
+interface FormData {
+  firstName: string;
+  lastName: string;
   email: string;
-  phone?: string | null;
-  birthDate?: string | null;
-  gender?: string | null;
+  phone: string;
+  zoneId: string;
 }
 
-const inp: React.CSSProperties = {
-  width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb',
-  borderRadius: 8, fontSize: 15, boxSizing: 'border-box' as const, marginTop: 4, background: '#fff',
+const TERMS = `ข้อกำหนดการใช้งาน (Terms of Use)
+
+1. การใช้งานแอปพลิเคชัน
+ผู้ใช้ตกลงที่จะใช้งานระบบเพื่อวัตถุประสงค์ด้านสาธารณสุขและการดูแลผู้ป่วยไร้บ้านเท่านั้น ห้ามนำข้อมูลไปใช้ในทางที่ไม่เหมาะสมหรือผิดกฎหมาย
+
+2. ความรับผิดชอบของผู้ใช้
+ผู้ใช้มีหน้าที่รักษาข้อมูลส่วนตัวและรหัสผ่าน รวมถึงรายงานการใช้งานที่ผิดปกติแก่ผู้ดูแลระบบทันที
+
+3. ข้อมูลผู้ป่วย
+ข้อมูลผู้ป่วยทั้งหมดในระบบถือเป็นข้อมูลลับ ห้ามเปิดเผยหรือนำออกนอกระบบโดยไม่ได้รับอนุญาต
+
+4. การยกเลิกบัญชี
+ผู้ดูแลระบบมีสิทธิ์ระงับหรือยกเลิกบัญชีที่ละเมิดข้อกำหนดได้ทันที
+
+นโยบายความเป็นส่วนตัว (Privacy Policy)
+
+1. ข้อมูลที่เก็บรวบรวม
+ระบบเก็บข้อมูล ชื่อ-นามสกุล, อีเมล, เบอร์โทรศัพท์, LINE User ID และข้อมูลการใช้งาน
+
+2. วัตถุประสงค์การใช้ข้อมูล
+ข้อมูลใช้เพื่อการประสานงานทีมสาธารณสุข การดูแลผู้ป่วย และการปรับปรุงระบบ
+
+3. การเปิดเผยข้อมูล
+ข้อมูลจะไม่ถูกเปิดเผยแก่บุคคลภายนอก ยกเว้นกรณีที่กฎหมายกำหนด
+
+4. สิทธิ์ของผู้ใช้
+ผู้ใช้มีสิทธิ์ขอดู แก้ไข หรือลบข้อมูลส่วนตัวได้โดยติดต่อผู้ดูแลระบบ`;
+
+const INP: React.CSSProperties = {
+  width: '100%', padding: '9px 12px', border: '1px solid #E2E8F0',
+  borderRadius: 9, fontSize: 14, boxSizing: 'border-box' as const,
+  background: '#F8FAFC', color: '#0F172A', outline: 'none', marginTop: 4,
 };
-const lbl: React.CSSProperties = { fontSize: 12, color: '#6b7280', fontWeight: 600 };
-const btn = (primary = true): React.CSSProperties => ({
-  width: '100%', padding: 12, borderRadius: 10, border: 'none',
-  background: primary ? '#7c3aed' : '#f3f4f6',
-  color: primary ? '#fff' : '#374151',
-  fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 8,
-});
-
-function isComplete(me: Me): boolean {
-  return !!me.phone && !!me.birthDate && !!me.email;
-}
-
-function toDateInput(iso?: string | null): string {
-  return iso ? iso.slice(0, 10) : '';
-}
-
-const wrap = (children: React.ReactNode) => (
-  <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 16, paddingTop: 0 }}>
-    <div style={{ width: '100%', maxWidth: 400 }}>{children}</div>
-  </div>
-);
+const LBL: React.CSSProperties = { fontSize: 11, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em' };
 
 export default function RegisterPage() {
-  const [step, setStep] = useState<Step>('loading');
+  const [step, setStep] = useState<Step>('form');
   const [lineProfile, setLineProfile] = useState<{ displayName: string; pictureUrl?: string } | null>(null);
-  const [form, setForm] = useState({ phone: '', birthDate: '', gender: '' });
-  const [email, setEmail] = useState('');
+  const [form, setForm] = useState<FormData>({ firstName: '', lastName: '', email: '', phone: '', zoneId: '' });
+  const [zones, setZones] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState('');
+  const [scrolled, setScrolled] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!getToken()) {
-      navigate('/welcome', { replace: true });
-      return;
-    }
-    async function load() {
-      try {
-        const [me, profile] = await Promise.all([
-          api.getMe(),
-          liff.getProfile().catch(() => null),
-        ]);
-        if (profile) setLineProfile({ displayName: profile.displayName, pictureUrl: profile.pictureUrl ?? undefined });
-        setEmail(me.email);
-        if (isComplete(me)) {
-          navigate('/profile', { replace: true });
-          return;
-        }
-        setForm({
-          phone: me.phone ?? '',
-          birthDate: toDateInput(me.birthDate),
-          gender: me.gender ?? '',
-        });
-        setStep('form');
-      } catch (e: any) {
-        if (e?.status === 401) {
-          navigate('/welcome', { replace: true });
-        } else {
-          setError('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่');
-          setStep('form');
-        }
-      }
-    }
-    load();
+    if (getToken()) { navigate('/profile', { replace: true }); return; }
+    liff.getProfile().then(p => setLineProfile({ displayName: p.displayName, pictureUrl: p.pictureUrl ?? undefined })).catch(() => {});
+    api.getPublicZones().then(setZones).catch(() => {});
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.phone.trim()) { setError('กรุณาระบุเบอร์โทรศัพท์'); return; }
-    if (!form.birthDate) { setError('กรุณาระบุวันเกิด'); return; }
-    setError('');
-    setStep('submitting');
-    try {
-      await api.updateMe({
-        phone: form.phone.trim(),
-        birthDate: form.birthDate,
-        gender: form.gender || undefined,
-      });
-      navigate('/profile', { replace: true });
-    } catch (err: any) {
-      setError(err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่');
-      setStep('form');
-    }
-  }
-
-  if (step === 'loading') return wrap(
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-      <p style={{ color: '#9ca3af', fontSize: 13, fontFamily: 'monospace' }}>กำลังโหลด...</p>
+  const LineProfileBar = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#F0FFF4', border: '1px solid #BBF7D0', borderRadius: 10, padding: '8px 12px', marginBottom: 16 }}>
+      {lineProfile?.pictureUrl ? (
+        <img src={lineProfile.pictureUrl} alt="LINE" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #86EFAC', flexShrink: 0 }} />
+      ) : (
+        <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#06C755', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#fff', fontSize: 14, flexShrink: 0 }}>
+          {lineProfile?.displayName?.[0]?.toUpperCase() ?? '?'}
+        </div>
+      )}
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#166534' }}>{lineProfile?.displayName ?? '...'}</div>
+        <div style={{ fontSize: 10, color: '#4ADE80', fontWeight: 600 }}>LINE เชื่อมต่อแล้ว ✓</div>
+      </div>
     </div>
   );
 
-  const today = new Date().toISOString().slice(0, 10);
+  // ── Step: form ──
+  if (step === 'form') {
+    const handleNext = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!form.firstName.trim() || !form.lastName.trim()) { setError('กรุณากรอกชื่อและนามสกุล'); return; }
+      if (!form.email.trim()) { setError('กรุณากรอก Email'); return; }
+      setError('');
+      setStep('tou');
+    };
 
-  return wrap(
-    <>
-      {/* Purple gradient header */}
-      <div style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', padding: '20px 20px 18px', borderRadius: '0 0 24px 24px', marginBottom: 20 }}>
-        <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: 'monospace', margin: '0 0 8px' }}>HomeMed Connect</p>
-
-        {/* LINE profile row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: '8px 12px', marginBottom: 12 }}>
-          {lineProfile?.pictureUrl ? (
-            <img src={lineProfile.pictureUrl} alt="LINE" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.4)', flexShrink: 0 }} />
-          ) : (
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#06c755', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#fff', fontSize: 16, flexShrink: 0 }}>
-              {lineProfile?.displayName?.[0]?.toUpperCase() ?? '?'}
-            </div>
-          )}
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{lineProfile?.displayName ?? '...'}</div>
-            {lineProfile && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>LINE Account เชื่อมต่อแล้ว ✓</div>}
-          </div>
+    return (
+      <div style={{ background: '#F8FAFC', minHeight: '100vh' }}>
+        {/* Top bar */}
+        <div style={{ background: '#fff', borderBottom: '1px solid #F1F5F9', padding: '16px 16px 14px' }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: ACCENT, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 4px' }}>HomeMed Connect</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>สมัครสมาชิก</h1>
+          <p style={{ fontSize: 12, color: '#94A3B8', margin: '3px 0 0' }}>กรอกข้อมูลเพื่อเข้าร่วมโครงการดูแลผู้ป่วยไร้บ้าน</p>
         </div>
 
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>ข้อมูลส่วนตัว</div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>กรอกให้ครบก่อนเริ่มใช้งาน</div>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: 16 }}>
+          <LineProfileBar />
+
+          {error && (
+            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#DC2626' }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleNext}>
+            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E2E8F0', overflow: 'hidden', marginBottom: 12 }}>
+              <div style={{ display: 'flex', borderBottom: '1px solid #F1F5F9' }}>
+                <div style={{ flex: 1, padding: '12px 14px', borderRight: '1px solid #F1F5F9' }}>
+                  <label style={LBL}>ชื่อ *</label>
+                  <input style={INP} value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} placeholder="สมชาย" />
+                </div>
+                <div style={{ flex: 1, padding: '12px 14px' }}>
+                  <label style={LBL}>นามสกุล *</label>
+                  <input style={INP} value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} placeholder="ใจดี" />
+                </div>
+              </div>
+              <div style={{ padding: '12px 14px', borderBottom: '1px solid #F1F5F9' }}>
+                <label style={LBL}>อีเมล *</label>
+                <input style={INP} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" />
+              </div>
+              <div style={{ padding: '12px 14px', borderBottom: '1px solid #F1F5F9' }}>
+                <label style={LBL}>เบอร์โทรศัพท์</label>
+                <input style={INP} type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="08x-xxx-xxxx" />
+              </div>
+              <div style={{ padding: '12px 14px' }}>
+                <label style={LBL}>Zone ที่ต้องการลงพื้นที่</label>
+                <select style={{ ...INP, cursor: 'pointer' }} value={form.zoneId} onChange={e => setForm({ ...form, zoneId: e.target.value })}>
+                  <option value="">-- เลือก Zone (ไม่บังคับ) --</option>
+                  {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <button type="submit"
+              style={{ width: '100%', padding: 13, borderRadius: 12, border: 'none', background: ACCENT, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 8 }}>
+              ถัดไป →
+            </button>
+          </form>
+
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#94A3B8' }}>
+            มีบัญชีในระบบอยู่แล้ว?{' '}
+            <span style={{ color: ACCENT, cursor: 'pointer', fontWeight: 600 }} onClick={() => navigate('/auth')}>
+              เชื่อมบัญชี →
+            </span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Step: ToU ──
+  const handleSubmit = async () => {
+    const freshToken = liff.getIDToken() ?? '';
+    if (!freshToken) { liffLogin(); return; }
+    setSubmitting(true);
+    setError('');
+    try {
+      const { accessToken } = await api.guestRegister({
+        idToken: freshToken,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone || undefined,
+        zoneId: form.zoneId || undefined,
+      });
+      setToken(accessToken);
+      navigate('/profile', { replace: true });
+    } catch (err: any) {
+      const msg = (err.message ?? '').toLowerCase();
+      if (msg.includes('expired') || msg.includes('invalid liff')) { liffLogin(); return; }
+      setError(err.message ?? 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+      setStep('form');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{ background: '#F8FAFC', minHeight: '100vh' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #F1F5F9', padding: '16px 16px 14px' }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: ACCENT, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 4px' }}>HomeMed Connect</p>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', margin: 0 }}>ข้อกำหนดและนโยบาย</h1>
+        <p style={{ fontSize: 12, color: '#94A3B8', margin: '3px 0 0' }}>กรุณาอ่านและยอมรับก่อนสมัครสมาชิก</p>
       </div>
 
-      {/* Form */}
-      <div style={{ padding: '0 16px 32px' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: 16 }}>
         {error && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8, padding: '8px 12px', marginBottom: 14, fontSize: 13, color: '#dc2626' }}>
+          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#DC2626' }}>
             {error}
-            {!email && (
-              <button
-                type="button"
-                onClick={() => liff.closeWindow()}
-                style={{ display: 'block', marginTop: 8, fontSize: 12, color: '#dc2626', background: 'none', border: '1px solid #fca5a5', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
-              >
-                ปิดและลองใหม่
-              </button>
-            )}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          {/* Email read-only */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={lbl}>อีเมล</label>
-            <div style={{ ...inp, background: '#f3f4f6', color: '#6b7280', border: '1px solid #e5e7eb', cursor: 'not-allowed' }}>
-              {email}
-            </div>
-            <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>ไม่สามารถแก้ไขอีเมลได้ที่นี่</p>
-          </div>
+        <div
+          onScroll={e => {
+            const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+            if (scrollTop + clientHeight >= scrollHeight - 10) setScrolled(true);
+          }}
+          style={{ height: '50vh', overflowY: 'auto', border: '1px solid #E2E8F0', borderRadius: 12, padding: 16, fontSize: 13, lineHeight: 1.8, color: '#374151', whiteSpace: 'pre-wrap', background: '#fff', marginBottom: 8 }}
+        >
+          {TERMS}
+        </div>
 
-          {/* Phone */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={lbl}>เบอร์โทรศัพท์ *</label>
-            <input
-              style={inp}
-              type="tel"
-              placeholder="08x-xxx-xxxx"
-              value={form.phone}
-              onChange={e => setForm({ ...form, phone: e.target.value })}
-            />
-          </div>
+        {!scrolled && (
+          <p style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', marginBottom: 12 }}>↓ เลื่อนลงเพื่ออ่านให้ครบ</p>
+        )}
 
-          {/* BirthDate */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={lbl}>วันเกิด *</label>
-            <input
-              style={inp}
-              type="date"
-              max={today}
-              value={form.birthDate}
-              onChange={e => setForm({ ...form, birthDate: e.target.value })}
-            />
-          </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', cursor: scrolled ? 'pointer' : 'not-allowed', opacity: scrolled ? 1 : 0.4, marginBottom: 12 }}>
+          <input type="checkbox" checked={checked} disabled={!scrolled} onChange={e => setChecked(e.target.checked)} style={{ width: 18, height: 18, accentColor: ACCENT }} />
+          <span style={{ fontSize: 13, color: '#374151' }}>ข้าพเจ้ายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัว</span>
+        </label>
 
-          {/* Gender chips */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={lbl}>เพศ</label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-              {(['MALE', 'FEMALE', 'OTHER'] as const).map((g) => {
-                const label = g === 'MALE' ? 'ชาย' : g === 'FEMALE' ? 'หญิง' : 'อื่นๆ';
-                const selected = form.gender === g;
-                return (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => setForm({ ...form, gender: selected ? '' : g })}
-                    style={{
-                      flex: 1, padding: '8px 0', borderRadius: 10, border: '1.5px solid',
-                      borderColor: selected ? '#7c3aed' : '#e2e8f0',
-                      background: selected ? '#7c3aed' : '#fff',
-                      color: selected ? '#fff' : '#374151',
-                      fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    }}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <button type="submit" style={btn(true)} disabled={step === 'submitting'}>
-            {step === 'submitting' ? 'กำลังบันทึก...' : 'บันทึกและเริ่มใช้งาน →'}
-          </button>
-        </form>
+        <button disabled={!checked || submitting} onClick={handleSubmit}
+          style={{ width: '100%', padding: 13, borderRadius: 12, border: 'none', background: !checked || submitting ? '#A5B4FC' : ACCENT, color: '#fff', fontSize: 14, fontWeight: 700, cursor: !checked || submitting ? 'not-allowed' : 'pointer', marginBottom: 8 }}>
+          {submitting ? 'กำลังสมัคร...' : 'สมัครสมาชิก ✓'}
+        </button>
+        <button disabled={submitting} onClick={() => { setScrolled(false); setChecked(false); setStep('form'); }}
+          style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px solid #E2E8F0', background: '#fff', color: '#64748B', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+          ← ย้อนกลับ
+        </button>
       </div>
-    </>
+    </div>
   );
 }
