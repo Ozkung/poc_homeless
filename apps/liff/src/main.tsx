@@ -24,17 +24,27 @@ function AppRoutes() {
         await initLiff();
         const token = liff.getIDToken();
         if (!token) return; // liff.login() redirect in progress — stay on loading screen
+
+        // Read ?to= param set by Rich Menu buttons (e.g. ?to=register)
+        const toParam = new URLSearchParams(window.location.search).get('to');
+
         try {
           const { accessToken } = await api.verifyLiff(token);
           setToken(accessToken);
-          // Already linked — if user opened the register page, bounce to profile
-          if (location.pathname === '/register') {
+          // Already linked — route to requested page or stay on current
+          if (toParam === 'register') {
+            navigate('/profile', { replace: true }); // already registered → go to profile
+          } else if (toParam === 'profile') {
+            navigate('/profile', { replace: true });
+          } else if (toParam === 'add-patient') {
+            navigate('/add-patient', { replace: true });
+          } else if (location.pathname === '/register') {
             navigate('/profile', { replace: true });
           }
           setReady(true);
         } catch (e: any) {
           if (e.status === 401 || e.message?.includes('not linked')) {
-            // Not linked — send to registration
+            // Not linked — always go to register regardless of ?to
             navigate('/register', { replace: true });
             setReady(true);
           } else {
