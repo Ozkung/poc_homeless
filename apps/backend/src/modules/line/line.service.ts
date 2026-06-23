@@ -123,6 +123,57 @@ export class LineService {
     await this.pushText(lineUserId, lines.join('\n'));
   }
 
+  async pushRoleApproval(lineUserId: string, data: { displayName: string; newRole: string }) {
+    const ROLE_LABEL: Record<string, string> = {
+      CARE_GIVER: 'ผู้ดูแลภาคสนาม', CASE_MANAGER: 'Case Manager',
+      MEDICAL_VOLUNTEER: 'อาสาพยาบาล', DOCTOR: 'แพทย์',
+      ADMIN: 'ผู้ดูแลระบบ', SUPER_ADMIN: 'ผู้อำนวยการ',
+    };
+    const roleLabel = ROLE_LABEL[data.newRole] ?? data.newRole;
+    const liffUrl = `https://liff.line.me/${this.liffId}`;
+
+    const body = {
+      to: lineUserId,
+      messages: [{
+        type: 'flex',
+        altText: `HomeMed Connect: บัญชีของคุณได้รับการอนุมัติแล้ว — ${roleLabel}`,
+        contents: {
+          type: 'bubble',
+          header: {
+            type: 'box', layout: 'vertical',
+            backgroundColor: '#6366F1',
+            contents: [{ type: 'text', text: 'HomeMed Connect', weight: 'bold', color: '#ffffff', size: 'sm' }],
+          },
+          body: {
+            type: 'box', layout: 'vertical', spacing: 'md',
+            contents: [
+              { type: 'text', text: '✅ บัญชีของคุณได้รับการอนุมัติแล้ว', weight: 'bold', size: 'md', wrap: true, color: '#0F172A' },
+              { type: 'text', text: `สวัสดีคุณ ${data.displayName}`, size: 'sm', color: '#64748B', wrap: true },
+              { type: 'text', text: `Role: ${roleLabel}`, size: 'sm', color: '#6366F1', weight: 'bold' },
+              { type: 'text', text: 'ตอนนี้คุณสามารถเข้าใช้งานระบบและดูรายการผู้ป่วยในพื้นที่ได้แล้ว', size: 'sm', color: '#64748B', wrap: true },
+            ],
+          },
+          footer: {
+            type: 'box', layout: 'vertical',
+            contents: [{
+              type: 'button', style: 'primary', color: '#6366F1',
+              action: { type: 'uri', label: 'เปิดแอปพลิเคชัน', uri: liffUrl },
+            }],
+          },
+        },
+      }],
+    };
+
+    const res = await fetch(`${LINE_API}/v2/bot/message/push`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.channelAccessToken}` },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      this.logger.error(`pushRoleApproval failed: ${res.status} ${await res.text()}`);
+    }
+  }
+
   async pushAdjNotify(lineUserId: string, data: { itemName: string; qty: number; adminName: string }) {
     const dir = data.qty > 0 ? `+${data.qty}` : `${data.qty}`;
     await this.pushText(lineUserId,

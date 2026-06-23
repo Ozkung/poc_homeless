@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { LineService } from '../line/line.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -27,6 +28,7 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditLogService,
+    private line: LineService,
   ) {}
 
   async findAll(orgId: string) {
@@ -124,14 +126,21 @@ export class UsersService {
 
     // Audit role changes (GUEST → real role = approval)
     if (dto.role && dto.role !== target.role) {
+      const isApproval = target.role === 'GUEST';
       void this.audit.log({
         orgId,
         actorId,
-        action: target.role === 'GUEST' ? 'APPROVE_GUEST' : 'CHANGE_ROLE',
+        action: isApproval ? 'APPROVE_GUEST' : 'CHANGE_ROLE',
         entity: 'User',
         entityId: id,
         detail: `${target.displayName}: ${target.role} → ${dto.role}`,
       });
+      if (isApproval && target.lineUserId) {
+        void this.line.pushRoleApproval(target.lineUserId, {
+          displayName: target.displayName,
+          newRole: dto.role,
+        });
+      }
     }
 
     return updated;
