@@ -211,6 +211,69 @@ describe('PatientsService', () => {
     });
   });
 
+  describe('guestReport()', () => {
+    it('creates a PENDING patient using actor preferredZoneId and encrypted alias', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ preferredZoneId: 'zone-abc' });
+      mockPrisma.patient.findUnique.mockResolvedValue(null); // HN unique check
+      mockPrisma.patient.create.mockResolvedValue({
+        id: 'p99', hn: 'HN000000000099', nameEnc: 'enc:Stranger',
+        organizationId: 'org1', caseManagerId: null, age: null, gender: null,
+        status: 'PENDING', conditions: [], initialComplaint: 'Fever',
+        locationText: 'Under bridge', phone: null, birthDate: null,
+        nationalIdEnc: null, followUpTarget: null, zoneId: 'zone-abc',
+        createdAt: new Date(), updatedAt: new Date(),
+      });
+
+      const result = await service.guestReport('actor1', 'org1', {
+        alias: 'Stranger',
+        locationText: 'Under bridge',
+        initialComplaint: 'Fever',
+      });
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'actor1' },
+        select: { preferredZoneId: true },
+      });
+      expect(mockCrypto.encrypt).toHaveBeenCalledWith('Stranger');
+      expect(mockPrisma.patient.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            organizationId: 'org1',
+            status: 'PENDING',
+            zoneId: 'zone-abc',
+          }),
+        }),
+      );
+      expect(result).toEqual({ id: 'p99', hn: 'HN000000000099' });
+    });
+
+    it('creates patient with null zoneId when actor has no preferredZoneId', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ preferredZoneId: null });
+      mockPrisma.patient.findUnique.mockResolvedValue(null);
+      mockPrisma.patient.create.mockResolvedValue({
+        id: 'p100', hn: 'HN000000000100', nameEnc: 'enc:Unknown',
+        organizationId: 'org1', caseManagerId: null, age: null, gender: null,
+        status: 'PENDING', conditions: [], initialComplaint: 'Unknown',
+        locationText: 'Park', phone: null, birthDate: null,
+        nationalIdEnc: null, followUpTarget: null, zoneId: null,
+        createdAt: new Date(), updatedAt: new Date(),
+      });
+
+      const result = await service.guestReport('actor2', 'org1', {
+        alias: 'Unknown',
+        locationText: 'Park',
+        initialComplaint: 'Unknown',
+      });
+
+      expect(mockPrisma.patient.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ zoneId: null }),
+        }),
+      );
+      expect(result).toEqual({ id: 'p100', hn: 'HN000000000100' });
+    });
+  });
+
   describe('findAll()', () => {
     it('decrypts nameEnc for every patient in the list', async () => {
       const rawPatients = [

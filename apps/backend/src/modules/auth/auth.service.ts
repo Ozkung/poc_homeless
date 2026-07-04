@@ -108,7 +108,7 @@ export class AuthService {
         organizationId: org.id,
         email: data.email,
         passwordHash,
-        role: 'CARE_GIVER',
+        role: 'GUEST',
         displayName: `${data.firstName} ${data.lastName}`,
         lineUserId: profile.sub,
         lineDisplayName: profile.name ?? null,
@@ -119,9 +119,9 @@ export class AuthService {
     });
 
     this.sseService.emit(org.id, ['CASE_MANAGER', 'ADMIN', 'SUPER_ADMIN'], {
-      type: 'member_joined',
+      type: 'guest_joined',
       name: `${data.firstName} ${data.lastName}`,
-      role: 'CARE_GIVER',
+      role: 'GUEST',
     });
 
     return this.issueTokens(user.id, user.email, user.role, user.organizationId, user.displayName, user.avatarUrl ?? null);

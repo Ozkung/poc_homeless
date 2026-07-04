@@ -70,6 +70,35 @@ export class PatientsService {
     return this.decrypt(patient);
   }
 
+  async guestReport(actorId: string, orgId: string, data: {
+    alias: string;
+    locationText: string;
+    initialComplaint: string;
+    gender?: string;
+    age?: number;
+  }) {
+    const actor = await this.prisma.user.findUnique({
+      where: { id: actorId },
+      select: { preferredZoneId: true },
+    });
+    const hn = await this.generateHN();
+    const patient = await this.prisma.patient.create({
+      data: {
+        organizationId: orgId,
+        nameEnc: this.crypto.encrypt(data.alias),
+        hn,
+        age: data.age,
+        gender: data.gender as any,
+        status: 'PENDING',
+        conditions: [],
+        initialComplaint: data.initialComplaint,
+        locationText: data.locationText,
+        zoneId: actor?.preferredZoneId ?? null,
+      },
+    });
+    return { id: patient.id, hn: patient.hn };
+  }
+
   async update(id: string, orgId: string, data: Partial<{
     name: string; age: number; gender: string; status: string; conditions: string[]; locationText: string;
     phone: string; birthDate: string; nationalId: string;
