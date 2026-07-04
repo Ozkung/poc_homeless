@@ -11,10 +11,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": true,
-    "paths": {
-      "@homemed/shared-types": ["../../packages/shared-types/src"]
-    }
+    "strict": true
   },
   "include": ["src"]
 }

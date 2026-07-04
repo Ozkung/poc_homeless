@@ -1,16 +1,7 @@
 import { create } from 'zustand';
+import type { Zone, SystemProfile } from '../lib/api';
 
-export interface SystemProfile {
-  id: string;
-  email: string;
-  displayName?: string;
-  phone?: string | null;
-  birthDate?: string | null;
-  gender?: string | null;
-  role: string;
-  preferredZoneId?: string | null;
-  preferredZone?: { id: string; name: string; color: string } | null;
-}
+export type { SystemProfile, Zone };
 
 export interface LineProfile {
   userId: string;
@@ -21,19 +12,17 @@ export interface LineProfile {
 interface ProfileStore {
   lineProfile: LineProfile | null;
   systemProfile: SystemProfile | null;
-  zones: { id: string; name: string; color: string }[];
+  zones: Zone[];
   setLineProfile: (p: LineProfile) => void;
   setSystemProfile: (p: SystemProfile) => void;
-  setZones: (z: { id: string; name: string; color: string }[]) => void;
+  setZones: (z: Zone[]) => void;
   updateSystemProfile: (partial: Partial<SystemProfile>) => void;
-  clearProfiles: () => void;
 }
 
 export const useProfileStore = create<ProfileStore>((set) => ({
   lineProfile: null,
   systemProfile: null,
   zones: [],
-
   setLineProfile: (p) => set({ lineProfile: p }),
   setSystemProfile: (p) => set({ systemProfile: p }),
   setZones: (z) => set({ zones: z }),
@@ -41,5 +30,4 @@ export const useProfileStore = create<ProfileStore>((set) => ({
     set((state) => ({
       systemProfile: state.systemProfile ? { ...state.systemProfile, ...partial } : null,
     })),
-  clearProfiles: () => set({ lineProfile: null, systemProfile: null, zones: [] }),
 }));

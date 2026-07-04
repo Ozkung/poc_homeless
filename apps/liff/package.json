@@ -5,11 +5,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "eslint src --ext .ts,.tsx",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@homemed/shared-types": "*",
     "@line/liff": "^2.25.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
