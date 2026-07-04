@@ -10,7 +10,6 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import ReportPage from './pages/ReportPage';
 
-const ACCENT = '#6366F1';
 
 function AppRoutes() {
   const [ready, setReady] = useState(false);
@@ -32,6 +31,7 @@ function AppRoutes() {
         try {
           const { accessToken } = await api.verifyLiff(idToken);
           setToken(accessToken);
+          navigate('/', { replace: true });
           Promise.all([api.getMe(), api.getPublicZones()])
             .then(([me, zones]) => { setSystemProfile(me); setZones(zones); })
             .catch(() => {});
