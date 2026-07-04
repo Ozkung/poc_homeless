@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -7,6 +7,7 @@ import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.de
 import { UserRole } from '@prisma/client';
 import { SosDto } from './dto/sos.dto';
 import { UpsertCarePlanAssessmentDto } from './dto/care-plan-assessment.dto';
+import { GuestReportDto } from './dto/guest-report.dto';
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -163,10 +164,7 @@ export class PatientsController {
 
   @Post('guest-report')
   @Roles(UserRole.GUEST)
-  guestReport(@Body() body: { alias: string; locationText: string; initialComplaint: string; gender?: string; age?: number }, @CurrentUser() user: JwtPayload) {
-    if (!body.alias || !body.locationText || !body.initialComplaint) {
-      throw new BadRequestException('alias, locationText และ initialComplaint จำเป็นต้องระบุ');
-    }
+  guestReport(@Body() body: GuestReportDto, @CurrentUser() user: JwtPayload) {
     return this.patients.guestReport(user.sub, user.orgId, body);
   }
 }

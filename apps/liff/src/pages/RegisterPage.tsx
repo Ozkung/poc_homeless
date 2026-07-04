@@ -57,9 +57,8 @@ export default function RegisterPage() {
         zoneId: form.zoneId || undefined,
       });
       setToken(accessToken);
-      const me = await api.getMe();
-      setSystemProfile(me);
       navigate('/', { replace: true });
+      api.getMe().then(setSystemProfile).catch(() => {});
     } catch (e: any) {
       setError(e.message ?? 'ลงทะเบียนไม่สำเร็จ');
     } finally {
