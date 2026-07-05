@@ -10,6 +10,7 @@ interface Patient {
   status: 'CRITICAL' | 'PENDING' | 'STABLE' | 'MISSING';
   age?: number; gender?: 'MALE' | 'FEMALE' | 'OTHER';
   conditions: string[]; initialComplaint?: string; locationText?: string;
+  photoUrl?: string;
 }
 interface Activity {
   id: string; type: string; createdAt: string;
@@ -102,7 +103,17 @@ export default async function PatientDetailPage({
       key: 'info',
       label: 'ข้อมูล',
       children: (
-        <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small" styles={{ label: { color: '#aaa', fontSize: 11 } }}>
+        <>
+          {patient.photoUrl && (
+            <div style={{ marginBottom: 16 }}>
+              <img
+                src={`${process.env.API_URL ?? 'http://localhost:3001'}${patient.photoUrl}`}
+                alt="รูปผู้ป่วย"
+                style={{ width: 120, height: 120, borderRadius: 12, objectFit: 'cover', border: '1px solid #f0f0f0' }}
+              />
+            </div>
+          )}
+          <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small" styles={{ label: { color: '#aaa', fontSize: 11 } }}>
           <Descriptions.Item label="HN">{patient.hn}</Descriptions.Item>
           <Descriptions.Item label="อายุ">{patient.age ? `${patient.age} ปี` : '—'}</Descriptions.Item>
           <Descriptions.Item label="เพศ">{patient.gender ? GENDER_LABEL[patient.gender] : '—'}</Descriptions.Item>
@@ -122,6 +133,7 @@ export default async function PatientDetailPage({
             </Descriptions.Item>
           )}
         </Descriptions>
+        </>
       ),
     },
     {
