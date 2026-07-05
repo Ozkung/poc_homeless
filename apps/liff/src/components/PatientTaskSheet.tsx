@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api, TodayTask } from '../lib/api';
 
 const ACCENT = '#6366F1';
@@ -25,7 +25,6 @@ export default function PatientTaskSheet({ task, onClose, onStatusChange }: Prop
   const [noteState, setNoteState] = useState<'idle' | 'loading'>('idle');
   const [notes, setNotes] = useState<string[]>([]);
   const [error, setError] = useState('');
-  const backdropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -124,7 +123,7 @@ export default function PatientTaskSheet({ task, onClose, onStatusChange }: Prop
   return (
     <>
       {/* Backdrop */}
-      <div ref={backdropRef} onClick={onClose}
+      <div onClick={onClose}
         style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100 }} />
 
       {/* Sheet */}
@@ -150,8 +149,8 @@ export default function PatientTaskSheet({ task, onClose, onStatusChange }: Prop
             </div>
             <span style={{
               fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
-              background: STATUS_COLOR[task.patient.status] + '20',
-              color: STATUS_COLOR[task.patient.status],
+              background: (STATUS_COLOR[task.patient.status] ?? '#94A3B8') + '20',
+              color: STATUS_COLOR[task.patient.status] ?? '#94A3B8',
             }}>
               {STATUS_LABEL[task.patient.status] ?? task.patient.status}
             </span>
@@ -181,7 +180,7 @@ export default function PatientTaskSheet({ task, onClose, onStatusChange }: Prop
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {fields.length === 0
                 ? <p style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center' }}>ไม่มีแบบสำรวจสำหรับ task นี้</p>
-                : fields
+                : [...fields]
                     .sort((a, b) => a.order - b.order)
                     .map((f) => (
                       <div key={f.id}>
