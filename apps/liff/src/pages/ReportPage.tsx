@@ -30,6 +30,9 @@ export default function ReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ id: string; hn: string } | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoState, setPhotoState] = useState<'idle' | 'uploading' | 'uploaded' | 'error'>('idle');
+  const [photoError, setPhotoError] = useState('');
 
   const set = (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -62,15 +65,92 @@ export default function ReportPage() {
     }
   }
 
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !result) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError('รูปใหญ่เกินไป (max 5MB)');
+      setPhotoState('error');
+      return;
+    }
+
+    setPhotoState('uploading');
+    setPhotoError('');
+    try {
+      const data = await api.uploadPatientPhoto(result.id, file);
+      setPhotoUrl(data.photoUrl);
+      setPhotoState('uploaded');
+    } catch (err: any) {
+      setPhotoError(err.message ?? 'อัพโหลดรูปไม่สำเร็จ');
+      setPhotoState('error');
+    }
+  }
+
   const valid = form.firstName.trim().length > 0;
 
   if (result) return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ textAlign: 'center', maxWidth: 320 }}>
+      <div style={{ textAlign: 'center', maxWidth: 320, width: '100%' }}>
         <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 34 }}>✅</div>
         <h2 style={{ fontWeight: 700, fontSize: 18, color: '#0F172A', marginBottom: 8 }}>ส่งข้อมูลสำเร็จ</h2>
         <p style={{ fontSize: 14, color: '#64748B', marginBottom: 4 }}>ทีมงานจะติดตามผู้ป่วยรายนี้</p>
         <p style={{ fontSize: 20, fontWeight: 800, color: ACCENT, marginBottom: 24 }}>{result.hn}</p>
+
+        {/* Photo section */}
+        {photoState === 'uploaded' && photoUrl ? (
+          <div style={{ marginBottom: 20 }}>
+            <img
+              src={`${import.meta.env.VITE_API_URL}${photoUrl}`}
+              alt="รูปผู้ป่วย"
+              style={{ width: 120, height: 120, borderRadius: 12, objectFit: 'cover', border: '2px solid #E2E8F0' }}
+            />
+            <p style={{ fontSize: 12, color: '#64748B', marginTop: 8 }}>บันทึกรูปผู้ป่วยแล้ว</p>
+          </div>
+        ) : (
+          <div style={{ marginBottom: 20 }}>
+            <input
+              id="patient-photo-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              onChange={handlePhoto}
+            />
+            <label
+              htmlFor="patient-photo-input"
+              style={{
+                display: 'inline-block',
+                padding: '10px 24px',
+                background: photoState === 'uploading' ? '#CBD5E1' : '#F1F5F9',
+                color: photoState === 'uploading' ? '#94A3B8' : '#334155',
+                border: '1px dashed #CBD5E1',
+                borderRadius: 10,
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: photoState === 'uploading' ? 'default' : 'pointer',
+                pointerEvents: photoState === 'uploading' ? 'none' : 'auto',
+              }}
+            >
+              {photoState === 'uploading' ? 'กำลังอัพโหลด...' : '📷 ถ่ายรูปผู้ป่วย'}
+            </label>
+            {photoState === 'error' && (
+              <div style={{ marginTop: 8 }}>
+                <p style={{ fontSize: 12, color: '#EF4444', margin: '0 0 6px' }}>{photoError}</p>
+                <label
+                  htmlFor="patient-photo-input"
+                  style={{ fontSize: 12, color: ACCENT, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  ลองใหม่
+                </label>
+              </div>
+            )}
+            {photoState === 'idle' && (
+              <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>ไม่บังคับ — สามารถข้ามได้</p>
+            )}
+          </div>
+        )}
+
         <button
           onClick={() => navigate('/')}
           style={{ padding: '12px 32px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
