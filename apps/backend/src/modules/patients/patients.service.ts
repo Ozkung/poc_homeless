@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AesGcmService } from '../../common/crypto/aes-gcm.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -289,6 +289,22 @@ export class PatientsService {
     });
     if (!task) throw new NotFoundException('Task not found');
     return this.createSos(task.patientId, task.patient.organizationId, userId, coords);
+  }
+
+  async updatePhoto(patientId: string, userId: string, photoUrl: string): Promise<{ photoUrl: string }> {
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: patientId },
+      select: { reportedById: true },
+    });
+    if (!patient) throw new NotFoundException('Patient not found');
+    if (patient.reportedById !== userId) {
+      throw new ForbiddenException('ไม่มีสิทธิ์อัพโหลดรูปผู้ป่วยรายนี้');
+    }
+    await this.prisma.patient.update({
+      where: { id: patientId },
+      data: { photoUrl },
+    });
+    return { photoUrl };
   }
 
   private decrypt(p: any) {

@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller, Get, Post, Patch, Delete, Param, Body, Query,
+  UseGuards, HttpCode, HttpStatus, UseInterceptors, UploadedFile, BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { randomUUID } from 'crypto';
 import { PatientsService } from './patients.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -8,6 +15,14 @@ import { UserRole } from '@prisma/client';
 import { SosDto } from './dto/sos.dto';
 import { UpsertCarePlanAssessmentDto } from './dto/care-plan-assessment.dto';
 import { GuestReportDto } from './dto/guest-report.dto';
+
+const ALLOWED_PHOTO_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
+
+const patientPhotoStorage = diskStorage({
+  destination: join(process.cwd(), 'uploads', 'patients'),
+  filename: (_req, file, cb) => cb(null, `${randomUUID()}${extname(file.originalname)}`),
+});
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -166,5 +181,30 @@ export class PatientsController {
   @Roles(UserRole.GUEST)
   guestReport(@Body() body: GuestReportDto, @CurrentUser() user: JwtPayload) {
     return this.patients.guestReport(user.sub, user.orgId, body);
+  }
+
+  @Post(':id/photo')
+  @Roles(UserRole.GUEST)
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: patientPhotoStorage,
+      limits: { fileSize: MAX_PHOTO_SIZE },
+      fileFilter: (_req, file, cb) => {
+        if (ALLOWED_PHOTO_MIME.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('รองรับเฉพาะไฟล์ภาพ JPEG, PNG, WebP'), false);
+        }
+      },
+    }),
+  )
+  async uploadPhoto(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (!file) throw new BadRequestException('ไม่พบไฟล์ภาพ');
+    const photoUrl = `/uploads/patients/${file.filename}`;
+    return this.patients.updatePhoto(id, user.sub, photoUrl);
   }
 }
