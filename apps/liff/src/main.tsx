@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import ReportPage from './pages/ReportPage';
+import AddPage from './pages/AddPage';
 
 
 function AppRoutes() {
@@ -76,6 +77,7 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/profile"  element={<ProfilePage />} />
       <Route path="/report"   element={<ReportPage />} />
+      <Route path="/add"      element={<AddPage />} />
     </Routes>
   );
 }
