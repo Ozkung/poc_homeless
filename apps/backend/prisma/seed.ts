@@ -572,6 +572,106 @@ async function main() {
   const totalTasks = 4+5+2+5+3  + 3+3  + 4+0;
   console.log(`✓ Event tasks: ${totalTasks} records`);
 
+  // ── Today Events (ลงตรวจประจำวัน) ─────────────────────────────────────────
+  // Set GUEST preferredZoneId เพื่อทดสอบ zone-based filtering
+  await Promise.all([
+    prisma.user.update({ where: { id: 'user-seed-guest1' }, data: { preferredZoneId: 'zone-seed-001' } }),
+    prisma.user.update({ where: { id: 'user-seed-guest2' }, data: { preferredZoneId: 'zone-seed-001' } }),
+    prisma.user.update({ where: { id: 'user-seed-guest3' }, data: { preferredZoneId: 'zone-seed-002' } }),
+  ]);
+
+  const todayStart = new Date(); todayStart.setHours(8, 0, 0, 0);
+  const todayEnd   = new Date(); todayEnd.setHours(20, 0, 0, 0);
+
+  const evtToday1 = await prisma.event.upsert({
+    where:  { id: 'evt-today-001' },
+    update: {},
+    create: {
+      id: 'evt-today-001', organizationId: org.id, createdById: cm1.id,
+      title: 'ลงตรวจ เขตพระนคร', startDate: todayStart, endDate: todayEnd, priority: 'URGENT',
+      note: 'ลงพื้นที่ตรวจเยี่ยมผู้ป่วยเขตพระนคร',
+    },
+  });
+  const evtToday2 = await prisma.event.upsert({
+    where:  { id: 'evt-today-002' },
+    update: {},
+    create: {
+      id: 'evt-today-002', organizationId: org.id, createdById: cm1.id,
+      title: 'ลงตรวจ เขตป้อมปราบฯ', startDate: todayStart, endDate: todayEnd, priority: 'URGENT',
+      note: 'ลงพื้นที่ตรวจเยี่ยมผู้ป่วยเขตป้อมปราบศัตรูพ่าย',
+    },
+  });
+  const evtToday3 = await prisma.event.upsert({
+    where:  { id: 'evt-today-003' },
+    update: {},
+    create: {
+      id: 'evt-today-003', organizationId: org.id, createdById: cm2.id,
+      title: 'ลงตรวจ เขตหนองจอก', startDate: todayStart, endDate: todayEnd, priority: 'URGENT',
+      note: 'ลงพื้นที่ตรวจเยี่ยมผู้ป่วยเขตหนองจอก',
+    },
+  });
+  const evtToday4 = await prisma.event.upsert({
+    where:  { id: 'evt-today-004' },
+    update: {},
+    create: {
+      id: 'evt-today-004', organizationId: org.id, createdById: cm1.id,
+      title: 'ลงตรวจ เขตสัมพันธวงศ์', startDate: todayStart, endDate: todayEnd, priority: 'URGENT',
+      note: 'ลงพื้นที่ตรวจเยี่ยมผู้ป่วยเขตสัมพันธวงศ์',
+    },
+  });
+  void evtToday1; void evtToday2; void evtToday3; void evtToday4;
+
+  // Tasks — zone-seed-001: pat-001 (DONE), pat-003 (DONE), pat-007 (DONE)
+  await mkTask('tk-td-01-1', 'evt-today-001', 'pat-seed-001', cm1.id, form1.id, 'DONE',      todayStart);
+  await mkTask('tk-td-01-2', 'evt-today-001', 'pat-seed-003', cm2.id, form1.id, 'DONE',      todayStart);
+  await mkTask('tk-td-01-3', 'evt-today-001', 'pat-seed-007', cm2.id, form1.id, 'DONE',      todayStart);
+  // Tasks — zone-seed-002: pat-002 (PENDING), pat-008 (PENDING)
+  await mkTask('tk-td-02-1', 'evt-today-002', 'pat-seed-002', cm1.id, form1.id, 'PENDING',   todayStart);
+  await mkTask('tk-td-02-2', 'evt-today-002', 'pat-seed-008', cm1.id, form1.id, 'PENDING',   todayStart);
+  // Tasks — zone-seed-003: pat-004 (PENDING), pat-006 (IN_PROGRESS)
+  await mkTask('tk-td-03-1', 'evt-today-003', 'pat-seed-004', cm2.id, form1.id, 'PENDING',   todayStart);
+  await mkTask('tk-td-03-2', 'evt-today-003', 'pat-seed-006', cm2.id, form1.id, 'IN_PROGRESS', todayStart);
+  // Tasks — zone-seed-004: pat-005 (PENDING)
+  await mkTask('tk-td-04-1', 'evt-today-004', 'pat-seed-005', cm1.id, form1.id, 'PENDING',   todayStart);
+
+  // Submissions for zone-001 tasks (simulate already completed)
+  const g1 = await prisma.user.findUnique({ where: { id: 'user-seed-guest1' } });
+  const g2 = await prisma.user.findUnique({ where: { id: 'user-seed-guest2' } });
+  if (g1) {
+    await mkSubmission('sub-td-01-1', 'tk-td-01-1', 'pat-seed-001', form1.id, g1.id,
+      answers1('72', '168', '145', '92', '6', 'ผู้ป่วยอ่อนแรง หน้าซีด แน่นหน้าอก'), todayStart);
+    await mkSubmission('sub-td-01-3', 'tk-td-01-3', 'pat-seed-007', form1.id, g1.id,
+      answers1('65', '162', '138', '85', '4', 'ผู้ป่วยเดินลำบาก ปวดเข่า'), todayStart);
+  }
+  if (g2) {
+    await mkSubmission('sub-td-01-2', 'tk-td-01-2', 'pat-seed-003', form1.id, g2.id,
+      answers1('58', '160', '122', '78', '3', 'สุขภาพทรงตัว ขอยาแก้ปวดข้อ'), todayStart);
+  }
+
+  // ผู้ป่วยใหม่ที่เพิ่มผ่าน LIFF (simulate guest-report)
+  const liffHn = 'HN-LIFF-001';
+  const existingLiff = await prisma.patient.findUnique({ where: { hn: liffHn } });
+  if (!existingLiff && g1) {
+    await prisma.patient.create({
+      data: {
+        id: 'pat-seed-liff-001',
+        organizationId: org.id,
+        nameEnc: encrypt('นายทดสอบ ลงพื้นที่'),
+        hn: liffHn,
+        age: 35, gender: 'MALE', status: 'PENDING',
+        conditions: [],
+        locationText: 'สนามหลวง บริเวณลานคนเมือง',
+        zoneId: 'zone-seed-001',
+        reportedById: g1.id,
+      },
+    });
+  }
+
+  console.log(`✓ Today Events: 4 records (evt-today-001..004)`);
+  console.log(`✓ Today Tasks: 8 records`);
+  console.log(`✓ Today Submissions: 3 records (zone-001 done)`);
+  console.log(`✓ LIFF patient: pat-seed-liff-001`);
+
   // ── Activities ────────────────────────────────────────────────────────────
   await prisma.activity.createMany({
     skipDuplicates: true,
