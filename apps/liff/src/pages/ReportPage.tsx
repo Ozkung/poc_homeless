@@ -83,7 +83,7 @@ export default function ReportPage() {
       {state === 'list' && (
         <div style={{ padding: 12 }}>
           <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 10, fontWeight: 600 }}>
-            {tasks[0]?.eventTitle} · {tasks.length} ราย
+            {[...new Set(tasks.map((t) => t.eventTitle))].join(' / ')} · {tasks.length} ราย
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {tasks.map((t) => (

@@ -1,1 +1,4 @@
-uploads/
+uploads/*
+!uploads/patients/
+uploads/patients/*
+!uploads/patients/.gitkeep

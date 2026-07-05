@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, GoneException, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, GoneException, HttpException, HttpStatus, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { AesGcmService } from '../../common/crypto/aes-gcm.service';
@@ -17,7 +17,7 @@ export class TasksService {
   ) {}
 
   private readonly TASK_INCLUDE = {
-    patient: { select: { id: true, hn: true, nameEnc: true, age: true, locationText: true, status: true, conditions: true, initialComplaint: true, zoneId: true, organizationId: true } },
+    patient: { select: { id: true, hn: true, nameEnc: true, age: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
     formTemplate: { select: { id: true, title: true, fields: true } },
     event: { select: { id: true, title: true, note: true, startDate: true, endDate: true, priority: true } },
   } as const;
@@ -263,6 +263,9 @@ export class TasksService {
     answers: Array<{ fieldId: string; value: string }>,
   ): Promise<{ submissionId: string }> {
     const task = await this.getTaskForGuest(taskId, userId, orgId);
+    if (task.status === 'DONE') {
+      throw new ConflictException('Form already submitted for this task');
+    }
     if (!task.formTemplateId) throw new BadRequestException('Task has no form template');
 
     const [submission] = await this.prisma.$transaction([
