@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, GoneException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, NotFoundException, GoneException, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { AesGcmService } from '../../common/crypto/aes-gcm.service';
@@ -83,6 +83,25 @@ export class TasksService {
       },
       formTemplate: t.formTemplate ?? null,
     }));
+  }
+
+  private async getTaskForGuest(taskId: string, userId: string, orgId: string) {
+    const task = await this.findOne(taskId);
+    const [user, patient] = await Promise.all([
+      this.prisma.user.findFirst({
+        where: { id: userId, organizationId: orgId },
+        select: { preferredZoneId: true },
+      }),
+      this.prisma.patient.findUnique({
+        where: { id: task.patientId },
+        select: { zoneId: true, organizationId: true },
+      }),
+    ]);
+    if (patient?.organizationId !== orgId) throw new NotFoundException('Task not found');
+    if (!user?.preferredZoneId || patient?.zoneId !== user.preferredZoneId) {
+      throw new NotFoundException('Task not found');
+    }
+    return task;
   }
 
   async findMyTasks(userId: string) {
@@ -207,5 +226,75 @@ export class TasksService {
     const key = `liff:task:${taskId}:${token}`;
     const result = await this.redis.getdel(key);
     return result === '1';
+  }
+
+  async guestCheckin(taskId: string, userId: string, orgId: string): Promise<{ activityId: string }> {
+    const task = await this.getTaskForGuest(taskId, userId, orgId);
+    await this.prisma.eventTask.update({
+      where: { id: taskId },
+      data: { status: task.status === 'PENDING' ? 'IN_PROGRESS' : task.status },
+    });
+    const activity = await this.prisma.activity.create({
+      data: {
+        actorId:   userId,
+        patientId: task.patientId,
+        taskId,
+        eventId:   task.eventId,
+        type:      'CHECK_IN',
+        payload:   Prisma.DbNull,
+      },
+    });
+    return { activityId: activity.id };
+  }
+
+  async guestAddNote(taskId: string, userId: string, orgId: string, note: string): Promise<{ activityId: string }> {
+    const task = await this.getTaskForGuest(taskId, userId, orgId);
+    const activity = await this.prisma.activity.create({
+      data: {
+        actorId:   userId,
+        patientId: task.patientId,
+        taskId,
+        eventId:   task.eventId,
+        type:      'NOTE',
+        payload:   { note },
+      },
+    });
+    return { activityId: activity.id };
+  }
+
+  async guestSubmitForm(
+    taskId: string, userId: string, orgId: string,
+    answers: Array<{ fieldId: string; value: string }>,
+  ): Promise<{ submissionId: string }> {
+    const task = await this.getTaskForGuest(taskId, userId, orgId);
+    if (!task.formTemplateId) throw new BadRequestException('Task has no form template');
+
+    const [submission] = await this.prisma.$transaction([
+      this.prisma.submission.create({
+        data: {
+          taskId,
+          patientId:      task.patientId,
+          formTemplateId: task.formTemplateId,
+          submittedById:  userId,
+          answers:        answers as any,
+        },
+      }),
+      this.prisma.activity.create({
+        data: {
+          actorId:   userId,
+          patientId: task.patientId,
+          taskId,
+          eventId:   task.eventId,
+          type:      'FORM_SUBMIT',
+          payload:   { formTitle: task.formTemplate?.title ?? 'แบบสำรวจ' },
+        },
+      }),
+      this.prisma.eventTask.update({
+        where: { id: taskId },
+        data:  { status: 'DONE' },
+      }),
+    ]);
+
+    return { submissionId: submission.id };
   }
 }
