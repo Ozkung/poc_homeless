@@ -17,7 +17,7 @@ export class TasksService {
   ) {}
 
   private readonly TASK_INCLUDE = {
-    patient: { select: { id: true, hn: true, nameEnc: true, age: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
+    patient: { select: { id: true, hn: true, nameEnc: true, age: true, locationText: true, status: true, conditions: true, initialComplaint: true, zoneId: true, organizationId: true } },
     formTemplate: { select: { id: true, title: true, fields: true } },
     event: { select: { id: true, title: true, note: true, startDate: true, endDate: true, priority: true } },
   } as const;
@@ -87,18 +87,12 @@ export class TasksService {
 
   private async getTaskForGuest(taskId: string, userId: string, orgId: string) {
     const task = await this.findOne(taskId);
-    const [user, patient] = await Promise.all([
-      this.prisma.user.findFirst({
-        where: { id: userId, organizationId: orgId },
-        select: { preferredZoneId: true },
-      }),
-      this.prisma.patient.findUnique({
-        where: { id: task.patientId },
-        select: { zoneId: true, organizationId: true },
-      }),
-    ]);
-    if (patient?.organizationId !== orgId) throw new NotFoundException('Task not found');
-    if (!user?.preferredZoneId || patient?.zoneId !== user.preferredZoneId) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, organizationId: orgId },
+      select: { preferredZoneId: true },
+    });
+    if (task.patient?.organizationId !== orgId) throw new NotFoundException('Task not found');
+    if (!user?.preferredZoneId || task.patient?.zoneId !== user.preferredZoneId) {
       throw new NotFoundException('Task not found');
     }
     return task;
@@ -230,20 +224,22 @@ export class TasksService {
 
   async guestCheckin(taskId: string, userId: string, orgId: string): Promise<{ activityId: string }> {
     const task = await this.getTaskForGuest(taskId, userId, orgId);
-    await this.prisma.eventTask.update({
-      where: { id: taskId },
-      data: { status: task.status === 'PENDING' ? 'IN_PROGRESS' : task.status },
-    });
-    const activity = await this.prisma.activity.create({
-      data: {
-        actorId:   userId,
-        patientId: task.patientId,
-        taskId,
-        eventId:   task.eventId,
-        type:      'CHECK_IN',
-        payload:   Prisma.DbNull,
-      },
-    });
+    const [, activity] = await this.prisma.$transaction([
+      this.prisma.eventTask.update({
+        where: { id: taskId },
+        data: { status: task.status === 'PENDING' ? 'IN_PROGRESS' : task.status },
+      }),
+      this.prisma.activity.create({
+        data: {
+          actorId:   userId,
+          patientId: task.patientId,
+          taskId,
+          eventId:   task.eventId,
+          type:      'CHECK_IN',
+          payload:   Prisma.DbNull,
+        },
+      }),
+    ]);
     return { activityId: activity.id };
   }
 
