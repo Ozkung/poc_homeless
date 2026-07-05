@@ -39,7 +39,8 @@ export default function ReportPage() {
   }, [systemProfile]);
 
   function handleStatusChange(taskId: string, status: string) {
-    setTasks((prev) => prev.map((t) => t.taskId === taskId ? { ...t, status: status as any } : t));
+    setTasks((prev) => prev.map((t) => t.taskId === taskId ? { ...t, status: status as TodayTask['status'] } : t));
+    setSelected((prev) => prev?.taskId === taskId ? { ...prev, status: status as TodayTask['status'] } : prev);
   }
 
   return (
