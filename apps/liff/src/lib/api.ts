@@ -7,6 +7,29 @@ let accessToken: string | null = null;
 export function setToken(token: string) { accessToken = token; }
 export function getToken(): string | null { return accessToken; }
 
+export interface FormField {
+  id: string;
+  type: 'number' | 'text' | 'textarea' | 'radio' | 'select' | 'scale';
+  label: string;
+  required: boolean;
+  order: number;
+  options?: string[];
+  min?: number;
+  max?: number;
+}
+
+export interface TodayTask {
+  taskId: string;
+  eventId: string;
+  eventTitle: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'NOT_FOUND';
+  patient: {
+    id: string; hn: string; name: string;
+    age?: number; status: string; conditions: string[];
+  };
+  formTemplate: { id: string; title: string; fields: FormField[] } | null;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -80,4 +103,37 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  getTodayTasks: () =>
+    request<TodayTask[]>('/events/today/my-tasks'),
+
+  guestCheckin: (taskId: string) =>
+    request<{ activityId: string }>(`/tasks/${taskId}/guest-checkin`, { method: 'POST' }),
+
+  guestAddNote: (taskId: string, note: string) =>
+    request<{ activityId: string }>(`/tasks/${taskId}/guest-note`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    }),
+
+  guestSubmitForm: (taskId: string, answers: Array<{ fieldId: string; value: string }>) =>
+    request<{ submissionId: string }>(`/tasks/${taskId}/guest-submit`, {
+      method: 'POST',
+      body: JSON.stringify({ answers }),
+    }),
+
+  uploadPatientPhoto: async (patientId: string, file: File): Promise<{ photoUrl: string }> => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    const res = await fetch(`${API_URL}/patients/${patientId}/photo`, {
+      method: 'POST',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw Object.assign(new Error((err as any).message ?? 'อัพโหลดรูปไม่สำเร็จ'), { status: res.status });
+    }
+    return res.json();
+  },
 };
