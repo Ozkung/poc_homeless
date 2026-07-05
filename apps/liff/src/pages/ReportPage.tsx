@@ -1,267 +1,152 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, TodayTask } from '../lib/api';
+import { useProfileStore } from '../store/profileStore';
+import PatientTaskSheet from '../components/PatientTaskSheet';
 
 const ACCENT = '#6366F1';
-const INP: React.CSSProperties = {
-  width: '100%', padding: '9px 12px', border: '1px solid #E2E8F0',
-  borderRadius: 9, fontSize: 14, boxSizing: 'border-box',
-  background: '#F8FAFC', color: '#0F172A', outline: 'none', marginTop: 4,
-};
-const LBL: React.CSSProperties = {
-  fontSize: 11, color: '#94A3B8', fontWeight: 700,
-  textTransform: 'uppercase', letterSpacing: '0.06em',
-};
 
-const STATUS_OPTIONS = [
-  { value: 'CRITICAL', label: 'L1 ฉุกเฉินวิกฤติ' },
-  { value: 'PENDING',  label: 'L2 ฉุกเฉินเร่งด่วน' },
-  { value: 'STABLE',   label: 'L3 ไม่เร่งด่วน' },
-  { value: 'MISSING',  label: 'L4 ทั่วไป' },
-];
+const TASK_STATUS_LABEL: Record<string, string> = {
+  PENDING: 'รอดำเนินการ', IN_PROGRESS: 'กำลังดำเนินการ', DONE: 'เสร็จแล้ว', NOT_FOUND: 'ไม่พบผู้ป่วย',
+};
+const TASK_STATUS_COLOR: Record<string, string> = {
+  PENDING: '#F59E0B', IN_PROGRESS: '#3B82F6', DONE: '#22C55E', NOT_FOUND: '#94A3B8',
+};
+const PAT_STATUS_COLOR: Record<string, string> = {
+  CRITICAL: '#EF4444', PENDING: '#F59E0B', STABLE: '#22C55E', MISSING: '#94A3B8',
+};
+const PAT_STATUS_LABEL: Record<string, string> = {
+  CRITICAL: 'L1', PENDING: 'L2', STABLE: 'L3', MISSING: 'L4',
+};
 
 export default function ReportPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    firstName: '', lastName: '', nationalId: '', phone: '',
-    gender: '', birthDate: '', age: '',
-    status: 'PENDING', locationText: '', conditions: '', initialComplaint: '',
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [result, setResult] = useState<{ id: string; hn: string } | null>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [photoState, setPhotoState] = useState<'idle' | 'uploading' | 'uploaded' | 'error'>('idle');
-  const [photoError, setPhotoError] = useState('');
+  const { systemProfile } = useProfileStore();
+  const [tasks, setTasks] = useState<TodayTask[]>([]);
+  const [state, setState] = useState<'loading' | 'no-zone' | 'no-event' | 'list'>('loading');
+  const [selected, setSelected] = useState<TodayTask | null>(null);
 
-  const set = (k: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-      setForm((f) => ({ ...f, [k]: e.target.value }));
+  useEffect(() => {
+    if (!systemProfile) return;
+    if (!systemProfile.preferredZoneId) { setState('no-zone'); return; }
 
-  async function submit() {
-    setSubmitting(true);
-    setError('');
-    try {
-      const data = await api.guestReportPatient({
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim() || undefined,
-        nationalId: form.nationalId.trim() || undefined,
-        phone: form.phone.trim() || undefined,
-        gender: form.gender || undefined,
-        birthDate: form.birthDate || undefined,
-        age: form.age ? parseInt(form.age, 10) : undefined,
-        status: form.status || undefined,
-        locationText: form.locationText.trim() || undefined,
-        conditions: form.conditions.trim()
-          ? form.conditions.split(',').map((s) => s.trim()).filter(Boolean)
-          : undefined,
-        initialComplaint: form.initialComplaint.trim() || undefined,
-      });
-      setResult(data);
-    } catch (e: any) {
-      setError(e.message ?? 'ส่งข้อมูลไม่สำเร็จ');
-    } finally {
-      setSubmitting(false);
-    }
+    api.getTodayTasks()
+      .then((data) => {
+        setTasks(data);
+        setState(data.length === 0 ? 'no-event' : 'list');
+      })
+      .catch(() => setState('no-event'));
+  }, [systemProfile]);
+
+  function handleStatusChange(taskId: string, status: string) {
+    setTasks((prev) => prev.map((t) => t.taskId === taskId ? { ...t, status: status as any } : t));
   }
-
-  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !result) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      setPhotoError('รูปใหญ่เกินไป (max 5MB)');
-      setPhotoState('error');
-      return;
-    }
-
-    setPhotoState('uploading');
-    setPhotoError('');
-    try {
-      const data = await api.uploadPatientPhoto(result.id, file);
-      setPhotoUrl(data.photoUrl);
-      setPhotoState('uploaded');
-    } catch (err: any) {
-      setPhotoError(err.message ?? 'อัพโหลดรูปไม่สำเร็จ');
-      setPhotoState('error');
-    }
-  }
-
-  const valid = form.firstName.trim().length > 0;
-
-  if (result) return (
-    <div style={{ background: '#F8FAFC', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ textAlign: 'center', maxWidth: 320, width: '100%' }}>
-        <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 34 }}>✅</div>
-        <h2 style={{ fontWeight: 700, fontSize: 18, color: '#0F172A', marginBottom: 8 }}>ส่งข้อมูลสำเร็จ</h2>
-        <p style={{ fontSize: 14, color: '#64748B', marginBottom: 4 }}>ทีมงานจะติดตามผู้ป่วยรายนี้</p>
-        <p style={{ fontSize: 20, fontWeight: 800, color: ACCENT, marginBottom: 24 }}>{result.hn}</p>
-
-        {/* Photo section */}
-        {photoState === 'uploaded' && photoUrl ? (
-          <div style={{ marginBottom: 20 }}>
-            <img
-              src={`${import.meta.env.VITE_API_URL}${photoUrl}`}
-              alt="รูปผู้ป่วย"
-              style={{ width: 120, height: 120, borderRadius: 12, objectFit: 'cover', border: '2px solid #E2E8F0' }}
-            />
-            <p style={{ fontSize: 12, color: '#64748B', marginTop: 8 }}>บันทึกรูปผู้ป่วยแล้ว</p>
-          </div>
-        ) : (
-          <div style={{ marginBottom: 20 }}>
-            <input
-              id="patient-photo-input"
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: 'none' }}
-              onChange={handlePhoto}
-            />
-            <label
-              htmlFor="patient-photo-input"
-              style={{
-                display: 'inline-block',
-                padding: '10px 24px',
-                background: photoState === 'uploading' ? '#CBD5E1' : '#F1F5F9',
-                color: photoState === 'uploading' ? '#94A3B8' : '#334155',
-                border: '1px dashed #CBD5E1',
-                borderRadius: 10,
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: photoState === 'uploading' ? 'default' : 'pointer',
-                pointerEvents: photoState === 'uploading' ? 'none' : 'auto',
-              }}
-            >
-              {photoState === 'uploading' ? 'กำลังอัพโหลด...' : '📷 ถ่ายรูปผู้ป่วย'}
-            </label>
-            {photoState === 'error' && (
-              <div style={{ marginTop: 8 }}>
-                <p style={{ fontSize: 12, color: '#EF4444', margin: '0 0 6px' }}>{photoError}</p>
-                <label
-                  htmlFor="patient-photo-input"
-                  style={{ fontSize: 12, color: ACCENT, cursor: 'pointer', textDecoration: 'underline' }}
-                >
-                  ลองใหม่
-                </label>
-              </div>
-            )}
-            {photoState === 'idle' && (
-              <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>ไม่บังคับ — สามารถข้ามได้</p>
-            )}
-          </div>
-        )}
-
-        <button
-          onClick={() => navigate('/')}
-          style={{ padding: '12px 32px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
-        >
-          กลับหน้าหลัก
-        </button>
-      </div>
-    </div>
-  );
 
   return (
-    <div style={{ background: '#F8FAFC', minHeight: '100vh', padding: 16, paddingTop: 24, maxWidth: 480, margin: '0 auto', paddingBottom: 40 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#64748B', padding: 0 }}>←</button>
-        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0F172A', margin: 0 }}>เพิ่มผู้ป่วย</h2>
+    <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: 80 }}>
+      {/* Header */}
+      <div style={{ background: '#fff', padding: '16px 16px 12px', borderBottom: '1px solid #F1F5F9', position: 'sticky', top: 0, zIndex: 10 }}>
+        <h1 style={{ fontSize: 17, fontWeight: 700, color: '#0F172A', margin: 0 }}>ลงตรวจวันนี้</h1>
+        {systemProfile?.preferredZone && (
+          <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>{systemProfile.preferredZone.name}</p>
+        )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-        {/* ชื่อ-นามสกุล */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1 }}>
-            <label style={LBL}>ชื่อ *</label>
-            <input style={INP} value={form.firstName} onChange={set('firstName')} placeholder="สมชาย" />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={LBL}>นามสกุล</label>
-            <input style={INP} value={form.lastName} onChange={set('lastName')} placeholder="ใจดี" />
-          </div>
+      {/* States */}
+      {state === 'loading' && (
+        <div style={{ padding: 40, textAlign: 'center' }}>
+          <p style={{ color: '#94A3B8', fontSize: 14 }}>กำลังโหลด...</p>
         </div>
+      )}
 
-        {/* เลขบัตรประชาชน */}
-        <div>
-          <label style={LBL}>เลขบัตรประชาชน</label>
-          <input style={INP} value={form.nationalId} onChange={set('nationalId')} placeholder="1234567890123" maxLength={13} />
+      {state === 'no-zone' && (
+        <div style={{ padding: 40, textAlign: 'center' }}>
+          <p style={{ fontSize: 32, marginBottom: 12 }}>📍</p>
+          <p style={{ fontWeight: 600, color: '#374151', fontSize: 15, marginBottom: 8 }}>ยังไม่ได้ตั้งค่าพื้นที่</p>
+          <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>กรุณาตั้งค่า Zone ก่อนใช้งาน</p>
+          <button onClick={() => navigate('/profile')}
+            style={{ padding: '10px 24px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+            ตั้งค่าโปรไฟล์
+          </button>
         </div>
+      )}
 
-        {/* เบอร์โทร / เพศ */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1 }}>
-            <label style={LBL}>เบอร์โทรศัพท์</label>
-            <input style={INP} type="tel" value={form.phone} onChange={set('phone')} placeholder="081-234-5678" />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={LBL}>เพศ</label>
-            <select style={{ ...INP, appearance: 'none' } as React.CSSProperties} value={form.gender} onChange={set('gender')}>
-              <option value="">— ไม่ระบุ —</option>
-              <option value="MALE">ชาย</option>
-              <option value="FEMALE">หญิง</option>
-              <option value="OTHER">อื่นๆ</option>
-            </select>
-          </div>
+      {state === 'no-event' && (
+        <div style={{ padding: 40, textAlign: 'center' }}>
+          <p style={{ fontSize: 32, marginBottom: 12 }}>📋</p>
+          <p style={{ fontWeight: 600, color: '#374151', fontSize: 15, marginBottom: 4 }}>ไม่มีการลงตรวจวันนี้</p>
+          <p style={{ fontSize: 13, color: '#94A3B8' }}>ในพื้นที่ของคุณยังไม่มี Event วันนี้</p>
         </div>
+      )}
 
-        {/* วันเกิด / อายุ */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1 }}>
-            <label style={LBL}>วันเกิด</label>
-            <input style={INP} type="date" value={form.birthDate} onChange={set('birthDate')} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={LBL}>อายุ (ปี)</label>
-            <input style={INP} type="number" min="0" max="150" value={form.age} onChange={set('age')} placeholder="ปี" />
-          </div>
-        </div>
-
-        {/* สถานะ Triage */}
-        <div>
-          <label style={LBL}>สถานะ (Triage)</label>
-          <select style={{ ...INP, appearance: 'none' } as React.CSSProperties} value={form.status} onChange={set('status')}>
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+      {state === 'list' && (
+        <div style={{ padding: 12 }}>
+          <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 10, fontWeight: 600 }}>
+            {tasks[0]?.eventTitle} · {tasks.length} ราย
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {tasks.map((t) => (
+              <div key={t.taskId} onClick={() => setSelected(t)}
+                style={{
+                  background: '#fff', borderRadius: 14, padding: '14px 16px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.07)', cursor: 'pointer',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  opacity: t.status === 'DONE' ? 0.6 : 1,
+                }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
+                      background: PAT_STATUS_COLOR[t.patient.status] + '20',
+                      color: PAT_STATUS_COLOR[t.patient.status],
+                    }}>
+                      {PAT_STATUS_LABEL[t.patient.status]}
+                    </span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t.patient.name}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>{t.patient.hn}</p>
+                  {t.patient.conditions.length > 0 && (
+                    <p style={{ fontSize: 11, color: '#64748B', margin: '4px 0 0' }}>{t.patient.conditions.slice(0, 2).join(', ')}</p>
+                  )}
+                </div>
+                <div style={{ flexShrink: 0, marginLeft: 12, textAlign: 'right' }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+                    background: TASK_STATUS_COLOR[t.status] + '15',
+                    color: TASK_STATUS_COLOR[t.status],
+                  }}>
+                    {TASK_STATUS_LABEL[t.status]}
+                  </span>
+                  <p style={{ fontSize: 18, color: '#CBD5E1', margin: '4px 0 0' }}>›</p>
+                </div>
+              </div>
             ))}
-          </select>
+          </div>
         </div>
+      )}
 
-        {/* สถานที่ */}
-        <div>
-          <label style={LBL}>สถานที่ที่พบ</label>
-          <input style={INP} value={form.locationText} onChange={set('locationText')} placeholder="เช่น ใต้สะพาน ถ.พระราม 4" />
-        </div>
-
-        {/* โรคประจำตัว */}
-        <div>
-          <label style={LBL}>โรคประจำตัว</label>
-          <input style={INP} value={form.conditions} onChange={set('conditions')} placeholder="เบาหวาน, ความดัน" />
-          <p style={{ fontSize: 11, color: '#94A3B8', margin: '4px 0 0' }}>คั่นด้วยเครื่องหมายจุลภาค</p>
-        </div>
-
-        {/* อาการเบื้องต้น */}
-        <div>
-          <label style={LBL}>อาการเบื้องต้น</label>
-          <textarea
-            style={{ ...INP, minHeight: 80, resize: 'vertical' } as React.CSSProperties}
-            value={form.initialComplaint}
-            onChange={set('initialComplaint')}
-            placeholder="เช่น ปวดศีรษะ เวียนหัว อ่อนเพลีย มา 3 วัน..."
-          />
-        </div>
-
-      </div>
-
-      {error && <p style={{ color: '#EF4444', fontSize: 13, marginTop: 12 }}>{error}</p>}
-
-      <button
-        disabled={!valid || submitting}
-        onClick={submit}
-        style={{ width: '100%', marginTop: 24, padding: '12px', background: valid && !submitting ? ACCENT : '#CBD5E1', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: valid && !submitting ? 'pointer' : 'default' }}
-      >
-        {submitting ? 'กำลังบันทึก...' : 'บันทึกผู้ป่วย'}
+      {/* FAB — เพิ่มผู้ป่วย */}
+      <button onClick={() => navigate('/add')}
+        style={{
+          position: 'fixed', bottom: 24, right: 20, width: 52, height: 52,
+          borderRadius: '50%', background: ACCENT, color: '#fff', border: 'none',
+          fontSize: 26, cursor: 'pointer', boxShadow: '0 4px 12px rgba(99,102,241,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 50,
+        }}>
+        +
       </button>
+
+      {/* Bottom Sheet */}
+      {selected && (
+        <PatientTaskSheet
+          task={selected}
+          onClose={() => setSelected(null)}
+          onStatusChange={handleStatusChange}
+        />
+      )}
     </div>
   );
 }
