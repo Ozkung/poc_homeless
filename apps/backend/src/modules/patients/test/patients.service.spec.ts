@@ -212,7 +212,7 @@ describe('PatientsService', () => {
   });
 
   describe('guestReport()', () => {
-    it('creates a PENDING patient using actor preferredZoneId and encrypted alias', async () => {
+    it('creates a PENDING patient using actor preferredZoneId and encrypted name', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ preferredZoneId: 'zone-abc' });
       mockPrisma.patient.findUnique.mockResolvedValue(null); // HN unique check
       mockPrisma.patient.create.mockResolvedValue({
@@ -225,7 +225,7 @@ describe('PatientsService', () => {
       });
 
       const result = await service.guestReport('actor1', 'org1', {
-        alias: 'Stranger',
+        firstName: 'Stranger',
         locationText: 'Under bridge',
         initialComplaint: 'Fever',
       });
@@ -260,7 +260,7 @@ describe('PatientsService', () => {
       });
 
       const result = await service.guestReport('actor2', 'org1', {
-        alias: 'Unknown',
+        firstName: 'Unknown',
         locationText: 'Park',
         initialComplaint: 'Unknown',
       });

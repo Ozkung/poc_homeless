@@ -70,8 +70,11 @@ export const api = {
   getDoctorSchedules: () => request<any[]>('/doctor/schedules'),
 
   guestReportPatient: (data: {
-    alias: string; locationText: string; initialComplaint: string;
-    gender?: string; age?: number;
+    firstName: string; lastName?: string;
+    nationalId?: string; phone?: string;
+    gender?: string; birthDate?: string; age?: number;
+    status?: string; locationText?: string;
+    conditions?: string[]; initialComplaint?: string;
   }) =>
     request<{ id: string; hn: string }>('/patients/guest-report', {
       method: 'POST',

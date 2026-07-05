@@ -179,11 +179,6 @@ export default function AdminUsersPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>ผู้ใช้งาน</h1>
-          {users.filter((u) => u.role === 'GUEST').length > 0 && (
-            <Badge count={users.filter((u) => u.role === 'GUEST').length} color="#faad14">
-              <Tag color="gold" style={{ fontSize: 12 }}>รออนุมัติ</Tag>
-            </Badge>
-          )}
         </div>
         <Button type="primary" onClick={() => setCreateModal(true)}>+ เพิ่มผู้ใช้</Button>
       </div>
@@ -195,7 +190,6 @@ export default function AdminUsersPage() {
           { title: 'ชื่อ', dataIndex: 'displayName', render: (v, r) => (
             <span>
               <span style={{ fontWeight: 600 }}>{v}</span>
-              {r.role === 'GUEST' && <Tag color="gold" style={{ fontSize: 10, marginLeft: 6 }}>รออนุมัติ</Tag>}
               {r.phone && <div style={{ fontSize: 11, color: '#aaa' }}>{r.phone}</div>}
             </span>
           )},

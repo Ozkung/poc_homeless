@@ -13,10 +13,19 @@ const LBL: React.CSSProperties = {
   textTransform: 'uppercase', letterSpacing: '0.06em',
 };
 
+const STATUS_OPTIONS = [
+  { value: 'CRITICAL', label: 'L1 ฉุกเฉินวิกฤติ' },
+  { value: 'PENDING',  label: 'L2 ฉุกเฉินเร่งด่วน' },
+  { value: 'STABLE',   label: 'L3 ไม่เร่งด่วน' },
+  { value: 'MISSING',  label: 'L4 ทั่วไป' },
+];
+
 export default function ReportPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    alias: '', locationText: '', initialComplaint: '', gender: '', age: '',
+    firstName: '', lastName: '', nationalId: '', phone: '',
+    gender: '', birthDate: '', age: '',
+    status: 'PENDING', locationText: '', conditions: '', initialComplaint: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -31,11 +40,19 @@ export default function ReportPage() {
     setError('');
     try {
       const data = await api.guestReportPatient({
-        alias: form.alias.trim(),
-        locationText: form.locationText.trim(),
-        initialComplaint: form.initialComplaint.trim(),
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim() || undefined,
+        nationalId: form.nationalId.trim() || undefined,
+        phone: form.phone.trim() || undefined,
         gender: form.gender || undefined,
+        birthDate: form.birthDate || undefined,
         age: form.age ? parseInt(form.age, 10) : undefined,
+        status: form.status || undefined,
+        locationText: form.locationText.trim() || undefined,
+        conditions: form.conditions.trim()
+          ? form.conditions.split(',').map((s) => s.trim()).filter(Boolean)
+          : undefined,
+        initialComplaint: form.initialComplaint.trim() || undefined,
       });
       setResult(data);
     } catch (e: any) {
@@ -45,7 +62,7 @@ export default function ReportPage() {
     }
   }
 
-  const valid = form.alias.trim() && form.locationText.trim() && form.initialComplaint.trim();
+  const valid = form.firstName.trim().length > 0;
 
   if (result) return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
@@ -65,32 +82,38 @@ export default function ReportPage() {
   );
 
   return (
-    <div style={{ background: '#F8FAFC', minHeight: '100vh', padding: 16, paddingTop: 24, maxWidth: 480, margin: '0 auto' }}>
+    <div style={{ background: '#F8FAFC', minHeight: '100vh', padding: 16, paddingTop: 24, maxWidth: 480, margin: '0 auto', paddingBottom: 40 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
         <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#64748B', padding: 0 }}>←</button>
-        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0F172A', margin: 0 }}>รายงานผู้ป่วย</h2>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0F172A', margin: 0 }}>เพิ่มผู้ป่วย</h2>
       </div>
-      <p style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>พบผู้ไร้บ้านที่ต้องการความช่วยเหลือ? กรอกข้อมูลเบื้องต้น</p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <label style={LBL}>ชื่อ / นามแฝง *</label>
-          <input style={INP} value={form.alias} onChange={set('alias')} placeholder="เช่น ลุงดำ หรือ ไม่ทราบชื่อ" />
-        </div>
-        <div>
-          <label style={LBL}>สถานที่พบ *</label>
-          <input style={INP} value={form.locationText} onChange={set('locationText')} placeholder="เช่น ใต้สะพาน, หน้าวัด..." />
-        </div>
-        <div>
-          <label style={LBL}>อาการเบื้องต้น *</label>
-          <textarea
-            style={{ ...INP, minHeight: 80, resize: 'vertical' } as React.CSSProperties}
-            value={form.initialComplaint}
-            onChange={set('initialComplaint')}
-            placeholder="เช่น มีไข้ ไม่รู้สึกตัว บาดเจ็บที่ขา..."
-          />
-        </div>
+
+        {/* ชื่อ-นามสกุล */}
         <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ flex: 1 }}>
+            <label style={LBL}>ชื่อ *</label>
+            <input style={INP} value={form.firstName} onChange={set('firstName')} placeholder="สมชาย" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={LBL}>นามสกุล</label>
+            <input style={INP} value={form.lastName} onChange={set('lastName')} placeholder="ใจดี" />
+          </div>
+        </div>
+
+        {/* เลขบัตรประชาชน */}
+        <div>
+          <label style={LBL}>เลขบัตรประชาชน</label>
+          <input style={INP} value={form.nationalId} onChange={set('nationalId')} placeholder="1234567890123" maxLength={13} />
+        </div>
+
+        {/* เบอร์โทร / เพศ */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ flex: 1 }}>
+            <label style={LBL}>เบอร์โทรศัพท์</label>
+            <input style={INP} type="tel" value={form.phone} onChange={set('phone')} placeholder="081-234-5678" />
+          </div>
           <div style={{ flex: 1 }}>
             <label style={LBL}>เพศ</label>
             <select style={{ ...INP, appearance: 'none' } as React.CSSProperties} value={form.gender} onChange={set('gender')}>
@@ -100,11 +123,54 @@ export default function ReportPage() {
               <option value="OTHER">อื่นๆ</option>
             </select>
           </div>
+        </div>
+
+        {/* วันเกิด / อายุ */}
+        <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1 }}>
-            <label style={LBL}>อายุโดยประมาณ</label>
-            <input style={INP} type="number" min="0" max="120" value={form.age} onChange={set('age')} placeholder="ปี" />
+            <label style={LBL}>วันเกิด</label>
+            <input style={INP} type="date" value={form.birthDate} onChange={set('birthDate')} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={LBL}>อายุ (ปี)</label>
+            <input style={INP} type="number" min="0" max="150" value={form.age} onChange={set('age')} placeholder="ปี" />
           </div>
         </div>
+
+        {/* สถานะ Triage */}
+        <div>
+          <label style={LBL}>สถานะ (Triage)</label>
+          <select style={{ ...INP, appearance: 'none' } as React.CSSProperties} value={form.status} onChange={set('status')}>
+            {STATUS_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* สถานที่ */}
+        <div>
+          <label style={LBL}>สถานที่ที่พบ</label>
+          <input style={INP} value={form.locationText} onChange={set('locationText')} placeholder="เช่น ใต้สะพาน ถ.พระราม 4" />
+        </div>
+
+        {/* โรคประจำตัว */}
+        <div>
+          <label style={LBL}>โรคประจำตัว</label>
+          <input style={INP} value={form.conditions} onChange={set('conditions')} placeholder="เบาหวาน, ความดัน" />
+          <p style={{ fontSize: 11, color: '#94A3B8', margin: '4px 0 0' }}>คั่นด้วยเครื่องหมายจุลภาค</p>
+        </div>
+
+        {/* อาการเบื้องต้น */}
+        <div>
+          <label style={LBL}>อาการเบื้องต้น</label>
+          <textarea
+            style={{ ...INP, minHeight: 80, resize: 'vertical' } as React.CSSProperties}
+            value={form.initialComplaint}
+            onChange={set('initialComplaint')}
+            placeholder="เช่น ปวดศีรษะ เวียนหัว อ่อนเพลีย มา 3 วัน..."
+          />
+        </div>
+
       </div>
 
       {error && <p style={{ color: '#EF4444', fontSize: 13, marginTop: 12 }}>{error}</p>}
@@ -114,7 +180,7 @@ export default function ReportPage() {
         onClick={submit}
         style={{ width: '100%', marginTop: 24, padding: '12px', background: valid && !submitting ? ACCENT : '#CBD5E1', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: valid && !submitting ? 'pointer' : 'default' }}
       >
-        {submitting ? 'กำลังส่งข้อมูล...' : 'ส่งรายงาน'}
+        {submitting ? 'กำลังบันทึก...' : 'บันทึกผู้ป่วย'}
       </button>
     </div>
   );

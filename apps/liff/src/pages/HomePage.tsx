@@ -6,7 +6,7 @@ import { useProfileStore } from '../store/profileStore';
 const ACCENT = '#6366F1';
 
 const ROLE_LABEL: Record<string, string> = {
-  GUEST:             'อาสาสมัคร (รออนุมัติ)',
+  GUEST:             'อาสาสมัคร',
   CARE_GIVER:        'ผู้ดูแลภาคสนาม',
   CASE_MANAGER:      'Case Manager',
   MEDICAL_VOLUNTEER: 'อาสาพยาบาล',

@@ -71,28 +71,38 @@ export class PatientsService {
   }
 
   async guestReport(actorId: string, orgId: string, data: {
-    alias: string;
-    locationText: string;
-    initialComplaint: string;
+    firstName: string;
+    lastName?: string;
+    nationalId?: string;
+    phone?: string;
     gender?: string;
+    birthDate?: string;
     age?: number;
+    status?: string;
+    locationText?: string;
+    conditions?: string[];
+    initialComplaint?: string;
   }) {
     const actor = await this.prisma.user.findUnique({
       where: { id: actorId },
       select: { preferredZoneId: true },
     });
+    const name = [data.firstName, data.lastName].filter(Boolean).join(' ');
     const hn = await this.generateHN();
     const patient = await this.prisma.patient.create({
       data: {
         organizationId: orgId,
-        nameEnc: this.crypto.encrypt(data.alias),
+        nameEnc: this.crypto.encrypt(name),
         hn,
         age: data.age,
         gender: data.gender as any,
-        status: 'PENDING',
-        conditions: [],
+        status: (data.status as any) ?? 'PENDING',
+        conditions: data.conditions ?? [],
         initialComplaint: data.initialComplaint,
         locationText: data.locationText,
+        phone: data.phone,
+        birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
+        nationalIdEnc: data.nationalId ? this.crypto.encrypt(data.nationalId) : undefined,
         zoneId: actor?.preferredZoneId ?? null,
       },
     });

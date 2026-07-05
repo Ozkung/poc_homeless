@@ -66,9 +66,9 @@ export class AuthService {
 
   async verifyLiffToken(idToken: string) {
     const profile = await this.verifyLineIdToken(idToken);
+    // console.log('LIFF user verified:', profile);
     const user = await this.prisma.user.findUnique({ where: { lineUserId: profile.sub } });
     if (!user || !user.isActive) throw new UnauthorizedException('Line user not linked');
-
     // Best-effort: sync LINE profile — non-fatal if migration not yet applied
     if (profile.name || profile.picture) {
       this.prisma.user.update({
