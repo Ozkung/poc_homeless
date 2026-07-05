@@ -177,6 +177,8 @@ model Patient {
   followUpTarget   Int?
   zoneId           String?
   zone             Zone?         @relation(fields: [zoneId], references: [id])
+  photoUrl         String?
+  reportedById     String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 

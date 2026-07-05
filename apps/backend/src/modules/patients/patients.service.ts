@@ -104,6 +104,7 @@ export class PatientsService {
         birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
         nationalIdEnc: data.nationalId ? this.crypto.encrypt(data.nationalId) : undefined,
         zoneId: actor?.preferredZoneId ?? null,
+        reportedById: actorId,
       },
     });
     return { id: patient.id, hn: patient.hn };
