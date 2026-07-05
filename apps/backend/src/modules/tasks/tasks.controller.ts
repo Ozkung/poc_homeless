@@ -2,11 +2,9 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGua
 import { TasksService } from './tasks.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 import { SubmissionsService } from '../submissions/submissions.service';
 import { SubmitTaskDto } from './dto/submit-task.dto';
-import { UserRole } from '@prisma/client';
 
 @Controller('tasks')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -48,16 +46,14 @@ export class TasksController {
     return this.submissions.create(user.sub, { taskId: id, token: dto.token, answers: dto.answers });
   }
 
-  // ── GUEST endpoints (zone-based auth, no assignee check) ────────────────
+  // ── LIFF endpoints (zone-based auth, no assignee check — open to all roles) ────────────────
 
   @Post(':id/guest-checkin')
-  @Roles(UserRole.GUEST)
   guestCheckin(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.tasks.guestCheckin(id, user.sub, user.orgId);
   }
 
   @Post(':id/guest-note')
-  @Roles(UserRole.GUEST)
   guestNote(
     @Param('id') id: string,
     @Body('note') note: string,
@@ -67,7 +63,6 @@ export class TasksController {
   }
 
   @Post(':id/guest-submit')
-  @Roles(UserRole.GUEST)
   @HttpCode(HttpStatus.CREATED)
   guestSubmit(
     @Param('id') id: string,
@@ -77,3 +72,4 @@ export class TasksController {
     return this.tasks.guestSubmitForm(id, user.sub, user.orgId, answers);
   }
 }
+

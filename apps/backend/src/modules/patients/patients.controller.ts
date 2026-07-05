@@ -178,13 +178,13 @@ export class PatientsController {
   }
 
   @Post('guest-report')
-  @Roles(UserRole.GUEST)
+  @Roles(UserRole.GUEST, UserRole.CARE_GIVER, UserRole.CASE_MANAGER, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   guestReport(@Body() body: GuestReportDto, @CurrentUser() user: JwtPayload) {
     return this.patients.guestReport(user.sub, user.orgId, body);
   }
 
   @Post(':id/photo')
-  @Roles(UserRole.GUEST)
+  @Roles(UserRole.GUEST, UserRole.CARE_GIVER, UserRole.CASE_MANAGER, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: patientPhotoStorage,
