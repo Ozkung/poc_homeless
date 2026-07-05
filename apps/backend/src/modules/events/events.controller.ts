@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { EventsService } from './events.service';
+import { TasksService } from '../tasks/tasks.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -10,7 +11,13 @@ import { UserRole } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN)
 export class EventsController {
-  constructor(private events: EventsService) {}
+  constructor(private events: EventsService, private tasks: TasksService) {}
+
+  @Get('today/my-tasks')
+  @Roles(UserRole.GUEST, UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER)
+  todayMyTasks(@CurrentUser() user: JwtPayload) {
+    return this.tasks.findTodayZoneTasks(user.sub, user.orgId);
+  }
 
   @Get()
   findAll(@CurrentUser() user: JwtPayload, @Query('month') month?: string, @Query('year') year?: string) {

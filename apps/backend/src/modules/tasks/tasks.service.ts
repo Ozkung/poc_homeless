@@ -17,7 +17,7 @@ export class TasksService {
   ) {}
 
   private readonly TASK_INCLUDE = {
-    patient: { select: { id: true, hn: true, nameEnc: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
+    patient: { select: { id: true, hn: true, nameEnc: true, age: true, locationText: true, status: true, conditions: true, initialComplaint: true } },
     formTemplate: { select: { id: true, title: true, fields: true } },
     event: { select: { id: true, title: true, note: true, startDate: true, endDate: true, priority: true } },
   } as const;
@@ -41,6 +41,47 @@ export class TasksService {
       ...t,
       liffToken: tokenMap[t.id] ?? t.liffToken,
       patient: t.patient ? { ...t.patient, name: this.crypto.decrypt(t.patient.nameEnc), nameEnc: undefined } : null,
+    }));
+  }
+
+  async findTodayZoneTasks(userId: string, orgId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, organizationId: orgId },
+      select: { preferredZoneId: true },
+    });
+    if (!user?.preferredZoneId) return [];
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    const tasks = await this.prisma.eventTask.findMany({
+      where: {
+        event: {
+          organizationId: orgId,
+          startDate: { lte: todayEnd },
+          endDate:   { gte: todayStart },
+        },
+        patient: { zoneId: user.preferredZoneId },
+      },
+      include: this.TASK_INCLUDE,
+      orderBy: { patient: { hn: 'asc' } },
+    });
+
+    return tasks.map((t: any) => ({
+      taskId:      t.id,
+      eventId:     t.event.id,
+      eventTitle:  t.event.title,
+      status:      t.status,
+      patient: {
+        id:         t.patient.id,
+        hn:         t.patient.hn,
+        name:       this.crypto.decrypt(t.patient.nameEnc),
+        age:        t.patient.age,
+        status:     t.patient.status,
+        conditions: t.patient.conditions,
+      },
+      formTemplate: t.formTemplate ?? null,
     }));
   }
 
