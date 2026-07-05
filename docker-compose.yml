@@ -65,7 +65,7 @@ services:
       context: .
       dockerfile: apps/liff/Dockerfile
       args:
-        VITE_API_URL: https://localhost/api
+        VITE_API_URL: https://line5566.duckdns.org/api
         VITE_LIFF_ID: ${VITE_LIFF_ID}
     expose:
       - '80'
