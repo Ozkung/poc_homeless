@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Card, Col, Collapse, Descriptions, Row, Tag, Tabs, Timeline } from 'antd';
 import StatusUpdateButton from './StatusUpdateButton';
+import PatientEditDrawer from './PatientEditDrawer';
 import { STATUS_COLOR, STATUS_LABEL } from '@/lib/patientStatus';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
@@ -10,7 +11,7 @@ interface Patient {
   status: 'CRITICAL' | 'PENDING' | 'STABLE' | 'MISSING';
   age?: number; gender?: 'MALE' | 'FEMALE' | 'OTHER';
   conditions: string[]; initialComplaint?: string; locationText?: string;
-  photoUrl?: string;
+  photoUrl?: string; phone?: string; birthDate?: string; nationalId?: string;
 }
 interface Activity {
   id: string; type: string; createdAt: string;
@@ -65,10 +66,11 @@ interface Props {
   showCarePlan?: boolean;
   CarePlanTabComponent?: React.ComponentType<{ patientId: string }>;
   showStatusUpdate?: boolean;
+  showEdit?: boolean;
 }
 
 export default async function PatientDetailPage({
-  id, token, backHref, backLabel = '← ผู้ป่วย', showCarePlan = false, CarePlanTabComponent, showStatusUpdate = false,
+  id, token, backHref, backLabel = '← ผู้ป่วย', showCarePlan = false, CarePlanTabComponent, showStatusUpdate = false, showEdit = false,
 }: Props) {
   const [patient, activities, submissions, assessmentRes] = await Promise.all([
     get<Patient>(`${API_URL}/patients/${id}`, token),
