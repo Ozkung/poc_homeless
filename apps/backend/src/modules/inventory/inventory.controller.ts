@@ -86,7 +86,7 @@ export class InventoryController {
   }
 
   @Post(':id/deduct')
-  @Roles(UserRole.ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
   @HttpCode(HttpStatus.OK)
   deduct(@Param('id') id: string, @Body() dto: DeductDto, @CurrentUser() user: JwtPayload) {
     return this.inventory.deduct(id, dto.quantity, {
