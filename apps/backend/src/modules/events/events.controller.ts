@@ -9,12 +9,12 @@ import { UserRole } from '@prisma/client';
 
 @Controller('events')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN)
+@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
 export class EventsController {
   constructor(private events: EventsService, private tasks: TasksService) {}
 
   @Get('today/my-tasks')
-  @Roles(UserRole.GUEST, UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.GUEST, UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER)
   todayMyTasks(@CurrentUser() user: JwtPayload) {
     return this.tasks.findTodayZoneTasks(user.sub, user.orgId);
   }

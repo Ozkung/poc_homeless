@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Map, Users, LogOut, ClipboardList, UserRound, Package } from 'lucide-react';
+import { LayoutDashboard, Map, Users, LogOut, ClipboardList, UserRound, Package, CalendarDays } from 'lucide-react';
 import type { MenuProps } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -18,6 +18,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const navItems: MenuProps['items'] = [
     { key: '/admin/dashboard',  label: 'Dashboard',  icon: <LayoutDashboard size={ICON_SIZE} /> },
     { key: '/admin/patients',   label: 'ผู้ป่วย',     icon: <UserRound size={ICON_SIZE} /> },
+    { key: '/admin/events',     label: 'Events',      icon: <CalendarDays size={ICON_SIZE} /> },
     { key: '/admin/inventory',  label: 'Inventory',   icon: <Package size={ICON_SIZE} /> },
     { key: '/admin/zones',      label: 'Zones',       icon: <Map size={ICON_SIZE} /> },
     { key: '/admin/users',      label: 'ผู้ใช้งาน',   icon: <Users size={ICON_SIZE} /> },
