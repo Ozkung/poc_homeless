@@ -8,6 +8,7 @@ import {
 } from 'antd';
 import { ArrowLeft, Stethoscope, Pill, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { STATUS_OPTIONS } from '@/lib/patientStatus';
+import PatientEditDrawer from '@/components/patients/PatientEditDrawer';
 
 interface MatchedMed {
   prescName: string;
@@ -292,6 +293,23 @@ export default function DoctorPatientDetailPage() {
           <Title level={4} style={{ margin: 0, wordBreak: 'break-word' }}>{patient.name}</Title>
           <Text type="secondary" style={{ fontSize: 12 }}>HN: {patient.hn}</Text>
         </div>
+        <PatientEditDrawer
+          patientId={id!}
+          token={session?.accessToken ?? ''}
+          initialValues={{
+            name: patient.name ?? '',
+            age: patient.age,
+            gender: patient.gender,
+            status: patient.status,
+            locationText: patient.locationText,
+            conditions: patient.conditions ?? [],
+            initialComplaint: patient.initialComplaint,
+            phone: patient.phone,
+            birthDate: patient.birthDate,
+            nationalId: patient.nationalId,
+          }}
+          onSuccess={load}
+        />
       </div>
 
       {/* Patient info */}

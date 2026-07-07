@@ -46,6 +46,7 @@ export class PatientsController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   update(@Param('id') id: string, @Body() body: any, @CurrentUser() user: JwtPayload) {
     return this.patients.update(id, user.orgId, body);
   }

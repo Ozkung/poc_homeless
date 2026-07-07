@@ -25,9 +25,10 @@ interface PatientEditProps {
     birthDate?: string;
     nationalId?: string;
   };
+  onSuccess?: () => void;
 }
 
-export default function PatientEditDrawer({ patientId, token, initialValues }: PatientEditProps) {
+export default function PatientEditDrawer({ patientId, token, initialValues, onSuccess }: PatientEditProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,7 +78,7 @@ export default function PatientEditDrawer({ patientId, token, initialValues }: P
       if (res.ok) {
         message.success('อัปเดตข้อมูลผู้ป่วยแล้ว');
         setOpen(false);
-        router.refresh();
+        if (onSuccess) { onSuccess(); } else { router.refresh(); }
       } else {
         message.error('บันทึกไม่สำเร็จ');
       }
