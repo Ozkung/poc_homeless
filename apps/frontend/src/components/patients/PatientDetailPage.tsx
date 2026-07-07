@@ -219,12 +219,32 @@ export default async function PatientDetailPage({
           </h2>
           <div style={{ marginTop: 4, fontSize: 12, color: '#8c8c8c' }}>HN: {patient.hn}</div>
         </div>
-        {showStatusUpdate
-          ? <StatusUpdateButton patientId={patient.id} currentStatus={patient.status} token={token} />
-          : <Tag color={STATUS_COLOR[patient.status]} style={{ fontSize: 13, padding: '4px 14px', alignSelf: 'flex-start' }}>
-              {STATUS_LABEL[patient.status]}
-            </Tag>
-        }
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          {showEdit && (
+            <PatientEditDrawer
+              patientId={patient.id}
+              token={token}
+              initialValues={{
+                name: patient.name,
+                age: patient.age,
+                gender: patient.gender,
+                status: patient.status,
+                locationText: patient.locationText,
+                conditions: patient.conditions,
+                initialComplaint: patient.initialComplaint,
+                phone: patient.phone,
+                birthDate: patient.birthDate,
+                nationalId: patient.nationalId,
+              }}
+            />
+          )}
+          {showStatusUpdate
+            ? <StatusUpdateButton patientId={patient.id} currentStatus={patient.status} token={token} />
+            : <Tag color={STATUS_COLOR[patient.status]} style={{ fontSize: 13, padding: '4px 14px', alignSelf: 'flex-start' }}>
+                {STATUS_LABEL[patient.status]}
+              </Tag>
+          }
+        </div>
       </div>
 
       {/* Stats — 2 cols on mobile, 4 on desktop */}
