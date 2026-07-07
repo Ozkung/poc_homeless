@@ -20,13 +20,13 @@ export class InventoryController {
   constructor(private inventory: InventoryService) {}
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR, UserRole.CASE_MANAGER)
   listItems(@CurrentUser() user: JwtPayload, @Query('category') category?: string) {
     return this.inventory.listItems(user.orgId, category);
   }
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CASE_MANAGER)
   createItem(@Body() dto: CreateItemDto, @CurrentUser() user: JwtPayload) {
     return this.inventory.createItem(user.orgId, dto, user.sub);
   }
@@ -54,13 +54,13 @@ export class InventoryController {
   }
 
   @Get('expiring')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CASE_MANAGER)
   getExpiring(@CurrentUser() user: JwtPayload) {
     return this.inventory.getExpiringLots(user.orgId);
   }
 
   @Post('lots/:lotId/expire')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CASE_MANAGER)
   @HttpCode(HttpStatus.NO_CONTENT)
   expireLot(@Param('lotId') lotId: string, @CurrentUser() user: JwtPayload) {
     return this.inventory.expireLot(lotId, user.sub, user.orgId);
@@ -73,13 +73,13 @@ export class InventoryController {
   }
 
   @Get(':id/transactions')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CASE_MANAGER)
   getTransactionHistory(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.inventory.getTransactionHistory(id, user.orgId);
   }
 
   @Post(':id/stock-in')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CASE_MANAGER)
   @HttpCode(HttpStatus.CREATED)
   stockIn(@Param('id') id: string, @Body() dto: StockInDto, @CurrentUser() user: JwtPayload) {
     return this.inventory.stockIn(id, user.orgId, user.sub, dto);
@@ -96,7 +96,7 @@ export class InventoryController {
   }
 
   @Post(':id/adj-request')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CASE_MANAGER)
   @HttpCode(HttpStatus.CREATED)
   requestAdj(@Param('id') id: string, @Body() dto: AdjRequestDto, @CurrentUser() user: JwtPayload) {
     return this.inventory.requestAdj(id, user.orgId, user.sub, dto);

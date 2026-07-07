@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography, Drawer } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, UserCircle, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, UserCircle, BarChart3, Package } from 'lucide-react';
 import type { MenuProps } from 'antd';
 
 const { Text } = Typography;
@@ -21,9 +21,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const navItems: MenuProps['items'] = [
     { key: '/cm/dashboard', label: 'Dashboard',    icon: <LayoutDashboard size={ICON_SIZE} /> },
     { key: '/cm/patients',  label: 'ผู้ป่วย',      icon: <Users size={ICON_SIZE} /> },
-    { key: '/cm/events',    label: 'แผนการเยี่ยม', icon: <CalendarDays size={ICON_SIZE} /> },
-    { key: '/cm/forms',     label: 'แบบฟอร์ม',     icon: <FileText size={ICON_SIZE} /> },
-    { key: '/cm/users',     label: 'ทีมของฉัน',     icon: <Users size={ICON_SIZE} /> },
+    { key: '/cm/events',     label: 'แผนการเยี่ยม', icon: <CalendarDays size={ICON_SIZE} /> },
+    { key: '/cm/forms',      label: 'แบบฟอร์ม',     icon: <FileText size={ICON_SIZE} /> },
+    { key: '/cm/inventory',  label: 'Inventory',    icon: <Package size={ICON_SIZE} /> },
+    { key: '/cm/users',      label: 'ทีมของฉัน',    icon: <Users size={ICON_SIZE} /> },
   ];
 
   const selectedKey = (navItems ?? []).find(
