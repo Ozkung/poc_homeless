@@ -81,12 +81,14 @@ export class PatientsController {
   }
 
   @Get(':id/care-plan')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   getCarePlan(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.patients.getCarePlan(id, user.orgId);
   }
 
   @Post(':id/care-plan')
   @HttpCode(HttpStatus.CREATED)
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   addCarePlanItem(
     @Param('id') id: string,
     @Body() body: { title: string; frequency: string; priority: string; assigneeName?: string },
@@ -96,6 +98,7 @@ export class PatientsController {
   }
 
   @Patch(':id/care-plan/:itemId')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   updateCarePlanItem(
     @Param('id') id: string,
     @Param('itemId') itemId: string,
@@ -107,6 +110,7 @@ export class PatientsController {
 
   @Delete(':id/care-plan/:itemId')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   deleteCarePlanItem(
     @Param('id') id: string,
     @Param('itemId') itemId: string,
@@ -116,7 +120,7 @@ export class PatientsController {
   }
 
   @Get(':id/assessment')
-  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.DOCTOR)
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   listCarePlanAssessments(
     @Param('id') id: string,
     @Query('skip') skip: string,
@@ -131,6 +135,7 @@ export class PatientsController {
   }
 
   @Get(':id/assessment/:assessmentId')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   getCarePlanAssessment(
     @Param('id') id: string,
     @Param('assessmentId') assessmentId: string,
@@ -141,6 +146,7 @@ export class PatientsController {
 
   @Post(':id/assessment')
   @HttpCode(HttpStatus.CREATED)
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   createCarePlanAssessment(
     @Param('id') id: string,
     @Body() dto: UpsertCarePlanAssessmentDto,
@@ -150,6 +156,7 @@ export class PatientsController {
   }
 
   @Patch(':id/assessment/:assessmentId')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   updateCarePlanAssessment(
     @Param('id') id: string,
     @Param('assessmentId') assessmentId: string,

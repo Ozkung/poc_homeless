@@ -10,6 +10,7 @@ import { ArrowLeft, Stethoscope, Pill, Trash2, CheckCircle, XCircle, AlertCircle
 import { STATUS_OPTIONS } from '@/lib/patientStatus';
 import PatientEditDrawer from '@/components/patients/PatientEditDrawer';
 import PatientDeleteButton from '@/components/patients/PatientDeleteButton';
+import DoctorCarePlanTab from './care-plan-tab';
 
 interface MatchedMed {
   prescName: string;
@@ -83,7 +84,6 @@ export default function DoctorPatientDetailPage() {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
-  const [assessments, setAssessments] = useState<any[]>([]);
   const [diagForm] = Form.useForm();
   const [medications, setMedications] = useState([{ name: '', dosage: '', frequency: '', duration: '', notes: '' }]);
 
@@ -113,7 +113,6 @@ export default function DoctorPatientDetailPage() {
     fetch(`${API_URL}/inventory`, { headers: h }).then((r) => r.ok ? r.json() : []).then(setInventoryItems).catch(() => {});
     loadActivities();
     fetch(`${API_URL}/patients/${id}/submissions`, { headers: h }).then((r) => r.ok ? r.json() : []).then(setSubmissions).catch(() => {});
-    fetch(`${API_URL}/patients/${id}/assessment?limit=50`, { headers: h }).then((r) => r.ok ? r.json() : { data: [] }).then((res) => setAssessments(res.data ?? [])).catch(() => {});
   }, [session?.accessToken, id, loadActivities]);
 
   function openDispense(prescription: any) {
@@ -450,26 +449,10 @@ export default function DoctorPatientDetailPage() {
           },
           {
             key: 'careplan',
-            label: `Care Plan (${assessments.length})`,
+            label: 'Care Plan',
             children: (
               <Card style={{ borderRadius: 12 }}>
-                {!assessments.length
-                  ? <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีข้อมูลการประเมิน</Text>
-                  : <Table
-                      size="small"
-                      dataSource={assessments}
-                      rowKey="id"
-                      pagination={{ pageSize: 10 }}
-                      columns={[
-                        { title: 'วันที่พบ', dataIndex: 'assessmentDate', width: 120, render: (v: string, r: any) => v ? new Date(v).toLocaleDateString('th-TH') : new Date(r.createdAt).toLocaleDateString('th-TH') },
-                        { title: 'สถานะ', dataIndex: 'status', width: 100, render: (v: string) => v ? <Tag color={({ Active: 'green', 'Follow-up': 'blue', Missing: 'orange', Closed: 'default' } as any)[v] ?? 'default'}>{v}</Tag> : '-' },
-                        { title: 'เป้าหมาย', dataIndex: 'helpGoal', render: (v: string) => v ? <Tag color="purple">{v}</Tag> : '-' },
-                        { title: 'สถานที่พบ', dataIndex: 'locationFound', render: (v: string) => v ?? '-' },
-                        { title: 'ประเภทไร้บ้าน', dataIndex: 'homelessType', render: (v: string) => v ?? '-' },
-                        { title: 'สิทธิรักษา', dataIndex: 'healthcareRight', width: 110, render: (v: string) => v ?? '-' },
-                      ]}
-                    />
-                }
+                <DoctorCarePlanTab patientId={id!} />
               </Card>
             ),
           },
