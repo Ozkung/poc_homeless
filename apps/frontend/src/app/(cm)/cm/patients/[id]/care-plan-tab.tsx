@@ -71,6 +71,7 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
   const [skip, setSkip] = useState(0);
   const [loading, setLoading] = useState(true);
   const [viewItem, setViewItem] = useState<Assessment | null>(null);
+  const [pendingNav, setPendingNav] = useState<string | null>(null);
 
   const headers = useCallback(() => ({
     Authorization: `Bearer ${session?.accessToken ?? ''}`,
@@ -184,13 +185,18 @@ export default function CarePlanTab({ patientId }: { patientId: string }) {
         title={`แบบประเมิน — ${viewItem?.assessmentDate ? new Date(viewItem.assessmentDate).toLocaleDateString('th-TH') : viewItem ? new Date(viewItem.createdAt).toLocaleDateString('th-TH') : ''}`}
         open={!!viewItem}
         onCancel={() => setViewItem(null)}
+        afterClose={() => { if (pendingNav) { router.push(pendingNav); setPendingNav(null); } }}
+        destroyOnClose
         footer={
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <Button onClick={() => setViewItem(null)}>ปิด</Button>
             <Button
               type="primary"
               icon={<Pencil size={13} />}
-              onClick={() => { setViewItem(null); router.push(`/cm/patients/${patientId}/care-plan-assessment?id=${viewItem?.id}`); }}
+              onClick={() => {
+                setPendingNav(`/cm/patients/${patientId}/care-plan-assessment?id=${viewItem?.id}`);
+                setViewItem(null);
+              }}
             >
               แก้ไข
             </Button>
