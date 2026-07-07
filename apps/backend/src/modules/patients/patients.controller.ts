@@ -26,7 +26,7 @@ const patientPhotoStorage = diskStorage({
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER)
+@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER, UserRole.SUPER_ADMIN)
 export class PatientsController {
   constructor(private patients: PatientsService) {}
 
@@ -51,7 +51,7 @@ export class PatientsController {
   }
 
   @Patch(':id/status')
-  @Roles(UserRole.CASE_MANAGER, UserRole.DOCTOR)
+  @Roles(UserRole.CASE_MANAGER, UserRole.DOCTOR, UserRole.SUPER_ADMIN)
   updateStatus(
     @Param('id') id: string,
     @Body('status') status: string,
