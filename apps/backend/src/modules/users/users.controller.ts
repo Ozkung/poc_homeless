@@ -74,19 +74,19 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.CASE_MANAGER)
   update(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.users.update(id, user.orgId, user.sub, dto);
+    return this.users.update(id, user.orgId, user.sub, dto, user.role);
   }
 
   @Delete(':id')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.CASE_MANAGER)
   @HttpCode(HttpStatus.NO_CONTENT)
   deactivate(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.users.deactivate(id, user.orgId, user.sub);
+    return this.users.deactivate(id, user.orgId, user.sub, user.role);
   }
 }

@@ -96,8 +96,9 @@ export class UsersService {
 
   async getMyFW(supervisorId: string, orgId: string) {
     return this.prisma.user.findMany({
-      where: { supervisorId, organizationId: orgId, isActive: true },
-      select: { id: true, displayName: true, email: true, role: true },
+      where: { supervisorId, organizationId: orgId },
+      select: { id: true, displayName: true, email: true, role: true, phone: true, isActive: true },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
@@ -113,10 +114,18 @@ export class UsersService {
     });
   }
 
-  async update(id: string, orgId: string, actorId: string, dto: UpdateUserDto) {
+  async update(id: string, orgId: string, actorId: string, dto: UpdateUserDto, actorRole?: string) {
     const target = await this.findOne(id, orgId);
     if (dto.role !== undefined && id === actorId) {
       throw new BadRequestException('ไม่สามารถเปลี่ยนสิทธิ์ของตนเองได้');
+    }
+    if (actorRole === 'CASE_MANAGER') {
+      if (target.role !== 'CARE_GIVER' || target.supervisorId !== actorId) {
+        throw new BadRequestException('CASE_MANAGER สามารถแก้ไขได้เฉพาะ CARE_GIVER ในทีมของตนเอง');
+      }
+      if (dto.role !== undefined || dto.isActive !== undefined) {
+        throw new BadRequestException('CASE_MANAGER ไม่สามารถเปลี่ยนสิทธิ์หรือสถานะบัญชีได้');
+      }
     }
     const updated = await this.prisma.user.update({
       where: { id },
@@ -183,9 +192,14 @@ export class UsersService {
     });
   }
 
-  async deactivate(id: string, orgId: string, actorId: string) {
+  async deactivate(id: string, orgId: string, actorId: string, actorRole?: string) {
     if (id === actorId) throw new BadRequestException('ไม่สามารถปิดบัญชีของตนเองได้');
-    await this.findOne(id, orgId);
+    const target = await this.findOne(id, orgId);
+    if (actorRole === 'CASE_MANAGER') {
+      if (target.role !== 'CARE_GIVER' || target.supervisorId !== actorId) {
+        throw new BadRequestException('CASE_MANAGER สามารถปิดบัญชีได้เฉพาะ CARE_GIVER ในทีมของตนเอง');
+      }
+    }
     return this.prisma.user.update({
       where: { id },
       data: { isActive: false },
