@@ -24,6 +24,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     { key: '/cm/events',     label: 'แผนการเยี่ยม', icon: <CalendarDays size={ICON_SIZE} /> },
     { key: '/cm/forms',      label: 'แบบฟอร์ม',     icon: <FileText size={ICON_SIZE} /> },
     { key: '/cm/inventory',  label: 'Inventory',    icon: <Package size={ICON_SIZE} /> },
+    { key: '/cm/reports',    label: 'รายงาน',       icon: <BarChart3 size={ICON_SIZE} /> },
     { key: '/cm/users',      label: 'ทีมของฉัน',    icon: <Users size={ICON_SIZE} /> },
   ];
 
