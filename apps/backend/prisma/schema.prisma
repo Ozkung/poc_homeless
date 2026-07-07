@@ -181,6 +181,7 @@ model Patient {
   reportedById     String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
 
   submissions         Submission[]
   activities          Activity[]

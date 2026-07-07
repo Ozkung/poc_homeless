@@ -19,6 +19,7 @@ export default async function CMPatientProfilePage({ params }: { params: Promise
       CarePlanTabComponent={CarePlanTab}
       showStatusUpdate
       showEdit
+      showDelete
     />
   );
 }

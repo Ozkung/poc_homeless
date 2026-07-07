@@ -63,6 +63,7 @@ export class PatientsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.DOCTOR)
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.patients.remove(id, user.orgId);
   }

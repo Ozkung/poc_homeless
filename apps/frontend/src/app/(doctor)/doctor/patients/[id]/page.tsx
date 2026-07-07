@@ -9,6 +9,7 @@ import {
 import { ArrowLeft, Stethoscope, Pill, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { STATUS_OPTIONS } from '@/lib/patientStatus';
 import PatientEditDrawer from '@/components/patients/PatientEditDrawer';
+import PatientDeleteButton from '@/components/patients/PatientDeleteButton';
 
 interface MatchedMed {
   prescName: string;
@@ -309,6 +310,12 @@ export default function DoctorPatientDetailPage() {
             nationalId: patient.nationalId,
           }}
           onSuccess={load}
+        />
+        <PatientDeleteButton
+          patientId={id!}
+          patientName={patient.name ?? ''}
+          token={session?.accessToken ?? ''}
+          backHref="/doctor/patients"
         />
       </div>
 

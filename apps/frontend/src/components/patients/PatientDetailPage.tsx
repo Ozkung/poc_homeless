@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Card, Col, Collapse, Descriptions, Row, Tag, Tabs, Timeline } from 'antd';
 import StatusUpdateButton from './StatusUpdateButton';
 import PatientEditDrawer from './PatientEditDrawer';
+import PatientDeleteButton from './PatientDeleteButton';
 import { STATUS_COLOR, STATUS_LABEL } from '@/lib/patientStatus';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
@@ -67,10 +68,11 @@ interface Props {
   CarePlanTabComponent?: React.ComponentType<{ patientId: string }>;
   showStatusUpdate?: boolean;
   showEdit?: boolean;
+  showDelete?: boolean;
 }
 
 export default async function PatientDetailPage({
-  id, token, backHref, backLabel = '← ผู้ป่วย', showCarePlan = false, CarePlanTabComponent, showStatusUpdate = false, showEdit = false,
+  id, token, backHref, backLabel = '← ผู้ป่วย', showCarePlan = false, CarePlanTabComponent, showStatusUpdate = false, showEdit = false, showDelete = false,
 }: Props) {
   const [patient, activities, submissions, assessmentRes] = await Promise.all([
     get<Patient>(`${API_URL}/patients/${id}`, token),
@@ -236,6 +238,14 @@ export default async function PatientDetailPage({
                 birthDate: patient.birthDate,
                 nationalId: patient.nationalId,
               }}
+            />
+          )}
+          {showDelete && (
+            <PatientDeleteButton
+              patientId={patient.id}
+              patientName={patient.name}
+              token={token}
+              backHref={backHref}
             />
           )}
           {showStatusUpdate

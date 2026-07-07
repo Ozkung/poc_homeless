@@ -13,9 +13,9 @@ export class PatientsService {
   ) {}
 
   async findAll(orgId: string, role?: string, userId?: string) {
-    let where: any = { organizationId: orgId };
+    let where: any = { organizationId: orgId, deletedAt: null };
     if (role === 'CARE_GIVER' && userId) {
-      where = { organizationId: orgId, eventTasks: { some: { assigneeId: userId } } };
+      where = { organizationId: orgId, deletedAt: null, eventTasks: { some: { assigneeId: userId } } };
     }
     const patients = await this.prisma.patient.findMany({
       where,
@@ -29,7 +29,7 @@ export class PatientsService {
   }
 
   async findOne(id: string, orgId: string) {
-    const patient = await this.prisma.patient.findFirst({ where: { id, organizationId: orgId } });
+    const patient = await this.prisma.patient.findFirst({ where: { id, organizationId: orgId, deletedAt: null } });
     if (!patient) throw new NotFoundException('Patient not found');
     return this.decrypt(patient);
   }
@@ -125,7 +125,7 @@ export class PatientsService {
 
   async remove(id: string, orgId: string) {
     await this.findOne(id, orgId);
-    await this.prisma.patient.delete({ where: { id } });
+    await this.prisma.patient.update({ where: { id }, data: { deletedAt: new Date() } });
   }
 
   async findActivities(id: string, orgId: string) {
