@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Badge, Button, Card, Collapse, Empty, Form, Modal, Spin, Tag, Typography, message } from 'antd';
+import { Badge, Button, Card, Collapse, Empty, Form, Modal, Spin, Tag, Timeline, Typography, message } from 'antd';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, MapPin, User, ClipboardList, AlertCircle } from 'lucide-react';
+import { CalendarDays, MapPin, User, ClipboardList, AlertCircle, History } from 'lucide-react';
 import { STATUS_COLOR as PATIENT_STATUS_COLOR, STATUS_LABEL as PATIENT_STATUS_LABEL } from '@/lib/patientStatus';
 import { FormFieldRenderer } from '@/components/FormFieldRenderer';
 import type { FormField } from '@homemed/shared-types';
@@ -23,9 +23,16 @@ interface FormState {
   fields: FormField[];
 }
 
+interface CheckinActivity {
+  id: string;
+  createdAt: string;
+  actor: { displayName: string; role: string };
+}
+
 export default function FWTasksPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
+  const userId = (session as any)?.user?.id;
   const router = useRouter();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,9 +42,12 @@ export default function FWTasksPage() {
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [submitting, setSubmitting] = useState(false);
 
+  // Check-in history per task: taskId → activities | 'loading'
+  const [checkinHistory, setCheckinHistory] = useState<Record<string, CheckinActivity[] | 'loading'>>({});
+
   const loadTasks = () => {
     if (!token) return;
-    fetch('/api/tasks/my', { headers: { Authorization: `Bearer ${token}` } })
+    fetch('/api/tasks/zone', { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.ok ? r.json() : [])
       .then((d) => setTasks(Array.isArray(d) ? d : []))
       .catch(() => {})
@@ -45,6 +55,15 @@ export default function FWTasksPage() {
   };
 
   useEffect(() => { loadTasks(); }, [token]);
+
+  const loadCheckinHistory = (taskId: string) => {
+    if (checkinHistory[taskId]) return;
+    setCheckinHistory((prev) => ({ ...prev, [taskId]: 'loading' }));
+    fetch(`/api/tasks/${taskId}/activities`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setCheckinHistory((prev) => ({ ...prev, [taskId]: Array.isArray(d) ? d : [] })))
+      .catch(() => setCheckinHistory((prev) => ({ ...prev, [taskId]: [] })));
+  };
 
   const openForm = (task: any) => {
     setAnswers({});
@@ -99,16 +118,18 @@ export default function FWTasksPage() {
 
   if (loading) return <div style={{ textAlign: 'center', paddingTop: 80 }}><Spin size="large" /></div>;
 
+  const pendingCount = tasks.filter((t) => t.status === 'PENDING' || t.status === 'IN_PROGRESS').length;
+
   return (
     <div style={{ fontFamily: "'Sarabun', sans-serif" }}>
       <div style={{ marginBottom: 24 }}>
         <Text style={{ fontSize: 10, color: '#1677ff', letterSpacing: 3, textTransform: 'uppercase' }}>Care Giver</Text>
-        <Title level={3} style={{ margin: 0, fontWeight: 800 }}>งานของฉัน</Title>
-        <Text type="secondary" style={{ fontSize: 12 }}>{tasks.length} งานที่ยังค้างอยู่</Text>
+        <Title level={3} style={{ margin: 0, fontWeight: 800 }}>งานในโซน</Title>
+        <Text type="secondary" style={{ fontSize: 12 }}>{pendingCount} งานที่ยังค้างอยู่ · ทั้งหมด {tasks.length} งาน</Text>
       </div>
 
       {tasks.length === 0 ? (
-        <Empty description="ยังไม่มีงานที่ได้รับมอบหมาย" />
+        <Empty description="ยังไม่มีงานในโซนของคุณ" />
       ) : (
         Object.values(eventGroups).map((group: any) => (
           <Card
@@ -145,7 +166,6 @@ export default function FWTasksPage() {
               </div>
             </div>
 
-            {/* Patient list */}
             <div style={{ fontSize: 11, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
               รายชื่อผู้ป่วย ({group.tasks.length} คน)
             </div>
@@ -153,63 +173,103 @@ export default function FWTasksPage() {
             <Collapse
               size="small"
               ghost
-              items={group.tasks.map((task: any) => ({
-                key: task.id,
-                label: (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <User size={13} color="#888" />
-                    <Text strong style={{ fontSize: 13 }}>{task.patient?.name ?? '—'}</Text>
-                    <Text type="secondary" style={{ fontSize: 11 }}>HN {task.patient?.hn ?? '—'}</Text>
-                    {task.patient?.status && (
-                      <Tag color={PATIENT_STATUS_COLOR[task.patient.status] ?? 'default'} style={{ fontSize: 10, margin: 0 }}>
-                        {PATIENT_STATUS_LABEL[task.patient.status] ?? task.patient.status}
+              onChange={(keys) => {
+                const opened = Array.isArray(keys) ? keys : [keys];
+                opened.forEach((taskId) => loadCheckinHistory(taskId as string));
+              }}
+              items={group.tasks.map((task: any) => {
+                const isAssignedToMe = task.assigneeId === userId;
+                const history = checkinHistory[task.id];
+
+                return {
+                  key: task.id,
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <User size={13} color="#888" />
+                      <Text strong style={{ fontSize: 13 }}>{task.patient?.name ?? '—'}</Text>
+                      <Text type="secondary" style={{ fontSize: 11 }}>HN {task.patient?.hn ?? '—'}</Text>
+                      {task.patient?.status && (
+                        <Tag color={PATIENT_STATUS_COLOR[task.patient.status] ?? 'default'} style={{ fontSize: 10, margin: 0 }}>
+                          {PATIENT_STATUS_LABEL[task.patient.status] ?? task.patient.status}
+                        </Tag>
+                      )}
+                      <Tag color={STATUS_COLOR[task.status] ?? 'default'} style={{ fontSize: 10, margin: 0 }}>
+                        {STATUS_LABEL[task.status] ?? task.status}
                       </Tag>
-                    )}
-                    <Tag color={STATUS_COLOR[task.status] ?? 'default'} style={{ fontSize: 10, margin: 0 }}>
-                      {STATUS_LABEL[task.status] ?? task.status}
-                    </Tag>
-                  </div>
-                ),
-                children: (
-                  <div style={{ paddingLeft: 20, display: 'grid', gap: 8 }}>
-                    {task.patient?.locationText && (
-                      <div style={{ display: 'flex', gap: 6, fontSize: 13 }}>
-                        <MapPin size={13} color="#888" style={{ flexShrink: 0, marginTop: 2 }} />
-                        <Text>{task.patient.locationText}</Text>
-                      </div>
-                    )}
-                    {task.patient?.initialComplaint && (
-                      <div style={{ display: 'flex', gap: 6, fontSize: 13 }}>
-                        <AlertCircle size={13} color="#fa8c16" style={{ flexShrink: 0, marginTop: 2 }} />
-                        <div>
-                          <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>อาการเบื้องต้น</Text>
-                          <Text>{task.patient.initialComplaint}</Text>
+                      {!isAssignedToMe && (
+                        <Tag style={{ fontSize: 10, margin: 0, color: '#888', borderColor: '#d9d9d9' }}>ไม่ได้มอบหมายให้คุณ</Tag>
+                      )}
+                    </div>
+                  ),
+                  children: (
+                    <div style={{ paddingLeft: 20, display: 'grid', gap: 8 }}>
+                      {task.patient?.locationText && (
+                        <div style={{ display: 'flex', gap: 6, fontSize: 13 }}>
+                          <MapPin size={13} color="#888" style={{ flexShrink: 0, marginTop: 2 }} />
+                          <Text>{task.patient.locationText}</Text>
                         </div>
-                      </div>
-                    )}
-                    {task.patient?.conditions?.length > 0 && (
-                      <div style={{ fontSize: 12 }}>
-                        <Text type="secondary" style={{ fontSize: 11 }}>โรคประจำตัว: </Text>
-                        {task.patient.conditions.map((c: string) => <Tag key={c} style={{ fontSize: 11 }}>{c}</Tag>)}
-                      </div>
-                    )}
-                    {task.formTemplate && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                        <ClipboardList size={13} color="#888" style={{ flexShrink: 0 }} />
-                        <Text style={{ flex: 1 }}>แบบฟอร์ม: <strong>{task.formTemplate.title}</strong></Text>
-                        {task.status !== 'DONE' && task.status !== 'NOT_FOUND' && (
-                          <Button
-                            size="small"
-                            type="primary"
-                            icon={<ClipboardList size={11} />}
-                            onClick={() => openForm(task)}
-                          >
-                            กรอกแบบฟอร์ม
-                          </Button>
+                      )}
+                      {task.patient?.initialComplaint && (
+                        <div style={{ display: 'flex', gap: 6, fontSize: 13 }}>
+                          <AlertCircle size={13} color="#fa8c16" style={{ flexShrink: 0, marginTop: 2 }} />
+                          <div>
+                            <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>อาการเบื้องต้น</Text>
+                            <Text>{task.patient.initialComplaint}</Text>
+                          </div>
+                        </div>
+                      )}
+                      {task.patient?.conditions?.length > 0 && (
+                        <div style={{ fontSize: 12 }}>
+                          <Text type="secondary" style={{ fontSize: 11 }}>โรคประจำตัว: </Text>
+                          {task.patient.conditions.map((c: string) => <Tag key={c} style={{ fontSize: 11 }}>{c}</Tag>)}
+                        </div>
+                      )}
+                      {task.formTemplate && isAssignedToMe && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                          <ClipboardList size={13} color="#888" style={{ flexShrink: 0 }} />
+                          <Text style={{ flex: 1 }}>แบบฟอร์ม: <strong>{task.formTemplate.title}</strong></Text>
+                          {task.status !== 'DONE' && task.status !== 'NOT_FOUND' && (
+                            <Button
+                              size="small"
+                              type="primary"
+                              icon={<ClipboardList size={11} />}
+                              onClick={() => openForm(task)}
+                            >
+                              กรอกแบบฟอร์ม
+                            </Button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Check-in history */}
+                      <div style={{ marginTop: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                          <History size={13} color="#888" />
+                          <Text style={{ fontSize: 12, color: '#555', fontWeight: 600 }}>ประวัติ Check-in</Text>
+                        </div>
+
+                        {history === 'loading' ? (
+                          <Spin size="small" />
+                        ) : !history || history.length === 0 ? (
+                          <Text type="secondary" style={{ fontSize: 12 }}>ยังไม่มีการ Check-in</Text>
+                        ) : (
+                          <Timeline
+                            style={{ marginTop: 4 }}
+                            items={history.map((act) => ({
+                              color: '#1677ff',
+                              children: (
+                                <div>
+                                  <Text style={{ fontSize: 12 }}>{act.actor.displayName}</Text>
+                                  <div style={{ fontSize: 11, color: '#aaa', marginTop: 1 }}>
+                                    {new Date(act.createdAt).toLocaleString('th-TH')}
+                                  </div>
+                                </div>
+                              ),
+                            }))}
+                          />
                         )}
                       </div>
-                    )}
-                    <div style={{ marginTop: 4 }}>
+
                       <span
                         onClick={() => router.push(`/fw/patients/${task.patient?.id}`)}
                         style={{ fontSize: 12, color: '#1677ff', cursor: 'pointer', textDecoration: 'underline' }}
@@ -217,9 +277,9 @@ export default function FWTasksPage() {
                         ดูข้อมูลผู้ป่วย →
                       </span>
                     </div>
-                  </div>
-                ),
-              }))}
+                  ),
+                };
+              })}
             />
           </Card>
         ))

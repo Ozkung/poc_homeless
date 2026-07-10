@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Package, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Users, UserCircle, LogOut } from 'lucide-react';
 import type { MenuProps } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -19,6 +19,7 @@ export default function MedVolShell({ children }: { children: React.ReactNode })
     { key: '/medvol/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={ICON_SIZE} /> },
     { key: '/medvol/inventory', label: 'Inventory', icon: <Package size={ICON_SIZE} /> },
     { key: '/medvol/patients',  label: 'ผู้ป่วย',   icon: <Users size={ICON_SIZE} /> },
+    { key: '/medvol/profile',   label: 'โปรไฟล์',  icon: <UserCircle size={ICON_SIZE} /> },
   ];
 
   const selectedKey = navItems.find((i) => i && pathname.startsWith((i as any).key))?.key as string ?? '/medvol/dashboard';

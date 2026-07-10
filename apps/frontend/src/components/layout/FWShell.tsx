@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Users, CheckSquare, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, CheckSquare, UserCircle, LogOut } from 'lucide-react';
 import type { MenuProps } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -19,6 +19,7 @@ export default function FWShell({ children }: { children: React.ReactNode }) {
     { key: '/fw/dashboard', label: 'Dashboard',     icon: <LayoutDashboard size={ICON_SIZE} /> },
     { key: '/fw/patients',  label: 'ผู้ป่วยของฉัน', icon: <Users size={ICON_SIZE} /> },
     { key: '/fw/tasks',     label: 'งานของฉัน',      icon: <CheckSquare size={ICON_SIZE} /> },
+    { key: '/fw/profile',   label: 'โปรไฟล์',        icon: <UserCircle size={ICON_SIZE} /> },
   ];
 
   const selectedKey = navItems.find((i) => i && pathname.startsWith((i as any).key))?.key as string ?? '/fw/dashboard';

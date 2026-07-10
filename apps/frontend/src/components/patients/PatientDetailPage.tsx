@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { Card, Col, Collapse, Descriptions, Row, Tag, Tabs, Timeline } from 'antd';
+import { Card, Col, Descriptions, Row, Tag, Tabs, Timeline } from 'antd';
 import StatusUpdateButton from './StatusUpdateButton';
 import PatientEditDrawer from './PatientEditDrawer';
 import PatientDeleteButton from './PatientDeleteButton';
+import SubmissionsHistory from './SubmissionsHistory';
 import { STATUS_COLOR, STATUS_LABEL } from '@/lib/patientStatus';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
@@ -160,42 +161,7 @@ export default async function PatientDetailPage({
     {
       key: 'formhistory',
       label: 'Form History',
-      children: !submissions?.length
-        ? <span style={{ color: '#888', fontSize: 12 }}>ยังไม่มีการส่งแบบฟอร์ม</span>
-        : <Collapse items={submissions.slice(0, 10).map((s) => ({
-            key: s.id,
-            label: (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11, color: '#aaa', fontFamily: 'monospace', flexShrink: 0 }}>
-                  {new Date(s.submittedAt).toLocaleDateString('th-TH')}
-                </span>
-                <span style={{ flex: 1, fontWeight: 600, fontSize: 13, minWidth: 120 }}>{s.formTemplate.title}</span>
-                <span style={{ fontSize: 11, color: '#888' }}>{s.submittedBy.displayName}</span>
-              </div>
-            ),
-            children: (
-              <div style={{ display: 'grid', gap: 10 }}>
-                {Array.isArray(s.answers) && (s.answers as any[]).map((ans: any, i: number) => {
-                  const fieldDef = s.formTemplate.fields?.find((f) => f.id === ans.fieldId);
-                  const label = fieldDef?.label ?? ans.fieldId;
-                  const raw = ans.value;
-                  const display = Array.isArray(raw)
-                    ? (raw as string[]).join(', ')
-                    : raw === null || raw === undefined || raw === ''
-                      ? '—'
-                      : String(raw);
-                  return (
-                    <div key={i}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 2 }}>{label}</div>
-                      <div style={{ fontSize: 12, padding: '4px 10px', background: '#f5f5f5', borderRadius: 6, display: 'inline-block', color: '#333' }}>
-                        {display}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ),
-          }))} />,
+      children: <SubmissionsHistory submissions={submissions ?? []} />,
     },
     ...(showCarePlan && CarePlanTabComponent ? [{
       key: 'careplan',

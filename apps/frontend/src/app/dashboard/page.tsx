@@ -9,6 +9,7 @@ const ROLE_DEST: Record<string, string> = {
   CARE_GIVER:        '/fw/dashboard',
   MEDICAL_VOLUNTEER: '/medvol/dashboard',
   DOCTOR:            '/doctor/dashboard',
+  GUEST:             '/guest/dashboard',
 };
 
 export default async function DashboardRedirectPage() {

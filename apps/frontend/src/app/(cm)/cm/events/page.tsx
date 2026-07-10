@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { LeftOutlined, RightOutlined, EditOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { User } from 'lucide-react';
 import dayjs from 'dayjs';
+import PatientSelect from '@/components/patients/PatientSelect';
 
 const { Text, Title } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -84,7 +85,7 @@ function CreateEventForm({
   onFinish,
   onCancel,
 }: {
-  patients: { id: string; name: string; status: string }[];
+  patients: { id: string; name: string; hn: string; status: string }[];
   users: { id: string; displayName: string }[];
   formTemplates: { id: string; title: string }[];
   saving: boolean;
@@ -115,12 +116,7 @@ function CreateEventForm({
       </Form.Item>
 
       <Form.Item name="patientIds" label="ผู้ป่วย" rules={[{ required: true, message: 'เลือกผู้ป่วยอย่างน้อย 1 คน' }]}>
-        <Select
-          mode="multiple"
-          placeholder="เลือกผู้ป่วย..."
-          options={patients.map((p) => ({ value: p.id, label: p.name }))}
-          filterOption={(input, opt) => (opt?.label as string ?? '').toLowerCase().includes(input.toLowerCase())}
-        />
+        <PatientSelect patients={patients} />
       </Form.Item>
 
       <Form.Item name="formTemplateId" label="Form Template">
@@ -168,7 +164,7 @@ export default function EventsPage() {
   const [createForm] = Form.useForm();
   const [users, setUsers] = useState<{ id: string; displayName: string }[]>([]);
   const [formTemplates, setFormTemplates] = useState<{ id: string; title: string }[]>([]);
-  const [allPatients, setAllPatients] = useState<{ id: string; name: string; status: string }[]>([]);
+  const [allPatients, setAllPatients] = useState<{ id: string; name: string; hn: string; status: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [editForm] = Form.useForm();

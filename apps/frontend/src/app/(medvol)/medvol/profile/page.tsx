@@ -1,5 +1,5 @@
 import ProfilePage from '@/components/profile/ProfilePage';
 
-export default function CMProfilePage() {
+export default function MedVolProfilePage() {
   return <ProfilePage />;
 }

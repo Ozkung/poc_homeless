@@ -258,6 +258,19 @@ export class TasksService {
     return { activityId: activity.id };
   }
 
+  async findTaskActivities(taskId: string, orgId: string) {
+    const task = await this.prisma.eventTask.findFirst({
+      where: { id: taskId, patient: { organizationId: orgId } },
+      select: { id: true },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+    return this.prisma.activity.findMany({
+      where: { taskId, type: 'CHECK_IN' },
+      include: { actor: { select: { displayName: true, role: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async guestSubmitForm(
     taskId: string, userId: string, orgId: string,
     answers: Array<{ fieldId: string; value: string }>,

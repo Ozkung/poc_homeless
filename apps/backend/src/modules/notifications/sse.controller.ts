@@ -24,7 +24,7 @@ export class SseController {
       throw new UnauthorizedException('Invalid token');
     }
 
-    const allowed = ['CASE_MANAGER', 'DOCTOR'];
+    const allowed = ['CASE_MANAGER', 'DOCTOR', 'ADMIN', 'SUPER_ADMIN'];
     if (!allowed.includes(payload.role)) {
       throw new UnauthorizedException('Role not permitted for notifications');
     }
