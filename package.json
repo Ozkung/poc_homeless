@@ -15,8 +15,8 @@
     "db:studio": "turbo run db:studio --filter=backend"
   },
   "devDependencies": {
-    "turbo": "^2.5.4",
-    "typescript": "^5.8.3"
+    "turbo": "^2.10.4",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=20.0.0",
