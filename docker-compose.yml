@@ -32,8 +32,9 @@ services:
       DATABASE_URL: postgresql://homemed:homemed_dev@postgres:5432/homemed
       REDIS_URL: redis://redis:6379
       FRONTEND_URL: https://line5566.duckdns.org
-    expose:
-      - '3001'
+      PORT: 8085
+    ports:
+      - '8085:8085'
     volumes:
       - uploads:/app/apps/backend/uploads
     depends_on:
@@ -51,12 +52,12 @@ services:
         NEXT_PUBLIC_API_URL: /api
     env_file: .env
     environment:
-      PORT: 3000
+      PORT: 8084
       NODE_ENV: production
       NEXTAUTH_URL: https://line5566.duckdns.org
-      API_URL: http://backend:3001
-    expose:
-      - '3000'
+      API_URL: http://backend:8085
+    ports:
+      - '8084:8084'
     depends_on:
       - backend
 
@@ -71,20 +72,6 @@ services:
       - '80'
     depends_on:
       - backend
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - '80:80'
-      - '443:443'
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
-      - ./nginx/acme-challenge:/var/www/acme-challenge:ro
-    depends_on:
-      - frontend
-      - backend
-      - liff
 
 volumes:
   pgdata:

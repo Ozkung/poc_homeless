@@ -19,5 +19,5 @@ WORKDIR /app/apps/backend
 RUN npx prisma generate
 RUN npm run build
 
-EXPOSE 3001
+EXPOSE 8085
 CMD ["node", "dist/src/main"]
