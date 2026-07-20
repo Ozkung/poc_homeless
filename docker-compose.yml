@@ -85,9 +85,9 @@ services:
       - ./nginx/certs:/etc/nginx/certs:ro
       - ./nginx/acme-challenge:/var/www/acme-challenge:ro
     depends_on:
-      - frontend
-      - backend
-      - liff
+      - frontend_hl
+      - backend_hl
+      - liff_hl
 volumes:
   pgdata:
   redisdata:
