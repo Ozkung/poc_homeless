@@ -1,5 +1,5 @@
 services:
-  postgres:
+  postgres_hl:
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: homemed
@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 10
 
-  redis:
+  redis_hl:
     image: redis:7-alpine
     volumes:
       - redisdata:/data
@@ -26,7 +26,7 @@ services:
       timeout: 3s
       retries: 5
 
-  backend:
+  backend_hl:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
@@ -41,13 +41,13 @@ services:
     volumes:
       - uploads:/app/apps/backend/uploads
     depends_on:
-      postgres:
+      postgres_hl:
         condition: service_healthy
-      redis:
+      redis_hl:
         condition: service_healthy
     command: sh -c "npx prisma migrate deploy && node dist/src/main"
 
-  frontend:
+  frontend_hl:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
@@ -58,13 +58,13 @@ services:
       PORT: 8084
       NODE_ENV: production
       NEXTAUTH_URL: https://poc-hl.autratech.org
-      API_URL: http://backend:8085
+      API_URL: http://backend_hl:8085
     ports:
       - '8084:8084'
     depends_on:
-      - backend
+      - backend_hl
 
-  liff:
+  liff_hl:
     build:
       context: .
       dockerfile: apps/liff/Dockerfile
@@ -74,7 +74,7 @@ services:
     expose:
       - '80'
     depends_on:
-      - backend
+      - backend_hl
 
 volumes:
   pgdata:
