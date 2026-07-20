@@ -91,7 +91,7 @@ services:
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: cloudflared-tunnel
+    container_name: cloudflared-poc_hl
     restart: always
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
