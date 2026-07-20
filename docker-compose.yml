@@ -34,7 +34,7 @@ services:
     environment:
       DATABASE_URL: postgresql://homemed:homemed_dev@postgres_hl:5433/homemed
       REDIS_URL: redis://redis_hl:6379
-      FRONTEND_URL: https://poc-hl.autratech.org
+      FRONTEND_URL: https://poc_hl.autratech.net
       PORT: 8085
     ports:
       - '8085:8085'
@@ -57,7 +57,7 @@ services:
     environment:
       PORT: 8084
       NODE_ENV: production
-      NEXTAUTH_URL: https://poc-hl.autratech.org
+      NEXTAUTH_URL: https://poc_hl.autratech.net
       API_URL: http://backend_hl:8085
     ports:
       - '8084:8084'
@@ -69,7 +69,7 @@ services:
       context: .
       dockerfile: apps/liff/Dockerfile
       args:
-        VITE_API_URL: https://poc-hl.autratech.org/api
+        VITE_API_URL: https://poc_hl.autratech.net/api
         VITE_LIFF_ID: ${VITE_LIFF_ID}
     expose:
       - '80'
