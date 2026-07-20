@@ -5,10 +5,13 @@ services:
       POSTGRES_DB: homemed
       POSTGRES_USER: homemed
       POSTGRES_PASSWORD: homemed_dev
+    command: -p 5433
+    ports:
+      - '5433:5433'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U homemed']
+      test: ['CMD-SHELL', 'pg_isready -U homemed -p 5433']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -29,7 +32,7 @@ services:
       dockerfile: apps/backend/Dockerfile
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://homemed:homemed_dev@postgres:5432/homemed
+      DATABASE_URL: postgresql://homemed:homemed_dev@postgres:5433/homemed
       REDIS_URL: redis://redis:6379
       FRONTEND_URL: https://line5566.duckdns.org
       PORT: 8085
