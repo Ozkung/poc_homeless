@@ -75,7 +75,19 @@ services:
       - '80'
     depends_on:
       - backend_hl
-
+  nginx:
+    image: nginx:alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/acme-challenge:/var/www/acme-challenge:ro
+    depends_on:
+      - frontend
+      - backend
+      - liff
 volumes:
   pgdata:
   redisdata:
