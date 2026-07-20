@@ -88,6 +88,14 @@ services:
       - frontend_hl
       - backend_hl
       - liff_hl
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tunnel
+    restart: always
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    command: tunnel --protocol http2 run
 volumes:
   pgdata:
   redisdata:
