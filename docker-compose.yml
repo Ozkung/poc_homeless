@@ -34,7 +34,7 @@ services:
     environment:
       DATABASE_URL: postgresql://homemed:homemed_dev@postgres:5433/homemed
       REDIS_URL: redis://redis:6379
-      FRONTEND_URL: https://line5566.duckdns.org
+      FRONTEND_URL: https://poc-hl.autratech.org
       PORT: 8085
     ports:
       - '8085:8085'
@@ -57,7 +57,7 @@ services:
     environment:
       PORT: 8084
       NODE_ENV: production
-      NEXTAUTH_URL: https://line5566.duckdns.org
+      NEXTAUTH_URL: https://poc-hl.autratech.org
       API_URL: http://backend:8085
     ports:
       - '8084:8084'
@@ -69,7 +69,7 @@ services:
       context: .
       dockerfile: apps/liff/Dockerfile
       args:
-        VITE_API_URL: https://line5566.duckdns.org/api
+        VITE_API_URL: https://poc-hl.autratech.org/api
         VITE_LIFF_ID: ${VITE_LIFF_ID}
     expose:
       - '80'
