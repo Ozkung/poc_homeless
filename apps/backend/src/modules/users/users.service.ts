@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { LineService } from '../line/line.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { CreateFwDto } from './dto/create-fw.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -76,7 +77,7 @@ export class UsersService {
     });
   }
 
-  async createFW(supervisorId: string, orgId: string, dto: CreateUserDto) {
+  async createFW(supervisorId: string, orgId: string, dto: CreateFwDto) {
     const hash = await bcrypt.hash(dto.password, 12);
     return this.prisma.user.create({
       data: {

@@ -9,6 +9,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
+import { CreateFwDto } from './dto/create-fw.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
@@ -38,7 +39,7 @@ export class UsersController {
   @Post('fw')
   @Roles(UserRole.CASE_MANAGER)
   @HttpCode(HttpStatus.CREATED)
-  createFW(@Body() dto: CreateUserDto, @CurrentUser() user: JwtPayload) {
+  createFW(@Body() dto: CreateFwDto, @CurrentUser() user: JwtPayload) {
     return this.users.createFW(user.sub, user.orgId, dto);
   }
 

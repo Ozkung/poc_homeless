@@ -42,3 +42,5 @@ npm run dev
 - Single-use LIFF tokens (Redis GETDEL)
 - JWT 15min + 7day rotating refresh
 - Bcrypt cost=12, Helmet.js, audit logging
+
+docker compose exec backend_hl npm run db:seed

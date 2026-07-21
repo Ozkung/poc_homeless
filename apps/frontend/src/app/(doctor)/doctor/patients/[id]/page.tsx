@@ -433,12 +433,16 @@ export default function DoctorPatientDetailPage() {
                       ),
                       children: (
                         <div style={{ display: 'grid', gap: 6 }}>
-                          {(s.answers ?? []).map((ans: any, i: number) => (
-                            <div key={i}>
-                              <div style={{ fontSize: 11, fontWeight: 600, color: '#555' }}>{ans.fieldId}</div>
-                              <div style={{ fontSize: 12, padding: '3px 8px', background: '#f5f5f5', borderRadius: 4, display: 'inline-block', marginTop: 2 }}>{String(ans.value)}</div>
-                            </div>
-                          ))}
+                          {(s.answers ?? []).map((ans: any, i: number) => {
+                            const fieldDef = s.formTemplate?.fields?.find((f: any) => f.id === ans.fieldId);
+                            const label = fieldDef?.label ?? ans.fieldId;
+                            return (
+                              <div key={i}>
+                                <div style={{ fontSize: 11, fontWeight: 600, color: '#555' }}>{label}</div>
+                                <div style={{ fontSize: 12, padding: '3px 8px', background: '#f5f5f5', borderRadius: 4, display: 'inline-block', marginTop: 2 }}>{String(ans.value)}</div>
+                              </div>
+                            );
+                          })}
                         </div>
                       ),
                     }))}

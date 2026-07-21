@@ -27,6 +27,8 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       accessToken: data.accessToken,
       refreshToken: newRefreshToken ?? token.refreshToken,
       accessTokenExpires: decodeJwtExpiry(data.accessToken),
+      displayName: data.displayName ?? token.displayName,
+      avatarUrl: data.avatarUrl ?? token.avatarUrl,
       error: undefined,
     };
   } catch {

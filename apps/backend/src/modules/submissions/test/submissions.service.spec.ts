@@ -3,6 +3,7 @@ import { GoneException, BadRequestException } from '@nestjs/common';
 import { SubmissionsService } from '../submissions.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { TasksService } from '../../tasks/tasks.service';
+import { AesGcmService } from '../../../common/crypto/aes-gcm.service';
 
 const mockPrisma = {
   submission: {
@@ -16,6 +17,11 @@ const mockTasksService = {
   consumeLiffToken: jest.fn(),
 };
 
+const mockCrypto = {
+  encrypt: jest.fn((v: string) => `enc(${v})`),
+  decrypt: jest.fn((v: string) => v.replace(/^enc\(|\)$/g, '')),
+};
+
 describe('SubmissionsService', () => {
   let service: SubmissionsService;
 
@@ -25,6 +31,7 @@ describe('SubmissionsService', () => {
         SubmissionsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TasksService, useValue: mockTasksService },
+        { provide: AesGcmService, useValue: mockCrypto },
       ],
     }).compile();
 
@@ -62,13 +69,14 @@ describe('SubmissionsService', () => {
       const result = await service.create('user1', submissionData);
 
       expect(mockTasksService.consumeLiffToken).toHaveBeenCalledWith('task1', 'valid-token');
+      expect(mockCrypto.encrypt).toHaveBeenCalledWith('answer');
       expect(mockPrisma.submission.create).toHaveBeenCalledWith({
         data: {
           taskId: 'task1',
           patientId: 'patient1',
           formTemplateId: 'form1',
           submittedById: 'user1',
-          answers: submissionData.answers,
+          answers: [{ fieldId: 'f1', value: 'enc(answer)' }],
         },
       });
       expect(result.taskId).toBe('task1');

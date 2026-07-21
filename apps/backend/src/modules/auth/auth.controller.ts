@@ -43,9 +43,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ login: { ttl: 900000, limit: 5 } })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken, role } = await this.auth.login(dto.email, dto.password);
+    const { accessToken, refreshToken, role, displayName, avatarUrl } = await this.auth.login(dto.email, dto.password);
     res.cookie(COOKIE_NAME, refreshToken, COOKIE_OPTS);
-    return { accessToken, role };
+    return { accessToken, role, displayName, avatarUrl };
   }
 
   @Post('refresh')
@@ -53,9 +53,9 @@ export class AuthController {
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token: string = req.cookies?.[COOKIE_NAME] ?? '';
-    const { accessToken, refreshToken, role } = await this.auth.refresh(token);
+    const { accessToken, refreshToken, role, displayName, avatarUrl } = await this.auth.refresh(token);
     res.cookie(COOKIE_NAME, refreshToken, COOKIE_OPTS);
-    return { accessToken, role };
+    return { accessToken, role, displayName, avatarUrl };
   }
 
   @Post('logout')

@@ -139,11 +139,20 @@ export class PatientsService {
 
   async findSubmissions(id: string, orgId: string) {
     await this.findOne(id, orgId);
-    return this.prisma.submission.findMany({
+    const submissions = await this.prisma.submission.findMany({
       where: { patientId: id },
       include: { formTemplate: { select: { title: true, fields: true } }, submittedBy: { select: { displayName: true } } },
       orderBy: { submittedAt: 'desc' },
     });
+    return submissions.map((s) => ({
+      ...s,
+      answers: Array.isArray(s.answers)
+        ? (s.answers as Array<{ fieldId: string; value: unknown }>).map((a) => ({
+            ...a,
+            value: typeof a.value === 'string' ? this.crypto.decrypt(a.value) : a.value,
+          }))
+        : s.answers,
+    }));
   }
 
   async getCarePlan(patientId: string, orgId: string) {

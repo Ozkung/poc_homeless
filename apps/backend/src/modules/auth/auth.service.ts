@@ -197,7 +197,7 @@ export class AuthService {
     const ttlSeconds = this.parseTtl(this.config.get<string>('jwt.refreshExpiresIn') ?? '7d');
     await this.redis.setex(`refresh:${refreshToken}`, ttlSeconds, JSON.stringify({ userId }));
 
-    return { accessToken, refreshToken, role };
+    return { accessToken, refreshToken, role, displayName, avatarUrl };
   }
 
   private parseTtl(expiry: string): number {
