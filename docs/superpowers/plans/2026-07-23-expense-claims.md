@@ -918,7 +918,7 @@ export default function CMExpenseClaimsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>คำขอเบิกเงิน</h1>
         <Button type="primary" icon={<Plus size={14} />} onClick={() => { form.resetFields(); setCreateOpen(true); }}>
-          + สร้างคำขอเบิกเงิน
+          สร้างคำขอเบิกเงิน
         </Button>
       </div>
 
@@ -1114,7 +1114,7 @@ export default function FWExpenseClaimsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>คำขอเบิกเงิน</h1>
         <Button type="primary" icon={<Plus size={14} />} onClick={() => { form.resetFields(); setCreateOpen(true); }}>
-          + สร้างคำขอเบิกเงิน
+          สร้างคำขอเบิกเงิน
         </Button>
       </div>
 
