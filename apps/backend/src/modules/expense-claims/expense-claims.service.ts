@@ -73,4 +73,25 @@ export class ExpenseClaimsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async review(claimId: string, reviewerId: string, orgId: string, dto: ReviewExpenseClaimDto) {
+    const claim = await this.prisma.expenseClaim.findFirst({
+      where: { id: claimId, organizationId: orgId, status: 'PENDING' },
+    });
+    if (!claim) throw new NotFoundException('ไม่พบคำขอเบิกเงินนี้ หรือถูกพิจารณาไปแล้ว');
+
+    const updated = await this.prisma.expenseClaim.update({
+      where: { id: claimId },
+      data: { status: dto.status, reviewedById: reviewerId, reviewNote: dto.reviewNote },
+    });
+
+    void this.audit.log({
+      orgId, actorId: reviewerId,
+      action: dto.status === 'APPROVED' ? 'APPROVE_CLAIM' : 'REJECT_CLAIM',
+      entity: 'ExpenseClaim', entityId: claimId,
+      detail: `฿${claim.amount} — ${dto.status}${dto.reviewNote ? `: ${dto.reviewNote}` : ''}`,
+    });
+
+    return updated;
+  }
 }

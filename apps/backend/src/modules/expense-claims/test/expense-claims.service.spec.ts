@@ -156,4 +156,46 @@ describe('ExpenseClaimsService', () => {
       );
     });
   });
+
+  describe('review', () => {
+    it('approves a pending claim and logs APPROVE_CLAIM', async () => {
+      mockPrisma.expenseClaim.findFirst.mockResolvedValue({ id: 'claim1', amount: 500, status: 'PENDING' });
+      mockPrisma.expenseClaim.update.mockResolvedValue({ id: 'claim1', status: 'APPROVED' });
+
+      await service.review('claim1', 'sa1', 'org1', { status: 'APPROVED', reviewNote: 'โอนแล้ว' });
+
+      expect(mockPrisma.expenseClaim.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'claim1', organizationId: 'org1', status: 'PENDING' } }),
+      );
+      expect(mockPrisma.expenseClaim.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'claim1' },
+          data: { status: 'APPROVED', reviewedById: 'sa1', reviewNote: 'โอนแล้ว' },
+        }),
+      );
+      expect(mockAuditLog.log).toHaveBeenCalledWith(
+        expect.objectContaining({ orgId: 'org1', actorId: 'sa1', action: 'APPROVE_CLAIM', entity: 'ExpenseClaim', entityId: 'claim1' }),
+      );
+    });
+
+    it('rejects a pending claim and logs REJECT_CLAIM', async () => {
+      mockPrisma.expenseClaim.findFirst.mockResolvedValue({ id: 'claim2', amount: 200, status: 'PENDING' });
+      mockPrisma.expenseClaim.update.mockResolvedValue({ id: 'claim2', status: 'REJECTED' });
+
+      await service.review('claim2', 'sa1', 'org1', { status: 'REJECTED' });
+
+      expect(mockAuditLog.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'REJECT_CLAIM', entityId: 'claim2' }),
+      );
+    });
+
+    it('throws NotFoundException when claim is not pending or does not exist', async () => {
+      mockPrisma.expenseClaim.findFirst.mockResolvedValue(null);
+
+      await expect(service.review('bad-id', 'sa1', 'org1', { status: 'APPROVED' }))
+        .rejects.toThrow(NotFoundException);
+
+      expect(mockPrisma.expenseClaim.update).not.toHaveBeenCalled();
+    });
+  });
 });
