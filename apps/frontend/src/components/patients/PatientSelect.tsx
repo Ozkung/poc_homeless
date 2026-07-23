@@ -37,17 +37,14 @@ export default function PatientSelect({ patients, placeholder = 'พิมพ์
         if (!p) return <span>{String(opt.label ?? opt.value)}</span>;
         return (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <div style={{ minWidth: 0 }}>
-              <span style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</span>
-              <span style={{ fontSize: 11, color: '#888', marginLeft: 6 }}>HN {p.hn}</span>
-            </div>
+            <span style={{ fontWeight: 600, fontSize: 13, minWidth: 0 }}>{p.name}</span>
             <Tag color={STATUS_COLOR[p.status] ?? 'default'} style={{ fontSize: 10, margin: 0, flexShrink: 0 }}>
               {STATUS_LABEL[p.status] ?? p.status}
             </Tag>
           </div>
         );
       }}
-      options={patients.map((p) => ({ value: p.id, label: `${p.name} (HN ${p.hn})` }))}
+      options={patients.map((p) => ({ value: p.id, label: p.name }))}
       {...rest}
     />
   );
