@@ -111,7 +111,7 @@ export default function CMUsersPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>ทีมของฉัน</h1>
-        <Button type="primary" icon={<Plus size={14} />} onClick={() => setCreateOpen(true)}>+ เพิ่ม CARE_GIVER</Button>
+        <Button type="primary" icon={<Plus size={14} />} onClick={() => setCreateOpen(true)}>เพิ่ม CARE_GIVER</Button>
       </div>
 
       <Table dataSource={fws} rowKey="id" size="small" columns={columns} />
