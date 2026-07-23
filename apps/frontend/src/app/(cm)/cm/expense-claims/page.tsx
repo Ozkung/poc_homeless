@@ -49,12 +49,14 @@ export default function CMExpenseClaimsPage() {
   useEffect(() => {
     if (!token) return;
     const headers = { Authorization: `Bearer ${token}` };
+    let hadError = false;
     Promise.all([
-      fetch(`${API_URL}/patients`, { headers }).then((r) => r.ok ? r.json() : []),
-      fetch(`${API_URL}/users/care-givers`, { headers }).then((r) => r.ok ? r.json() : []),
+      fetch(`${API_URL}/patients`, { headers }).then((r) => { if (!r.ok) hadError = true; return r.ok ? r.json() : []; }),
+      fetch(`${API_URL}/users/care-givers`, { headers }).then((r) => { if (!r.ok) hadError = true; return r.ok ? r.json() : []; }),
     ]).then(([p, cg]) => {
       setPatients(Array.isArray(p) ? p : []);
       setCareGivers(Array.isArray(cg) ? cg : []);
+      if (hadError) message.error('โหลดข้อมูลผู้ป่วย/Care Giver ไม่สำเร็จ');
     }).catch(() => {
       message.error('โหลดข้อมูลผู้ป่วย/Care Giver ไม่สำเร็จ');
     });
