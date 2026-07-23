@@ -1,0 +1,121 @@
+import { Test } from '@nestjs/testing';
+import { ExpenseClaimsService } from '../expense-claims.service';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AuditLogService } from '../../audit-log/audit-log.service';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+
+const mockPrisma: any = {
+  expenseClaim: {
+    create: jest.fn(),
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+  },
+  patient: { findFirst: jest.fn() },
+  user: { findFirst: jest.fn() },
+};
+
+const mockAuditLog = {
+  log: jest.fn().mockResolvedValue(undefined),
+};
+
+describe('ExpenseClaimsService', () => {
+  let service: ExpenseClaimsService;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        ExpenseClaimsService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AuditLogService, useValue: mockAuditLog },
+      ],
+    }).compile();
+    service = module.get(ExpenseClaimsService);
+    jest.clearAllMocks();
+  });
+
+  describe('create', () => {
+    it('creates a SELF claim without patient/payee lookups', async () => {
+      mockPrisma.expenseClaim.create.mockResolvedValue({ id: 'claim1', amount: 500 });
+
+      await service.create('org1', 'user1', 'CARE_GIVER', {
+        requestDate: '2026-07-23', amount: 500, description: 'ค่าเดินทาง', payeeType: 'SELF',
+      } as any);
+
+      expect(mockPrisma.patient.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.user.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.expenseClaim.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            organizationId: 'org1', requestedById: 'user1', amount: 500,
+            payeeType: 'SELF', patientId: null, payeeId: null,
+          }),
+        }),
+      );
+      expect(mockAuditLog.log).toHaveBeenCalledWith(
+        expect.objectContaining({ orgId: 'org1', actorId: 'user1', action: 'SUBMIT_CLAIM', entity: 'ExpenseClaim', entityId: 'claim1' }),
+      );
+    });
+
+    it('creates a PATIENT claim after validating the patient exists in the org', async () => {
+      mockPrisma.patient.findFirst.mockResolvedValue({ id: 'p1' });
+      mockPrisma.expenseClaim.create.mockResolvedValue({ id: 'claim2', amount: 300 });
+
+      await service.create('org1', 'user1', 'CARE_GIVER', {
+        requestDate: '2026-07-23', amount: 300, description: 'ค่ายา', payeeType: 'PATIENT', patientId: 'p1',
+      } as any);
+
+      expect(mockPrisma.patient.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'p1', organizationId: 'org1' } }),
+      );
+      expect(mockPrisma.expenseClaim.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ payeeType: 'PATIENT', patientId: 'p1', payeeId: null }) }),
+      );
+    });
+
+    it('throws BadRequestException when payeeType PATIENT but patientId not found in org', async () => {
+      mockPrisma.patient.findFirst.mockResolvedValue(null);
+
+      await expect(service.create('org1', 'user1', 'CARE_GIVER', {
+        requestDate: '2026-07-23', amount: 300, description: 'ค่ายา', payeeType: 'PATIENT', patientId: 'bad-id',
+      } as any)).rejects.toThrow(BadRequestException);
+
+      expect(mockPrisma.expenseClaim.create).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when a CARE_GIVER requester sets payeeType CARE_GIVER', async () => {
+      await expect(service.create('org1', 'user1', 'CARE_GIVER', {
+        requestDate: '2026-07-23', amount: 300, description: 'ค่าเดินทาง', payeeType: 'CARE_GIVER', payeeId: 'cg2',
+      } as any)).rejects.toThrow(BadRequestException);
+
+      expect(mockPrisma.user.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.expenseClaim.create).not.toHaveBeenCalled();
+    });
+
+    it('creates a CARE_GIVER claim for a CASE_MANAGER requester after validating the payee', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'cg2', role: 'CARE_GIVER' });
+      mockPrisma.expenseClaim.create.mockResolvedValue({ id: 'claim3', amount: 1000 });
+
+      await service.create('org1', 'cm1', 'CASE_MANAGER', {
+        requestDate: '2026-07-23', amount: 1000, description: 'ค่าเดินทางของทีม', payeeType: 'CARE_GIVER', payeeId: 'cg2',
+      } as any);
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'cg2', organizationId: 'org1', role: 'CARE_GIVER' } }),
+      );
+      expect(mockPrisma.expenseClaim.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ payeeType: 'CARE_GIVER', payeeId: 'cg2', patientId: null }) }),
+      );
+    });
+
+    it('throws BadRequestException when payeeType CARE_GIVER but payeeId not a Care Giver in org', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(service.create('org1', 'cm1', 'CASE_MANAGER', {
+        requestDate: '2026-07-23', amount: 1000, description: 'ค่าเดินทาง', payeeType: 'CARE_GIVER', payeeId: 'bad-id',
+      } as any)).rejects.toThrow(BadRequestException);
+
+      expect(mockPrisma.expenseClaim.create).not.toHaveBeenCalled();
+    });
+  });
+});
