@@ -37,9 +37,13 @@ export default function FWExpenseClaimsPage() {
 
   const load = useCallback(async () => {
     if (!token) return;
-    const res = await fetch(`${API_URL}/expense-claims/mine`, { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) setClaims(await res.json());
-    else message.error('โหลดประวัติคำขอเบิกเงินไม่สำเร็จ');
+    try {
+      const res = await fetch(`${API_URL}/expense-claims/mine`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) setClaims(await res.json());
+      else message.error('โหลดประวัติคำขอเบิกเงินไม่สำเร็จ');
+    } catch {
+      message.error('โหลดประวัติคำขอเบิกเงินไม่สำเร็จ');
+    }
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
