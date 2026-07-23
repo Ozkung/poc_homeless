@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Map, Users, LogOut, ClipboardList, UserRound, Package, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Map, Users, LogOut, ClipboardList, UserRound, Package, CalendarDays, Wallet } from 'lucide-react';
 import type { MenuProps } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -27,6 +27,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     // ผู้ใช้งาน + Audit Log are SUPER_ADMIN-only on the backend — hide rather than show a confusing empty page
     ...(isSuperAdmin ? [{ key: '/admin/users', label: 'ผู้ใช้งาน', icon: <Users size={ICON_SIZE} /> }] : []),
     ...(isSuperAdmin ? [{ key: '/admin/audit-log', label: 'Audit Log', icon: <ClipboardList size={ICON_SIZE} /> }] : []),
+    // Approval is SUPER_ADMIN-only on the backend — hide rather than show a confusing empty page
+    ...(isSuperAdmin ? [{ key: '/admin/expense-claims', label: 'เบิกเงิน', icon: <Wallet size={ICON_SIZE} /> }] : []),
   ];
 
   const selectedKey = navItems.find((i) => i && pathname.startsWith((i as any).key))?.key as string ?? '/admin/dashboard';

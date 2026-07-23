@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Button, Avatar, Typography, Drawer } from 'antd';
 import { signOut, useSession } from 'next-auth/react';
-import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, UserCircle, BarChart3, Package } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, FileText, LogOut, UserCircle, BarChart3, Package, Wallet } from 'lucide-react';
 import type { MenuProps } from 'antd';
 
 const { Text } = Typography;
@@ -26,6 +26,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     { key: '/cm/inventory',  label: 'Inventory',    icon: <Package size={ICON_SIZE} /> },
     { key: '/cm/reports',    label: 'รายงาน',       icon: <BarChart3 size={ICON_SIZE} /> },
     { key: '/cm/users',      label: 'ทีมของฉัน',    icon: <Users size={ICON_SIZE} /> },
+    { key: '/cm/expense-claims', label: 'เบิกเงิน', icon: <Wallet size={ICON_SIZE} /> },
   ];
 
   const selectedKey = (navItems ?? []).find(
