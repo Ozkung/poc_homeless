@@ -167,7 +167,7 @@ export default function CMDashboard() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr>{['ผู้ป่วย (HN)', 'โรคประจำตัว', 'Follow-up / เป้า', 'สถานะ', ''].map((h) => (
+              <tr>{['ผู้ป่วย', 'โรคประจำตัว', 'Follow-up / เป้า', 'สถานะ', ''].map((h) => (
                 <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', borderBottom: '1px solid #f0f0f0' }}>{h}</th>
               ))}</tr>
             </thead>
@@ -179,7 +179,7 @@ export default function CMDashboard() {
                 const color = hit ? '#52c41a' : '#faad14';
                 return (
                 <tr key={p.id} style={{ borderBottom: '1px solid #fafafa' }}>
-                  <td style={{ padding: '12px 16px', fontSize: 13, fontFamily: 'monospace', color: '#555' }}>{p.hn}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, color: '#333' }}>{p.name}</td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                       {p.conditions.slice(0, 2).map((c: string) => <Tag key={c} style={{ fontSize: 10 }}>{c}</Tag>)}

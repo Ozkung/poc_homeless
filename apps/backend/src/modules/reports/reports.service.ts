@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AesGcmService } from '../../common/crypto/aes-gcm.service';
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private crypto: AesGcmService) {}
 
   async getMonthly(orgId: string, month: number, year: number) {
     const start = new Date(year, month - 1, 1);
@@ -37,7 +38,7 @@ export class ReportsService {
 
     const patients = await this.prisma.patient.findMany({
       where: { organizationId: orgId },
-      select: { id: true, hn: true, status: true, conditions: true, followUpTarget: true },
+      select: { id: true, hn: true, nameEnc: true, status: true, conditions: true, followUpTarget: true },
     });
 
     const patientStats = patients.map((p) => {
@@ -46,6 +47,7 @@ export class ReportsService {
       return {
         id:            p.id,
         hn:            p.hn,
+        name:          this.crypto.decrypt(p.nameEnc),
         status:        p.status,
         conditions:    p.conditions,
         followUpDone:  pDone,
