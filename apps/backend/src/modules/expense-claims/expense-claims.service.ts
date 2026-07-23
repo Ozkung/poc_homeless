@@ -50,4 +50,27 @@ export class ExpenseClaimsService {
 
     return claim;
   }
+
+  async findMine(userId: string) {
+    return this.prisma.expenseClaim.findMany({
+      where: { requestedById: userId },
+      include: {
+        patient: { select: { id: true, hn: true } },
+        payee: { select: { id: true, displayName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findAll(orgId: string, status?: string) {
+    return this.prisma.expenseClaim.findMany({
+      where: { organizationId: orgId, ...(status ? { status: status as any } : {}) },
+      include: {
+        requester: { select: { id: true, displayName: true, role: true } },
+        patient: { select: { id: true, hn: true } },
+        payee: { select: { id: true, displayName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

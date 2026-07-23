@@ -118,4 +118,42 @@ describe('ExpenseClaimsService', () => {
       expect(mockPrisma.expenseClaim.create).not.toHaveBeenCalled();
     });
   });
+
+  describe('findMine', () => {
+    it('returns claims filtered by requestedById, newest first', async () => {
+      mockPrisma.expenseClaim.findMany.mockResolvedValue([{ id: 'claim1' }]);
+
+      const result = await service.findMine('user1');
+
+      expect(mockPrisma.expenseClaim.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { requestedById: 'user1' },
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+      expect(result).toEqual([{ id: 'claim1' }]);
+    });
+  });
+
+  describe('findAll', () => {
+    it('returns all org claims when no status filter given', async () => {
+      mockPrisma.expenseClaim.findMany.mockResolvedValue([]);
+
+      await service.findAll('org1');
+
+      expect(mockPrisma.expenseClaim.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { organizationId: 'org1' } }),
+      );
+    });
+
+    it('filters by status when provided', async () => {
+      mockPrisma.expenseClaim.findMany.mockResolvedValue([]);
+
+      await service.findAll('org1', 'PENDING');
+
+      expect(mockPrisma.expenseClaim.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { organizationId: 'org1', status: 'PENDING' } }),
+      );
+    });
+  });
 });
