@@ -103,6 +103,17 @@ export class UsersService {
     });
   }
 
+  async getCareGivers(orgId: string) {
+    return this.prisma.user.findMany({
+      where: { role: 'CARE_GIVER', organizationId: orgId },
+      select: {
+        id: true, displayName: true, email: true, role: true, phone: true, isActive: true,
+        supervisor: { select: { displayName: true } },
+      },
+      orderBy: { displayName: 'asc' },
+    });
+  }
+
   async transferFW(fwId: string, newSupervisorId: string, orgId: string) {
     const fw = await this.prisma.user.findFirst({ where: { id: fwId, organizationId: orgId, role: 'CARE_GIVER' } });
     if (!fw) throw new NotFoundException('CARE_GIVER not found');

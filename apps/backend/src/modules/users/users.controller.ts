@@ -36,6 +36,12 @@ export class UsersController {
     return this.users.getMyFW(user.sub, user.orgId);
   }
 
+  @Get('care-givers')
+  @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  getCareGivers(@CurrentUser() user: JwtPayload) {
+    return this.users.getCareGivers(user.orgId);
+  }
+
   @Post('fw')
   @Roles(UserRole.CASE_MANAGER)
   @HttpCode(HttpStatus.CREATED)

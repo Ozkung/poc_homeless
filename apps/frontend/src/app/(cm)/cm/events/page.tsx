@@ -86,7 +86,7 @@ function CreateEventForm({
   onCancel,
 }: {
   patients: { id: string; name: string; hn: string; status: string }[];
-  users: { id: string; displayName: string }[];
+  users: { id: string; displayName: string; supervisor?: { displayName: string } | null }[];
   formTemplates: { id: string; title: string }[];
   saving: boolean;
   form: ReturnType<typeof Form.useForm>[0];
@@ -133,8 +133,11 @@ function CreateEventForm({
 
       <Form.Item name="assigneeId" label="มอบหมายให้" rules={[{ required: true, message: 'เลือกผู้รับผิดชอบ' }]}>
         <Select
-          placeholder="เลือกผู้ช่วย CM..."
-          options={users.map((u) => ({ value: u.id, label: u.displayName }))}
+          placeholder="เลือกผู้รับผิดชอบ..."
+          options={users.map((u) => ({
+            value: u.id,
+            label: u.supervisor ? `${u.displayName} (ทีม ${u.supervisor.displayName})` : u.displayName,
+          }))}
         />
       </Form.Item>
 
@@ -162,7 +165,7 @@ export default function EventsPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [drawerMode, setDrawerMode] = useState<'view' | 'create'>('view');
   const [createForm] = Form.useForm();
-  const [users, setUsers] = useState<{ id: string; displayName: string }[]>([]);
+  const [users, setUsers] = useState<{ id: string; displayName: string; supervisor?: { displayName: string } | null }[]>([]);
   const [formTemplates, setFormTemplates] = useState<{ id: string; title: string }[]>([]);
   const [allPatients, setAllPatients] = useState<{ id: string; name: string; hn: string; status: string }[]>([]);
   const [saving, setSaving] = useState(false);
@@ -200,7 +203,7 @@ export default function EventsPage() {
     if (!session?.accessToken) return;
     const headers = { Authorization: `Bearer ${session.accessToken}` };
     Promise.all([
-      fetch(`${API_URL}/users/my-fw`, { headers }).then((r) => r.ok ? r.json() : []),
+      fetch(`${API_URL}/users/care-givers`, { headers }).then((r) => r.ok ? r.json() : []),
       fetch(`${API_URL}/forms`, { headers }).then((r) => r.ok ? r.json() : []),
       fetch(`${API_URL}/patients`, { headers }).then((r) => r.ok ? r.json() : []),
     ]).then(([fw, f, p]) => {
