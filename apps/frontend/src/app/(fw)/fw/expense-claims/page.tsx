@@ -39,6 +39,7 @@ export default function FWExpenseClaimsPage() {
     if (!token) return;
     const res = await fetch(`${API_URL}/expense-claims/mine`, { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) setClaims(await res.json());
+    else message.error('โหลดประวัติคำขอเบิกเงินไม่สำเร็จ');
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
@@ -46,9 +47,12 @@ export default function FWExpenseClaimsPage() {
   useEffect(() => {
     if (!token) return;
     fetch(`${API_URL}/patients`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.ok ? r.json() : [])
+      .then((r) => {
+        if (!r.ok) { message.error('โหลดข้อมูลผู้ป่วยไม่สำเร็จ'); return []; }
+        return r.json();
+      })
       .then((p) => setPatients(Array.isArray(p) ? p : []))
-      .catch(() => {});
+      .catch(() => { message.error('โหลดข้อมูลผู้ป่วยไม่สำเร็จ'); });
   }, [token]);
 
   async function handleCreate() {
