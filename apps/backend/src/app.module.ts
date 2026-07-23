@@ -23,6 +23,7 @@ import { ZonesModule } from './modules/zones/zones.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DoctorModule } from './modules/doctor/doctor.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
+import { ExpenseClaimsModule } from './modules/expense-claims/expense-claims.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { AuditLogModule } from './modules/audit-log/audit-log.module';
     DashboardModule,
     DoctorModule,
     AuditLogModule,
+    ExpenseClaimsModule,
   ],
 })
 export class AppModule {}
