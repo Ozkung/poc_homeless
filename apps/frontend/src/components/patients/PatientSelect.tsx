@@ -1,5 +1,5 @@
 'use client';
-import { Select, Tag } from 'antd';
+import { Select, Tag, Tooltip } from 'antd';
 import type { SelectProps } from 'antd';
 import { STATUS_COLOR, STATUS_LABEL } from '@/lib/patientStatus';
 
@@ -19,6 +19,12 @@ export default function PatientSelect({ patients, placeholder = 'พิมพ์
     <Select
       mode="multiple"
       showSearch
+      maxTagCount={3}
+      maxTagPlaceholder={(omitted) => (
+        <Tooltip title={omitted.map((o) => String(o.label ?? o.value)).join(', ')}>
+          <span>+{omitted.length} คน</span>
+        </Tooltip>
+      )}
       placeholder={placeholder}
       filterOption={(input, opt) => {
         const p = patients.find((px) => px.id === opt?.value);

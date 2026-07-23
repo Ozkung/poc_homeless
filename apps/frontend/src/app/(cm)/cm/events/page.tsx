@@ -7,12 +7,13 @@ import {
   format, getDay, addMonths, subMonths,
 } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { Button, Card, Drawer, Form, Input, Select, DatePicker, Tag, Typography, Popconfirm, message } from 'antd';
+import { Button, Card, Drawer, Form, Input, Select, DatePicker, Tag, Tooltip, Typography, Popconfirm, message } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { LeftOutlined, RightOutlined, EditOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { User } from 'lucide-react';
 import dayjs from 'dayjs';
 import PatientSelect from '@/components/patients/PatientSelect';
+import SelectAllLabel from '@/components/common/SelectAllLabel';
 
 const { Text, Title } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -115,7 +116,11 @@ function CreateEventForm({
         ]} />
       </Form.Item>
 
-      <Form.Item name="patientIds" label="ผู้ป่วย" rules={[{ required: true, message: 'เลือกผู้ป่วยอย่างน้อย 1 คน' }]}>
+      <Form.Item
+        name="patientIds"
+        label={<SelectAllLabel text="ผู้ป่วย" onSelectAll={() => form.setFieldValue('patientIds', patients.map((p) => p.id))} />}
+        rules={[{ required: true, message: 'เลือกผู้ป่วยอย่างน้อย 1 คน' }]}
+      >
         <PatientSelect patients={patients} />
       </Form.Item>
 
@@ -131,8 +136,21 @@ function CreateEventForm({
         มอบหมายงาน
       </div>
 
-      <Form.Item name="assigneeId" label="มอบหมายให้" rules={[{ required: true, message: 'เลือกผู้รับผิดชอบ' }]}>
+      <Form.Item
+        name="assigneeIds"
+        label={<SelectAllLabel text="มอบหมายให้" onSelectAll={() => form.setFieldValue('assigneeIds', users.map((u) => u.id))} />}
+        rules={[{ required: true, message: 'เลือกผู้รับผิดชอบอย่างน้อย 1 คน' }]}
+      >
         <Select
+          mode="multiple"
+          showSearch
+          optionFilterProp="label"
+          maxTagCount={3}
+          maxTagPlaceholder={(omitted) => (
+            <Tooltip title={omitted.map((o) => String(o.label ?? o.value)).join(', ')}>
+              <span>+{omitted.length} คน</span>
+            </Tooltip>
+          )}
           placeholder="เลือกผู้รับผิดชอบ..."
           options={users.map((u) => ({
             value: u.id,
@@ -294,7 +312,7 @@ export default function EventsPage() {
     dateRange: [dayjs.Dayjs, dayjs.Dayjs];
     priority: 'NORMAL' | 'URGENT' | 'CRITICAL';
     patientIds: string[];
-    assigneeId: string;
+    assigneeIds: string[];
     formTemplateId?: string;
     note?: string;
   }) {
@@ -312,7 +330,7 @@ export default function EventsPage() {
           endDate: values.dateRange[1].toISOString(),
           priority: values.priority,
           patientIds: values.patientIds,
-          assigneeId: values.assigneeId,
+          assigneeIds: values.assigneeIds,
           formIds: values.formTemplateId ? [values.formTemplateId] : undefined,
           note: values.note,
         }),

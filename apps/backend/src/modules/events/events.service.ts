@@ -39,15 +39,16 @@ export class EventsService {
   async create(orgId: string, userId: string, data: {
     title: string; startDate: string; endDate: string;
     priority?: string; note?: string; patientIds?: string[];
-    assigneeId?: string; formIds?: string[];
+    assigneeIds?: string[]; formIds?: string[];
   }) {
-    // Step 1: Validate assigneeId and patientIds upfront to surface clear errors
-    if (data.assigneeId) {
-      const assignee = await this.prisma.user.findFirst({
-        where: { id: data.assigneeId, organizationId: orgId },
+    // Step 1: Validate assigneeIds and patientIds upfront to surface clear errors
+    if (data.assigneeIds?.length) {
+      const foundAssignees = await this.prisma.user.findMany({
+        where: { id: { in: data.assigneeIds }, organizationId: orgId },
+        select: { id: true },
       });
-      if (!assignee) {
-        throw new BadRequestException(`Assignee ${data.assigneeId} not found in this organization`);
+      if (foundAssignees.length !== data.assigneeIds.length) {
+        throw new BadRequestException('One or more assigneeIds not found in this organization');
       }
     }
 
@@ -76,19 +77,21 @@ export class EventsService {
       });
 
       const tasks: { id: string }[] = [];
-      // Auto-generate one EventTask per patient if patientIds and assigneeId are provided
-      if (data.patientIds?.length && data.assigneeId) {
+      // Auto-generate one EventTask per patient per assignee if patientIds and assigneeIds are provided
+      if (data.patientIds?.length && data.assigneeIds?.length) {
         const formTemplateId = data.formIds?.[0] ?? null;
         for (const patientId of data.patientIds) {
-          const task = await tx.eventTask.create({
-            data: {
-              eventId: event.id,
-              patientId,
-              assigneeId: data.assigneeId,
-              formTemplateId,
-            },
-          });
-          tasks.push(task);
+          for (const assigneeId of data.assigneeIds) {
+            const task = await tx.eventTask.create({
+              data: {
+                eventId: event.id,
+                patientId,
+                assigneeId,
+                formTemplateId,
+              },
+            });
+            tasks.push(task);
+          }
         }
       }
 
