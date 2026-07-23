@@ -107,11 +107,12 @@ SUPER_ADMIN action since it's money.
 - **`apps/frontend/src/app/(fw)/fw/expense-claims/page.tsx`** — same form, payee radio limited to
   ตัวเอง / ผู้ป่วย (no Care Giver option), same history table.
 - **`apps/frontend/src/app/(admin)/admin/expense-claims/page.tsx`** — queue table for SUPER_ADMIN.
-  Since the `(admin)` route group's `layout.tsx` allows both ADMIN and SUPER_ADMIN, this page adds
-  its own client-side role check (`session.role !== 'SUPER_ADMIN'` → show access-denied) on top of
-  the real enforcement point, which is the backend `@Roles(SUPER_ADMIN)` guard. Status filter tabs
-  (Pending/Approved/Rejected/All), approve/reject actions open a small modal for the optional
-  `reviewNote`.
+  The `(admin)` route group's `layout.tsx` allows both ADMIN and SUPER_ADMIN, but per this
+  codebase's existing convention (`apps/frontend/src/app/(admin)/admin/users/page.tsx`, a
+  SUPER_ADMIN-only page with no client-side role check of its own), this page adds no extra
+  client-side guard either — enforcement is the backend's `@Roles(SUPER_ADMIN)` guard, and the nav
+  link is hidden from ADMIN. Status filter tabs (Pending/Approved/Rejected/All), approve/reject
+  actions open a small modal for the optional `reviewNote`.
 
 Add a nav entry ("เบิกเงิน" / "คำขอเบิกเงิน") to each role's existing menu component
 (`AppShell` for cm/fw, `AdminShell` for admin) alongside other nav items.
