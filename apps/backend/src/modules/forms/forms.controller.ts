@@ -8,7 +8,7 @@ import { UserRole } from '@prisma/client';
 
 @Controller('forms')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN)
+@Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
 export class FormsController {
   constructor(private forms: FormsService) {}
 
