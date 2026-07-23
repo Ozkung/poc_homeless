@@ -41,6 +41,7 @@ export default function CMExpenseClaimsPage() {
     if (!token) return;
     const res = await fetch(`${API_URL}/expense-claims/mine`, { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) setClaims(await res.json());
+    else message.error('โหลดประวัติคำขอเบิกเงินไม่สำเร็จ');
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
@@ -54,7 +55,9 @@ export default function CMExpenseClaimsPage() {
     ]).then(([p, cg]) => {
       setPatients(Array.isArray(p) ? p : []);
       setCareGivers(Array.isArray(cg) ? cg : []);
-    }).catch(() => {});
+    }).catch(() => {
+      message.error('โหลดข้อมูลผู้ป่วย/Care Giver ไม่สำเร็จ');
+    });
   }, [token]);
 
   async function handleCreate() {
