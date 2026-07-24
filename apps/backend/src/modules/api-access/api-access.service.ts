@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
@@ -10,6 +10,8 @@ import { RejectApiAccessRequestDto } from './dto/reject-api-access-request.dto';
 
 @Injectable()
 export class ApiAccessService {
+  private readonly logger = new Logger(ApiAccessService.name);
+
   constructor(private prisma: PrismaService, private mail: MailService, private audit: AuditLogService) {}
 
   getCatalog(): Record<string, string[]> {
@@ -58,7 +60,7 @@ export class ApiAccessService {
     return request;
   }
 
-  async approve(id: string, reviewerId: string, dto: ApproveApiAccessRequestDto) {
+  async approve(id: string, reviewerId: string, orgId: string, dto: ApproveApiAccessRequestDto) {
     const request = await this.prisma.apiAccessRequest.findUnique({ where: { id } });
     if (!request || request.status !== 'PENDING') {
       throw new NotFoundException('ไม่พบคำขอนี้ หรือถูกพิจารณาไปแล้ว');
@@ -86,14 +88,14 @@ export class ApiAccessService {
     await this.mail.sendApiAccessApproval(request.email, { token: plaintextToken, manualUrl: manual ?? undefined });
 
     void this.audit.log({
-      orgId: '', actorId: reviewerId, action: 'APPROVE_API_ACCESS_REQUEST',
+      orgId, actorId: reviewerId, action: 'APPROVE_API_ACCESS_REQUEST',
       entity: 'ApiAccessRequest', entityId: id, detail: `level=${grantedLevel}`,
-    });
+    }).catch((err) => this.logger.error(`Failed to write audit log for approve ${id}: ${(err as Error).message}`));
 
     return { request: updated, plaintextToken };
   }
 
-  async reject(id: string, reviewerId: string, dto: RejectApiAccessRequestDto) {
+  async reject(id: string, reviewerId: string, orgId: string, dto: RejectApiAccessRequestDto) {
     const request = await this.prisma.apiAccessRequest.findUnique({ where: { id } });
     if (!request || request.status !== 'PENDING') {
       throw new NotFoundException('ไม่พบคำขอนี้ หรือถูกพิจารณาไปแล้ว');
@@ -107,9 +109,9 @@ export class ApiAccessService {
     await this.mail.sendApiAccessRejection(request.email, { reason: dto.reason });
 
     void this.audit.log({
-      orgId: '', actorId: reviewerId, action: 'REJECT_API_ACCESS_REQUEST',
+      orgId, actorId: reviewerId, action: 'REJECT_API_ACCESS_REQUEST',
       entity: 'ApiAccessRequest', entityId: id, detail: dto.reason,
-    });
+    }).catch((err) => this.logger.error(`Failed to write audit log for reject ${id}: ${(err as Error).message}`));
 
     return updated;
   }
@@ -133,7 +135,7 @@ export class ApiAccessService {
     });
   }
 
-  async revokeToken(id: string, actorId: string) {
+  async revokeToken(id: string, actorId: string, orgId: string) {
     const token = await this.prisma.apiAccessToken.findUnique({ where: { id } });
     if (!token) throw new NotFoundException('ไม่พบ Token นี้');
 
@@ -143,8 +145,8 @@ export class ApiAccessService {
     });
 
     void this.audit.log({
-      orgId: '', actorId, action: 'REVOKE_API_ACCESS_TOKEN', entity: 'ApiAccessToken', entityId: id,
-    });
+      orgId, actorId, action: 'REVOKE_API_ACCESS_TOKEN', entity: 'ApiAccessToken', entityId: id,
+    }).catch((err) => this.logger.error(`Failed to write audit log for token revoke ${id}: ${(err as Error).message}`));
 
     return updated;
   }

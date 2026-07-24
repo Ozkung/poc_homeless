@@ -10,7 +10,7 @@ const mockPrisma: any = {
   apiAccessToken: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
 };
 const mockMail = { sendApiAccessApproval: jest.fn(), sendApiAccessRejection: jest.fn() };
-const mockAudit = { log: jest.fn() };
+const mockAudit = { log: jest.fn().mockResolvedValue(undefined) };
 
 describe('ApiAccessService — tokens', () => {
   let service: ApiAccessService;
@@ -46,7 +46,7 @@ describe('ApiAccessService — tokens', () => {
       mockPrisma.apiAccessToken.findUnique.mockResolvedValue({ id: 'tok1', isRevoked: false });
       mockPrisma.apiAccessToken.update.mockResolvedValue({ id: 'tok1', isRevoked: true });
 
-      await service.revokeToken('tok1', 'admin1');
+      await service.revokeToken('tok1', 'admin1', 'org1');
 
       expect(mockPrisma.apiAccessToken.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 'tok1' }, data: expect.objectContaining({ isRevoked: true, revokedAt: expect.any(Date) }) }),
@@ -57,7 +57,7 @@ describe('ApiAccessService — tokens', () => {
     it('throws NotFoundException for an unknown token id', async () => {
       mockPrisma.apiAccessToken.findUnique.mockResolvedValue(null);
 
-      await expect(service.revokeToken('nope', 'admin1')).rejects.toThrow(NotFoundException);
+      await expect(service.revokeToken('nope', 'admin1', 'org1')).rejects.toThrow(NotFoundException);
       expect(mockPrisma.apiAccessToken.update).not.toHaveBeenCalled();
     });
 
@@ -65,7 +65,7 @@ describe('ApiAccessService — tokens', () => {
       mockPrisma.apiAccessToken.findUnique.mockResolvedValue({ id: 'tok1', isRevoked: true });
       mockPrisma.apiAccessToken.update.mockResolvedValue({ id: 'tok1', isRevoked: true });
 
-      await expect(service.revokeToken('tok1', 'admin1')).resolves.toBeDefined();
+      await expect(service.revokeToken('tok1', 'admin1', 'org1')).resolves.toBeDefined();
     });
   });
 });

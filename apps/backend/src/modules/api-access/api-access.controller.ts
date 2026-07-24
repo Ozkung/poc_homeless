@@ -77,14 +77,14 @@ export class ApiAccessController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   approve(@Param('id') id: string, @Body() dto: ApproveApiAccessRequestDto, @CurrentUser() user: JwtPayload) {
-    return this.apiAccess.approve(id, user.sub, dto);
+    return this.apiAccess.approve(id, user.sub, user.orgId, dto);
   }
 
   @Patch(':id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   reject(@Param('id') id: string, @Body() dto: RejectApiAccessRequestDto, @CurrentUser() user: JwtPayload) {
-    return this.apiAccess.reject(id, user.sub, dto);
+    return this.apiAccess.reject(id, user.sub, user.orgId, dto);
   }
 
   @Patch('manual')
@@ -122,6 +122,6 @@ export class ApiAccessController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   revokeToken(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.apiAccess.revokeToken(id, user.sub);
+    return this.apiAccess.revokeToken(id, user.sub, user.orgId);
   }
 }

@@ -10,7 +10,7 @@ const mockPrisma: any = {
   apiAccessToken: { create: jest.fn(), findMany: jest.fn(), update: jest.fn() },
 };
 const mockMail = { sendApiAccessApproval: jest.fn(), sendApiAccessRejection: jest.fn() };
-const mockAudit = { log: jest.fn() };
+const mockAudit = { log: jest.fn().mockResolvedValue(undefined) };
 
 describe('ApiAccessService — review', () => {
   let service: ApiAccessService;
@@ -37,7 +37,7 @@ describe('ApiAccessService — review', () => {
       mockPrisma.apiAccessToken.create.mockImplementation(({ data }: any) => Promise.resolve({ id: 'tok1', ...data }));
       mockPrisma.apiAccessRequest.update.mockResolvedValue({ id: 'req1', status: 'APPROVED' });
 
-      const result = await service.approve('req1', 'admin1', {});
+      const result = await service.approve('req1', 'admin1', 'org1', {});
 
       expect(result.plaintextToken).toBeDefined();
       expect(typeof result.plaintextToken).toBe('string');
@@ -61,7 +61,7 @@ describe('ApiAccessService — review', () => {
       mockPrisma.apiAccessToken.create.mockImplementation(({ data }: any) => Promise.resolve({ id: 'tok1', ...data }));
       mockPrisma.apiAccessRequest.update.mockResolvedValue({ id: 'req1' });
 
-      await service.approve('req1', 'admin1', {});
+      await service.approve('req1', 'admin1', 'org1', {});
 
       const createCall = mockPrisma.apiAccessToken.create.mock.calls[0][0];
       expect(createCall.data.grantedLevel).toBe('VIEW');
@@ -76,7 +76,7 @@ describe('ApiAccessService — review', () => {
       mockPrisma.apiAccessToken.create.mockImplementation(({ data }: any) => Promise.resolve({ id: 'tok1', ...data }));
       mockPrisma.apiAccessRequest.update.mockResolvedValue({ id: 'req1' });
 
-      await service.approve('req1', 'admin1', { grantedLevel: 'VIEW', grantedScope: { Patient: ['hn'] } });
+      await service.approve('req1', 'admin1', 'org1', { grantedLevel: 'VIEW', grantedScope: { Patient: ['hn'] } });
 
       const createCall = mockPrisma.apiAccessToken.create.mock.calls[0][0];
       expect(createCall.data.grantedLevel).toBe('VIEW');
@@ -90,7 +90,7 @@ describe('ApiAccessService — review', () => {
       });
 
       await expect(
-        service.approve('req1', 'admin1', { grantedScope: { NotAModel: ['x'] } }),
+        service.approve('req1', 'admin1', 'org1', { grantedScope: { NotAModel: ['x'] } }),
       ).rejects.toThrow(BadRequestException);
       expect(mockPrisma.apiAccessToken.create).not.toHaveBeenCalled();
     });
@@ -98,7 +98,7 @@ describe('ApiAccessService — review', () => {
     it('throws NotFoundException when the request is not PENDING', async () => {
       mockPrisma.apiAccessRequest.findUnique.mockResolvedValue({ id: 'req1', status: 'APPROVED' });
 
-      await expect(service.approve('req1', 'admin1', {})).rejects.toThrow(NotFoundException);
+      await expect(service.approve('req1', 'admin1', 'org1', {})).rejects.toThrow(NotFoundException);
       expect(mockPrisma.apiAccessToken.create).not.toHaveBeenCalled();
     });
   });
@@ -108,7 +108,7 @@ describe('ApiAccessService — review', () => {
       mockPrisma.apiAccessRequest.findUnique.mockResolvedValue({ id: 'req1', status: 'PENDING', email: 'r@example.com' });
       mockPrisma.apiAccessRequest.update.mockResolvedValue({ id: 'req1', status: 'REJECTED' });
 
-      await service.reject('req1', 'admin1', { reason: 'ข้อมูลไม่ครบถ้วน' });
+      await service.reject('req1', 'admin1', 'org1', { reason: 'ข้อมูลไม่ครบถ้วน' });
 
       expect(mockPrisma.apiAccessRequest.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 'req1' }, data: expect.objectContaining({ status: 'REJECTED', rejectionReason: 'ข้อมูลไม่ครบถ้วน' }) }),
@@ -119,7 +119,7 @@ describe('ApiAccessService — review', () => {
     it('throws NotFoundException when the request is not PENDING', async () => {
       mockPrisma.apiAccessRequest.findUnique.mockResolvedValue({ id: 'req1', status: 'REJECTED' });
 
-      await expect(service.reject('req1', 'admin1', {})).rejects.toThrow(NotFoundException);
+      await expect(service.reject('req1', 'admin1', 'org1', {})).rejects.toThrow(NotFoundException);
     });
   });
 });
