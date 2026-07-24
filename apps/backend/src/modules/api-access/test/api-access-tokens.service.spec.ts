@@ -36,8 +36,10 @@ describe('ApiAccessService — tokens', () => {
 
       expect(result).toEqual([{ id: 'tok1', isRevoked: false }]);
       expect(mockPrisma.apiAccessToken.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ include: expect.objectContaining({ request: expect.anything() }) }),
+        expect.objectContaining({ select: expect.objectContaining({ request: expect.anything() }) }),
       );
+      const selectArg = mockPrisma.apiAccessToken.findMany.mock.calls[0][0].select;
+      expect(selectArg).not.toHaveProperty('tokenHash');
     });
   });
 

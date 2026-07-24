@@ -130,7 +130,16 @@ export class ApiAccessService {
 
   async listTokens() {
     return this.prisma.apiAccessToken.findMany({
-      include: { request: { select: { requesterName: true, requesterOrg: true, email: true } } },
+      select: {
+        id: true,
+        requestId: true,
+        grantedLevel: true,
+        grantedScope: true,
+        isRevoked: true,
+        revokedAt: true,
+        createdAt: true,
+        request: { select: { requesterName: true, requesterOrg: true, email: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
