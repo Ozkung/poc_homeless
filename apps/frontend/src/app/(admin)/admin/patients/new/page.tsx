@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import { STATUS_OPTIONS } from '@/lib/patientStatus';
+import PatientPhotoInput from '@/components/patients/PatientPhotoInput';
 
 const { Title } = Typography;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -16,6 +17,7 @@ export default function AdminNewPatientPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [form] = Form.useForm();
 
   async function handleSubmit(values: any) {
@@ -45,6 +47,19 @@ export default function AdminNewPatientPage() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
+        const created = await res.json();
+        if (photoFile) {
+          const photoForm = new FormData();
+          photoForm.append('photo', photoFile);
+          const photoRes = await fetch(`${API_URL}/patients/${created.id}/photo`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session?.accessToken}` },
+            body: photoForm,
+          });
+          if (!photoRes.ok) {
+            message.warning('สร้างผู้ป่วยสำเร็จ แต่ไม่สามารถอัปโหลดรูปได้');
+          }
+        }
         message.success('เพิ่มผู้ป่วยเรียบร้อย');
         router.push('/admin/patients');
       } else {
@@ -74,6 +89,8 @@ export default function AdminNewPatientPage() {
 
       <Card style={{ maxWidth: 640 }}>
         <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ status: 'PENDING' }}>
+
+          <PatientPhotoInput onChange={setPhotoFile} />
 
           <Row gutter={16}>
             <Col span={12}>
