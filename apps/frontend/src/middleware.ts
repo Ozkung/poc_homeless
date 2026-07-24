@@ -11,7 +11,7 @@ const ROLE_PREFIX: Record<string, string> = {
   GUEST:             'guest',
 };
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname } = req.nextUrl;
 
@@ -24,6 +24,10 @@ export async function proxy(req: NextRequest) {
   }
 
   if (!token) {
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+  if (token.error === 'RefreshAccessTokenError') {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
