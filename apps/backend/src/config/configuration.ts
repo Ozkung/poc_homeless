@@ -14,6 +14,12 @@ export const validationSchema = Joi.object({
   LIFF_ID: Joi.string().allow('').default(''),
   LIFF_TOKEN_TTL_SECONDS: Joi.number().default(14400),
   FRONTEND_URL: Joi.string().default('http://localhost:3000'),
+  SMTP_HOST: Joi.string().allow('').default(''),
+  SMTP_PORT: Joi.number().default(587),
+  SMTP_USER: Joi.string().allow('').default(''),
+  SMTP_PASS: Joi.string().allow('').default(''),
+  MAIL_FROM: Joi.string().allow('').default(''),
+  SWAGGER_DOCS_URL: Joi.string().allow('').default(''),
 });
 
 export default () => ({
@@ -34,4 +40,12 @@ export default () => ({
     liffTokenTtl: parseInt(process.env.LIFF_TOKEN_TTL_SECONDS ?? '14400', 10),
   },
   frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+  mail: {
+    host: process.env.SMTP_HOST ?? '',
+    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
+    user: process.env.SMTP_USER ?? '',
+    pass: process.env.SMTP_PASS ?? '',
+    from: process.env.MAIL_FROM ?? '',
+  },
+  swaggerDocsUrl: process.env.SWAGGER_DOCS_URL ?? '',
 });

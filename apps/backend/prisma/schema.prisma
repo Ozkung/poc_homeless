@@ -159,6 +159,8 @@ model User {
   expenseClaimsRequested ExpenseClaim[] @relation("ExpenseClaimRequester")
   expenseClaimsReviewed  ExpenseClaim[] @relation("ExpenseClaimReviewer")
   expenseClaimsReceived  ExpenseClaim[] @relation("ExpenseClaimPayee")
+
+  apiAccessRequestsReviewed ApiAccessRequest[] @relation("ApiAccessReviewer")
 }
 
 model Patient {
@@ -531,4 +533,47 @@ model ExpenseClaim {
   updatedAt      DateTime           @updatedAt
 
   @@index([organizationId, status])
+}
+
+enum ApiAccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApiAccessLevel {
+  VIEW
+  CREATE_UPDATE
+}
+
+model ApiAccessRequest {
+  id                    String                  @id @default(uuid())
+  requesterName         String
+  requesterOrg          String?
+  email                 String
+  phone                 String
+  justificationFileUrl  String
+  requestedLevel        ApiAccessLevel
+  requestedScope        Json
+  status                ApiAccessRequestStatus  @default(PENDING)
+  rejectionReason       String?
+  reviewedById          String?
+  reviewer              User?                   @relation("ApiAccessReviewer", fields: [reviewedById], references: [id])
+  reviewedAt            DateTime?
+  token                 ApiAccessToken?
+  createdAt             DateTime                @default(now())
+
+  @@index([status])
+}
+
+model ApiAccessToken {
+  id            String            @id @default(uuid())
+  requestId     String            @unique
+  request       ApiAccessRequest  @relation(fields: [requestId], references: [id])
+  tokenHash     String            @unique
+  grantedLevel  ApiAccessLevel
+  grantedScope  Json
+  isRevoked     Boolean           @default(false)
+  revokedAt     DateTime?
+  createdAt     DateTime          @default(now())
 }
