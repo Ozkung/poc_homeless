@@ -1,4 +1,5 @@
 import { NestFactory, Reflector } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
@@ -8,7 +9,12 @@ import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
+
+  // Trust the nginx reverse proxy's X-Forwarded-For (exactly one hop) so
+  // req.ip reflects the real client IP instead of nginx's container IP —
+  // required for per-IP rate limiting (ThrottlerGuard) to actually work.
+  app.set('trust proxy', 1);
 
   // Security
   app.use(helmet());
