@@ -214,6 +214,6 @@ export class PatientsController {
   ) {
     if (!file) throw new BadRequestException('ไม่พบไฟล์ภาพ');
     const photoUrl = `/uploads/patients/${file.filename}`;
-    return this.patients.updatePhoto(id, user.sub, photoUrl);
+    return this.patients.updatePhoto(id, user.sub, user.role, user.orgId, photoUrl);
   }
 }
