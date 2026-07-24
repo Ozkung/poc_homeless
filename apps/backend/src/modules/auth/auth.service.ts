@@ -207,6 +207,10 @@ export class AuthService {
     return parseInt(expiry);
   }
 
+  getRefreshCookieMaxAgeMs(): number {
+    return this.parseTtl(this.config.get<string>('jwt.refreshExpiresIn') ?? '7d') * 1000;
+  }
+
   async getMe(userId: string, orgId: string) {
     const user = await this.prisma.user.findFirst({
       where: { id: userId, organizationId: orgId },

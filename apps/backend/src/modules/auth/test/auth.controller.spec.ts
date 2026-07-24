@@ -8,6 +8,7 @@ const mockAuthService = {
   refresh: jest.fn(),
   logout: jest.fn(),
   verifyLiffToken: jest.fn(),
+  getRefreshCookieMaxAgeMs: jest.fn().mockReturnValue(30 * 24 * 60 * 60 * 1000),
 };
 
 function mockRes(): Partial<Response> {

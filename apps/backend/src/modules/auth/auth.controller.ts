@@ -18,13 +18,6 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 
 const COOKIE_NAME = 'refresh_token';
-const COOKIE_OPTS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: '/',
-};
 
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -37,6 +30,16 @@ const avatarStorage = diskStorage({
 export class AuthController {
   constructor(private auth: AuthService) {}
 
+  private cookieOpts() {
+    return {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const,
+      maxAge: this.auth.getRefreshCookieMaxAgeMs(),
+      path: '/',
+    };
+  }
+
   // ── Public auth ────────────────────────────────────────────────────────
 
   @Post('login')
@@ -44,7 +47,7 @@ export class AuthController {
   @Throttle({ login: { ttl: 900000, limit: 5 } })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken, role, displayName, avatarUrl } = await this.auth.login(dto.email, dto.password);
-    res.cookie(COOKIE_NAME, refreshToken, COOKIE_OPTS);
+    res.cookie(COOKIE_NAME, refreshToken, this.cookieOpts());
     return { accessToken, role, displayName, avatarUrl };
   }
 
@@ -54,7 +57,7 @@ export class AuthController {
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token: string = req.cookies?.[COOKIE_NAME] ?? '';
     const { accessToken, refreshToken, role, displayName, avatarUrl } = await this.auth.refresh(token);
-    res.cookie(COOKIE_NAME, refreshToken, COOKIE_OPTS);
+    res.cookie(COOKIE_NAME, refreshToken, this.cookieOpts());
     return { accessToken, role, displayName, avatarUrl };
   }
 
@@ -91,7 +94,7 @@ export class AuthController {
       throw new BadRequestException('idToken, email และ password จำเป็นต้องระบุ');
     }
     const { accessToken, refreshToken, role } = await this.auth.linkLine(body.idToken, body.email, body.password);
-    res.cookie(COOKIE_NAME, refreshToken, COOKIE_OPTS);
+    res.cookie(COOKIE_NAME, refreshToken, this.cookieOpts());
     return { accessToken, role };
   }
 
