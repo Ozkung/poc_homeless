@@ -24,6 +24,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DoctorModule } from './modules/doctor/doctor.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { ExpenseClaimsModule } from './modules/expense-claims/expense-claims.module';
+import { ApiAccessModule } from './modules/api-access/api-access.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { ExpenseClaimsModule } from './modules/expense-claims/expense-claims.mod
     DoctorModule,
     AuditLogModule,
     ExpenseClaimsModule,
+    ApiAccessModule,
   ],
 })
 export class AppModule {}
