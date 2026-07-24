@@ -4,6 +4,8 @@ import { AesGcmService } from '../../common/crypto/aes-gcm.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UserRole } from '@prisma/client';
 
+const ORG_SCOPED_PHOTO_ROLES = ['CASE_MANAGER', 'ADMIN', 'CARE_GIVER', 'MEDICAL_VOLUNTEER', 'SUPER_ADMIN'];
+
 @Injectable()
 export class PatientsService {
   constructor(
@@ -311,7 +313,7 @@ export class PatientsService {
 
     const authorized = userRole === 'GUEST'
       ? patient.reportedById === userId
-      : patient.organizationId === orgId;
+      : ORG_SCOPED_PHOTO_ROLES.includes(userRole) && patient.organizationId === orgId;
     if (!authorized) {
       throw new ForbiddenException('ไม่มีสิทธิ์อัพโหลดรูปผู้ป่วยรายนี้');
     }

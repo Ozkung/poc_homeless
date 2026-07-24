@@ -76,6 +76,15 @@ describe('PatientsService — updatePhoto authorization', () => {
       ).rejects.toThrow(ForbiddenException);
       expect(mockPrisma.patient.update).not.toHaveBeenCalled();
     });
+
+    it('rejects DOCTOR even when organizationId matches (not part of the org-scoped grant)', async () => {
+      mockPrisma.patient.findUnique.mockResolvedValue({ reportedById: null, organizationId: 'org1' });
+
+      await expect(
+        service.updatePhoto('p1', 'some-doctor', 'DOCTOR', 'org1', '/uploads/patients/x.jpg'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.patient.update).not.toHaveBeenCalled();
+    });
   });
 
   it('throws NotFoundException when the patient does not exist', async () => {
