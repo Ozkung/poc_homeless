@@ -112,7 +112,7 @@ export default async function PatientDetailPage({
           {patient.photoUrl && (
             <div style={{ marginBottom: 16 }}>
               <img
-                src={`${process.env.API_URL ?? 'http://localhost:3001'}${patient.photoUrl}`}
+                src={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}${patient.photoUrl}`}
                 alt="รูปผู้ป่วย"
                 style={{ width: 120, height: 120, borderRadius: 12, objectFit: 'cover', border: '1px solid #f0f0f0' }}
               />
