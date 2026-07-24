@@ -203,6 +203,7 @@ export default async function PatientDetailPage({
                 phone: patient.phone,
                 birthDate: patient.birthDate,
                 nationalId: patient.nationalId,
+                photoUrl: patient.photoUrl,
               }}
             />
           )}

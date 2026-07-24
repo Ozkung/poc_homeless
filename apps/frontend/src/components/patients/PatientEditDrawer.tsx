@@ -7,6 +7,7 @@ import {
 import { Pencil } from 'lucide-react';
 import dayjs from 'dayjs';
 import { STATUS_OPTIONS } from '@/lib/patientStatus';
+import PatientPhotoInput from './PatientPhotoInput';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -24,6 +25,7 @@ interface PatientEditProps {
     phone?: string;
     birthDate?: string;
     nationalId?: string;
+    photoUrl?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -32,6 +34,7 @@ export default function PatientEditDrawer({ patientId, token, initialValues, onS
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [form] = Form.useForm();
 
   function handleOpen() {
@@ -50,6 +53,7 @@ export default function PatientEditDrawer({ patientId, token, initialValues, onS
       nationalId: initialValues.nationalId,
     });
     setOpen(true);
+    setPhotoFile(null);
   }
 
   async function handleSubmit(values: any) {
@@ -76,6 +80,18 @@ export default function PatientEditDrawer({ patientId, token, initialValues, onS
         body: JSON.stringify(payload),
       });
       if (res.ok) {
+        if (photoFile) {
+          const photoForm = new FormData();
+          photoForm.append('photo', photoFile);
+          const photoRes = await fetch(`${API_URL}/patients/${patientId}/photo`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: photoForm,
+          });
+          if (!photoRes.ok) {
+            message.warning('บันทึกข้อมูลแล้ว แต่ไม่สามารถอัปโหลดรูปได้');
+          }
+        }
         message.success('อัปเดตข้อมูลผู้ป่วยแล้ว');
         setOpen(false);
         if (onSuccess) { onSuccess(); } else { router.refresh(); }
@@ -102,6 +118,8 @@ export default function PatientEditDrawer({ patientId, token, initialValues, onS
         destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <PatientPhotoInput photoUrl={initialValues.photoUrl} onChange={setPhotoFile} />
+
           <Form.Item label="ชื่อ-นามสกุล">
             <div style={{ display: 'flex', gap: 8 }}>
               <Form.Item name="firstName" noStyle rules={[{ required: true, message: 'กรุณาใส่ชื่อ' }]}>
