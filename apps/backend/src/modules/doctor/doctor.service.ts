@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AesGcmService } from '../../common/crypto/aes-gcm.service';
 
@@ -9,6 +9,14 @@ export class DoctorService {
   private decryptPatient<T extends { nameEnc: string }>(p: T): Omit<T, 'nameEnc'> & { name: string } {
     const { nameEnc, ...rest } = p;
     return { ...rest, name: this.crypto.decrypt(nameEnc) };
+  }
+
+  private assertNotPastDate(date: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (new Date(date) < today) {
+      throw new BadRequestException('ไม่สามารถสร้างหรือแก้ไขตารางเวลาย้อนหลังได้');
+    }
   }
 
   // ── Patients ─────────────────────────────────────────────────────────
@@ -105,7 +113,8 @@ export class DoctorService {
     });
   }
 
-  createSchedule(doctorId: string, orgId: string, dto: any) {
+  async createSchedule(doctorId: string, orgId: string, dto: any) {
+    this.assertNotPastDate(dto.date);
     return this.prisma.doctorSchedule.create({
       data: { doctorId, organizationId: orgId, ...dto, date: new Date(dto.date) },
       include: {
@@ -115,7 +124,8 @@ export class DoctorService {
     });
   }
 
-  updateSchedule(scheduleId: string, doctorId: string, dto: any) {
+  async updateSchedule(scheduleId: string, doctorId: string, dto: any) {
+    if (dto.date) this.assertNotPastDate(dto.date);
     return this.prisma.doctorSchedule.update({
       where: { id: scheduleId, doctorId },
       data: { ...dto, date: dto.date ? new Date(dto.date) : undefined },
