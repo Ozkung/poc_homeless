@@ -110,4 +110,18 @@ export class ApiAccessController {
     if (!file) throw new BadRequestException('ไม่พบไฟล์คู่มือ');
     return this.apiAccess.uploadManual(`/uploads/api-access/manual.pdf`);
   }
+
+  @Get('/tokens/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  listTokens() {
+    return this.apiAccess.listTokens();
+  }
+
+  @Patch('/tokens/:id/revoke')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  revokeToken(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.apiAccess.revokeToken(id, user.sub);
+  }
 }

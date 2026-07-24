@@ -125,4 +125,27 @@ export class ApiAccessService {
   async getManualUrl(): Promise<string | null> {
     return this.manualUrl;
   }
+
+  async listTokens() {
+    return this.prisma.apiAccessToken.findMany({
+      include: { request: { select: { requesterName: true, requesterOrg: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async revokeToken(id: string, actorId: string) {
+    const token = await this.prisma.apiAccessToken.findUnique({ where: { id } });
+    if (!token) throw new NotFoundException('ไม่พบ Token นี้');
+
+    const updated = await this.prisma.apiAccessToken.update({
+      where: { id },
+      data: { isRevoked: true, revokedAt: new Date() },
+    });
+
+    void this.audit.log({
+      orgId: '', actorId, action: 'REVOKE_API_ACCESS_TOKEN', entity: 'ApiAccessToken', entityId: id,
+    });
+
+    return updated;
+  }
 }
