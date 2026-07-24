@@ -3,12 +3,14 @@ import { BadRequestException } from '@nestjs/common';
 import { ApiAccessService } from '../api-access.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { AuditLogService } from '../../audit-log/audit-log.service';
 
 const mockPrisma: any = {
   apiAccessRequest: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
   apiAccessToken: { create: jest.fn(), findMany: jest.fn(), update: jest.fn() },
 };
 const mockMail = { sendApiAccessApproval: jest.fn(), sendApiAccessRejection: jest.fn() };
+const mockAudit = { log: jest.fn() };
 
 describe('ApiAccessService — create', () => {
   let service: ApiAccessService;
@@ -20,6 +22,7 @@ describe('ApiAccessService — create', () => {
         ApiAccessService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMail },
+        { provide: AuditLogService, useValue: mockAudit },
       ],
     }).compile();
     service = module.get(ApiAccessService);
@@ -77,6 +80,7 @@ describe('ApiAccessService — getCatalog', () => {
         ApiAccessService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMail },
+        { provide: AuditLogService, useValue: mockAudit },
       ],
     }).compile();
     service = module.get(ApiAccessService);
