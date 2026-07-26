@@ -180,6 +180,37 @@ export class AuthService {
     return this.issueTokens(user.id, user.email, user.role, user.organizationId, user.displayName, user.avatarUrl ?? null);
   }
 
+  async linkRole(callerId: string, email: string, password: string) {
+    const caller = await this.prisma.user.findUnique({ where: { id: callerId } });
+    if (!caller || caller.role !== 'GUEST') {
+      throw new ForbiddenException('เฉพาะบัญชีผู้รายงานเท่านั้นที่สามารถเชื่อมต่อกับบัญชีอื่นได้');
+    }
+
+    const target = await this.prisma.user.findUnique({ where: { email } });
+    if (!target || !target.isActive) throw new UnauthorizedException('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+
+    const valid = await bcrypt.compare(password, target.passwordHash);
+    if (!valid) throw new UnauthorizedException('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+
+    if (target.id === caller.id) throw new BadRequestException('ไม่สามารถเชื่อมต่อกับบัญชีตัวเองได้');
+
+    const { lineUserId, lineDisplayName, linePictureUrl } = caller;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: caller.id }, data: { lineUserId: null } });
+      await tx.user.update({
+        where: { id: target.id },
+        data: { lineUserId, lineDisplayName, linePictureUrl },
+      });
+      await tx.patient.updateMany({ where: { reportedById: caller.id }, data: { reportedById: target.id } });
+      await tx.activity.updateMany({ where: { actorId: caller.id }, data: { actorId: target.id } });
+      await tx.submission.updateMany({ where: { submittedById: caller.id }, data: { submittedById: target.id } });
+      await tx.user.delete({ where: { id: caller.id } });
+    });
+
+    return this.createLiffHandoffCode(target.id);
+  }
+
   async getPublicZones() {
     return this.prisma.zone.findMany({
       select: { id: true, name: true, color: true, description: true },
