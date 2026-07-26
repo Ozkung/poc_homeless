@@ -162,6 +162,24 @@ export class AuthService {
     return this.issueTokens(user.id, user.email, user.role, user.organizationId, user.displayName, user.avatarUrl ?? null);
   }
 
+  async createLiffHandoffCode(userId: string): Promise<{ code: string }> {
+    const code = randomUUID();
+    await this.redis.setex(`liff-handoff:${code}`, 60, userId);
+    return { code };
+  }
+
+  async exchangeLiffHandoffCode(code: string) {
+    const key = `liff-handoff:${code}`;
+    const userId = await this.redis.get(key);
+    if (!userId) throw new UnauthorizedException('Handoff code invalid or expired');
+    await this.redis.del(key);
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) throw new UnauthorizedException();
+
+    return this.issueTokens(user.id, user.email, user.role, user.organizationId, user.displayName, user.avatarUrl ?? null);
+  }
+
   async getPublicZones() {
     return this.prisma.zone.findMany({
       select: { id: true, name: true, color: true, description: true },

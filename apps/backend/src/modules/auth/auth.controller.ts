@@ -14,6 +14,7 @@ import { LoginDto } from './dto/login.dto';
 import { SetupDto } from './dto/setup.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { HandoffExchangeDto } from './dto/handoff-exchange.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 
@@ -96,6 +97,22 @@ export class AuthController {
     const { accessToken, refreshToken, role } = await this.auth.linkLine(body.idToken, body.email, body.password);
     res.cookie(COOKIE_NAME, refreshToken, this.cookieOpts());
     return { accessToken, role };
+  }
+
+  @Post('liff/handoff')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  liffHandoff(@CurrentUser() user: JwtPayload) {
+    return this.auth.createLiffHandoffCode(user.sub);
+  }
+
+  @Post('liff/handoff/exchange')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
+  async liffHandoffExchange(@Body() dto: HandoffExchangeDto, @Res({ passthrough: true }) res: Response) {
+    const { accessToken, refreshToken, role, displayName, avatarUrl } = await this.auth.exchangeLiffHandoffCode(dto.code);
+    res.cookie(COOKIE_NAME, refreshToken, this.cookieOpts());
+    return { accessToken, role, displayName, avatarUrl };
   }
 
   @Post('liff/guest-register')
