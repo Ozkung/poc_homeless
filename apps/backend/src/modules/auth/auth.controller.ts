@@ -119,6 +119,7 @@ export class AuthController {
   @Post('link-role')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 900000, limit: 5 } })
   linkRole(@Body() dto: LinkRoleDto, @CurrentUser() user: JwtPayload) {
     return this.auth.linkRole(user.sub, dto.email, dto.password);
   }
