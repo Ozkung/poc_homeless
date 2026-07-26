@@ -40,8 +40,24 @@ export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
-      credentials: { email: {}, password: {} },
+      credentials: { email: {}, password: {}, liffHandoffCode: {} },
       async authorize(credentials) {
+        if (credentials?.liffHandoffCode) {
+          try {
+            const res = await fetch(`${API_URL}/auth/liff/handoff/exchange`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: credentials.liffHandoffCode }),
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            const refreshToken = res.headers.get('set-cookie')?.match(/refresh_token=([^;]+)/)?.[1];
+            return { id: 'user', ...data, refreshToken };
+          } catch {
+            return null;
+          }
+        }
+
         if (!credentials?.email || !credentials?.password) return null;
         try {
           const res = await fetch(`${API_URL}/auth/login`, {

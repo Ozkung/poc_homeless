@@ -19,7 +19,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/setup') ||
-    pathname.startsWith('/api-access')
+    pathname.startsWith('/api-access') ||
+    pathname.startsWith('/guest/liff-handoff')
   ) {
     return NextResponse.next();
   }
