@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { signOut } from 'next-auth/react';
+import { signOut, signIn } from 'next-auth/react';
 import {
   App, Avatar, Button, Card, Form, Input, Modal,
   Radio, Typography,
@@ -39,6 +39,8 @@ export default function ProfilePage() {
   const [confirmPwOpen, setConfirmPwOpen] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
   const [confirmPwVal, setConfirmPwVal] = useState('');
+  const [linkForm] = Form.useForm();
+  const [linking, setLinking] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const token = (session as any)?.accessToken ?? '';
@@ -128,6 +130,26 @@ export default function ProfilePage() {
         finally { setUnlinking(false); }
       },
     });
+  }
+
+  async function handleLinkRole(values: { email: string; password: string }) {
+    setLinking(true);
+    try {
+      const res = await fetch(`${API}/auth/link-role`, {
+        method: 'POST', headers: headers(),
+        body: JSON.stringify(values),
+      });
+      if (res.ok) {
+        const { code } = await res.json();
+        message.success('เชื่อมต่อบัญชีสำเร็จ กำลังเข้าสู่ระบบ...');
+        await signIn('credentials', { liffHandoffCode: code, redirect: false });
+        window.location.href = '/';
+      } else {
+        const err = await res.json();
+        message.error(err.message ?? 'เกิดข้อผิดพลาด');
+      }
+    } catch { message.error('เกิดข้อผิดพลาด'); }
+    finally { setLinking(false); }
   }
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -234,12 +256,34 @@ export default function ProfilePage() {
               <Text style={{ color: '#06c755', fontWeight: 600 }}>● เชื่อมต่อแล้ว</Text>
               <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{me.lineUserId.slice(0, 20)}...</div>
             </div>
-            <Button danger size="small" loading={unlinking} onClick={handleUnlinkLine}>Unlink</Button>
+            {me?.role !== 'GUEST' && (
+              <Button danger size="small" loading={unlinking} onClick={handleUnlinkLine}>Unlink</Button>
+            )}
           </div>
         ) : (
           <Text type="secondary">ยังไม่เชื่อมต่อ LINE</Text>
         )}
       </Card>
+
+      {me?.role === 'GUEST' && (
+        <Card
+          title={<span style={{ color: '#6366F1', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>เชื่อมต่อกับบัญชีอื่น</span>}
+          style={{ marginTop: 16 }}
+        >
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 12 }}>
+            หากคุณมีบัญชีเจ้าหน้าที่อยู่แล้ว กรอกอีเมลและรหัสผ่านเพื่อเชื่อมต่อบัญชีนี้เข้ากับบัญชีนั้น
+          </Text>
+          <Form form={linkForm} layout="vertical" onFinish={handleLinkRole}>
+            <Form.Item name="email" label="อีเมล" rules={[{ required: true, type: 'email' }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="password" label="รหัสผ่าน" rules={[{ required: true }]}>
+              <Input.Password />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" loading={linking} block>เชื่อมต่อบัญชี</Button>
+          </Form>
+        </Card>
+      )}
 
       <Modal
         title="ยืนยันรหัสผ่านก่อนเปลี่ยน Email"
