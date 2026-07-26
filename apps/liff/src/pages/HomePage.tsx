@@ -46,6 +46,15 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, [systemProfile?.preferredZoneId]);
 
+  async function handleGoToDashboard() {
+    try {
+      const { code } = await api.liffHandoff();
+      window.location.href = `${import.meta.env.VITE_APP_URL}/guest/liff-handoff?code=${code}`;
+    } catch {
+      alert('ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่');
+    }
+  }
+
   const role = systemProfile?.role ?? 'GUEST';
   const roleLabel = ROLE_LABEL[role] ?? role;
   const roleColor = ROLE_COLOR[role] ?? ACCENT;
@@ -111,7 +120,7 @@ export default function HomePage() {
         {/* Action buttons */}
         <div style={{ display: 'flex', gap: 10 }}>
           <button
-            onClick={() => navigate('/profile')}
+            onClick={handleGoToDashboard}
             style={{ flex: 1, padding: '13px', background: '#fff', border: `1.5px solid ${ACCENT}`, color: ACCENT, borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
           >
             แก้ไขโปรไฟล์

@@ -64,6 +64,9 @@ export interface SystemProfile {
 }
 
 export const api = {
+  liffHandoff: () =>
+    request<{ code: string }>('/auth/liff/handoff', { method: 'POST' }),
+
   verifyLiff: (idToken: string) =>
     request<{ accessToken: string }>('/auth/liff/verify', {
       method: 'POST',

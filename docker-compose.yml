@@ -71,6 +71,7 @@ services:
       args:
         VITE_API_URL: https://poc_hl.autratech.net/api
         VITE_LIFF_ID: ${VITE_LIFF_ID}
+        VITE_APP_URL: https://poc_hl.autratech.net
     expose:
       - '80'
     depends_on:
