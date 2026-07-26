@@ -142,8 +142,13 @@ export default function ProfilePage() {
       if (res.ok) {
         const { code } = await res.json();
         message.success('เชื่อมต่อบัญชีสำเร็จ กำลังเข้าสู่ระบบ...');
-        await signIn('credentials', { liffHandoffCode: code, redirect: false });
-        window.location.href = '/';
+        const result = await signIn('credentials', { liffHandoffCode: code, redirect: false });
+        if (result?.ok) {
+          window.location.href = '/';
+        } else {
+          message.error('เชื่อมต่อบัญชีสำเร็จ แต่เข้าสู่ระบบไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่');
+          window.location.href = '/login';
+        }
       } else {
         const err = await res.json();
         message.error(err.message ?? 'เกิดข้อผิดพลาด');
