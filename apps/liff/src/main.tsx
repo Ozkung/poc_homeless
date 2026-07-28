@@ -15,27 +15,30 @@ import AddPage from './pages/AddPage';
 function AppRoutes() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
+  const [debug, setDebug] = useState<string[]>([]);
   const navigate = useNavigate();
   const { setLineProfile, setSystemProfile, setZones } = useProfileStore();
 
   useEffect(() => {
+    const log = (msg: string) => setDebug((d) => [...d, msg]);
+
     async function init() {
       try {
-        console.log('[liff-debug] before liff.init()');
+        log('before liff.init(), liffId=' + (import.meta.env.VITE_LIFF_ID || 'MISSING'));
         await initLiff();
-        console.log('[liff-debug] after liff.init(), isLoggedIn=', liff.isLoggedIn());
+        log('after liff.init(), isLoggedIn=' + liff.isLoggedIn() + ', inClient=' + liff.isInClient());
         const idToken = liff.getIDToken();
-        console.log('[liff-debug] idToken=', idToken ? 'present' : 'NULL');
-        if (!idToken) return; // redirect in progress
+        log('idToken=' + (idToken ? 'present' : 'NULL'));
+        if (!idToken) { log('STOPPED: no idToken, expecting redirect'); return; }
 
         liff.getProfile()
           .then((p) => setLineProfile({ userId: p.userId, displayName: p.displayName, pictureUrl: p.pictureUrl ?? undefined }))
           .catch(() => {});
 
         try {
-          console.log('[liff-debug] calling verifyLiff...');
+          log('calling verifyLiff...');
           const { accessToken } = await api.verifyLiff(idToken);
-          console.log('[liff-debug] verifyLiff succeeded');
+          log('verifyLiff succeeded');
           setToken(accessToken);
           navigate('/', { replace: true });
           Promise.all([api.getMe(), api.getPublicZones()])
@@ -43,7 +46,7 @@ function AppRoutes() {
             .catch(() => {});
           setReady(true);
         } catch (e: any) {
-          console.log('[liff-debug] verifyLiff failed', e?.status, e?.message);
+          log('verifyLiff failed status=' + e?.status + ' msg=' + e?.message);
           if (e.status === 401 || e.message?.includes('not linked')) {
             const zones = await api.getPublicZones().catch(() => []);
             setZones(zones);
@@ -56,6 +59,7 @@ function AppRoutes() {
           }
         }
       } catch (e: any) {
+        log('outer catch: ' + (e?.message ?? String(e)));
         setError(e.message ?? 'เกิดข้อผิดพลาด');
       }
     }
@@ -67,13 +71,17 @@ function AppRoutes() {
       <div style={{ textAlign: 'center' }}>
         <p style={{ fontSize: 40, marginBottom: 12 }}>⚠️</p>
         <p style={{ fontWeight: 600, color: '#374151', fontSize: 15 }}>{error}</p>
+        <pre style={{ textAlign: 'left', fontSize: 10, color: '#999', marginTop: 16, whiteSpace: 'pre-wrap' }}>{debug.join('\n')}</pre>
       </div>
     </div>
   );
 
   if (!ready) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#9CA3AF', fontSize: 14, fontFamily: 'monospace' }}>กำลังโหลด...</p>
+      <div style={{ textAlign: 'center', padding: 20 }}>
+        <p style={{ color: '#9CA3AF', fontSize: 14, fontFamily: 'monospace' }}>กำลังโหลด...</p>
+        <pre style={{ textAlign: 'left', fontSize: 10, color: '#999', marginTop: 16, whiteSpace: 'pre-wrap' }}>{debug.join('\n')}</pre>
+      </div>
     </div>
   );
 
