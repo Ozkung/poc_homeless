@@ -25,7 +25,7 @@ function LiffHandoffContent() {
     }
     signIn('credentials', { liffHandoffCode: code, redirect: false }).then((result) => {
       if (result?.ok) {
-        router.replace('/guest/dashboard');
+        router.replace('/guest/profile');
       } else {
         setError('เข้าสู่ระบบไม่สำเร็จ รหัสอาจหมดอายุ กรุณาเปิดจากลิงก์ใน LINE อีกครั้ง');
       }
