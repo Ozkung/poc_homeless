@@ -3,8 +3,15 @@ export const dynamic = 'force-dynamic';
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { Alert, Spin } from 'antd';
+
+const PROFILE_ROLE_PREFIX: Record<string, string> = {
+  CASE_MANAGER:      'cm',
+  CARE_GIVER:        'fw',
+  MEDICAL_VOLUNTEER: 'medvol',
+  GUEST:             'guest',
+};
 
 export default function LiffHandoffPage() {
   return (
@@ -25,9 +32,11 @@ function LiffHandoffContent() {
       setError('ไม่พบรหัสเข้าสู่ระบบ กรุณาเปิดจากลิงก์ใน LINE อีกครั้ง');
       return;
     }
-    signIn('credentials', { liffHandoffCode: code, redirect: false }).then((result) => {
+    signIn('credentials', { liffHandoffCode: code, redirect: false }).then(async (result) => {
       if (result?.ok) {
-        router.replace('/guest/profile');
+        const session = await getSession();
+        const prefix = PROFILE_ROLE_PREFIX[(session as any)?.role];
+        router.replace(prefix ? `/${prefix}/profile` : '/');
       } else {
         setError('เข้าสู่ระบบไม่สำเร็จ รหัสอาจหมดอายุ กรุณาเปิดจากลิงก์ใน LINE อีกครั้ง');
       }
