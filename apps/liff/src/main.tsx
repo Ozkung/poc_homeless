@@ -21,8 +21,11 @@ function AppRoutes() {
   useEffect(() => {
     async function init() {
       try {
+        console.log('[liff-debug] before liff.init()');
         await initLiff();
+        console.log('[liff-debug] after liff.init(), isLoggedIn=', liff.isLoggedIn());
         const idToken = liff.getIDToken();
+        console.log('[liff-debug] idToken=', idToken ? 'present' : 'NULL');
         if (!idToken) return; // redirect in progress
 
         liff.getProfile()
@@ -30,7 +33,9 @@ function AppRoutes() {
           .catch(() => {});
 
         try {
+          console.log('[liff-debug] calling verifyLiff...');
           const { accessToken } = await api.verifyLiff(idToken);
+          console.log('[liff-debug] verifyLiff succeeded');
           setToken(accessToken);
           navigate('/', { replace: true });
           Promise.all([api.getMe(), api.getPublicZones()])
@@ -38,6 +43,7 @@ function AppRoutes() {
             .catch(() => {});
           setReady(true);
         } catch (e: any) {
+          console.log('[liff-debug] verifyLiff failed', e?.status, e?.message);
           if (e.status === 401 || e.message?.includes('not linked')) {
             const zones = await api.getPublicZones().catch(() => []);
             setZones(zones);
