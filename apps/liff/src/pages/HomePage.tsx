@@ -35,16 +35,15 @@ export default function HomePage() {
     api.getDoctorSchedules()
       .then((all) => {
         const today = new Date(); today.setHours(0, 0, 0, 0);
-        const zoneId = systemProfile?.preferredZoneId;
         const upcoming = all
-          .filter((s: any) => new Date(s.date) >= today && (!zoneId || s.zone?.id === zoneId))
+          .filter((s: any) => new Date(s.date) >= today)
           .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
           .slice(0, 10);
         setSchedules(upcoming);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [systemProfile?.preferredZoneId]);
+  }, []);
 
   async function handleHandoff(target: 'profile' | 'expense-claims') {
     try {
@@ -87,9 +86,6 @@ export default function HomePage() {
         <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', overflow: 'hidden', marginBottom: 16 }}>
           <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid #F1F5F9' }}>
             <p style={{ fontWeight: 700, fontSize: 14, color: '#0F172A', margin: 0 }}>📅 กำหนดการลงพื้นที่ที่จะถึง</p>
-            {systemProfile?.preferredZone && (
-              <p style={{ fontSize: 11, color: '#94A3B8', margin: '3px 0 0' }}>เฉพาะพื้นที่: {systemProfile.preferredZone.name}</p>
-            )}
           </div>
           {loading
             ? <div style={{ padding: '20px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>กำลังโหลด...</div>

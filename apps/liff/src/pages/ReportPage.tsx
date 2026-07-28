@@ -23,12 +23,11 @@ export default function ReportPage() {
   const navigate = useNavigate();
   const { systemProfile } = useProfileStore();
   const [tasks, setTasks] = useState<TodayTask[]>([]);
-  const [state, setState] = useState<'loading' | 'no-zone' | 'no-event' | 'list'>('loading');
+  const [state, setState] = useState<'loading' | 'no-event' | 'list'>('loading');
   const [selected, setSelected] = useState<TodayTask | null>(null);
 
   useEffect(() => {
     if (!systemProfile) return;
-    if (!systemProfile.preferredZoneId) { setState('no-zone'); return; }
 
     api.getTodayTasks()
       .then((data) => {
@@ -48,9 +47,6 @@ export default function ReportPage() {
       {/* Header */}
       <div style={{ background: '#fff', padding: '16px 16px 12px', borderBottom: '1px solid #F1F5F9', position: 'sticky', top: 0, zIndex: 10 }}>
         <h1 style={{ fontSize: 17, fontWeight: 700, color: '#0F172A', margin: 0 }}>ลงตรวจวันนี้</h1>
-        {systemProfile?.preferredZone && (
-          <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>{systemProfile.preferredZone.name}</p>
-        )}
       </div>
 
       {/* States */}
@@ -60,23 +56,11 @@ export default function ReportPage() {
         </div>
       )}
 
-      {state === 'no-zone' && (
-        <div style={{ padding: 40, textAlign: 'center' }}>
-          <p style={{ fontSize: 32, marginBottom: 12 }}>📍</p>
-          <p style={{ fontWeight: 600, color: '#374151', fontSize: 15, marginBottom: 8 }}>ยังไม่ได้ตั้งค่าพื้นที่</p>
-          <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>กรุณาตั้งค่า Zone ก่อนใช้งาน</p>
-          <button onClick={() => navigate('/profile')}
-            style={{ padding: '10px 24px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-            ตั้งค่าโปรไฟล์
-          </button>
-        </div>
-      )}
-
       {state === 'no-event' && (
         <div style={{ padding: 40, textAlign: 'center' }}>
           <p style={{ fontSize: 32, marginBottom: 12 }}>📋</p>
           <p style={{ fontWeight: 600, color: '#374151', fontSize: 15, marginBottom: 4 }}>ไม่มีการลงตรวจวันนี้</p>
-          <p style={{ fontSize: 13, color: '#94A3B8' }}>ในพื้นที่ของคุณยังไม่มี Event วันนี้</p>
+          <p style={{ fontSize: 13, color: '#94A3B8' }}>ยังไม่มี Event วันนี้</p>
         </div>
       )}
 

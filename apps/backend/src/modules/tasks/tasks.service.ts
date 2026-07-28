@@ -44,13 +44,7 @@ export class TasksService {
     }));
   }
 
-  async findTodayZoneTasks(userId: string, orgId: string) {
-    const user = await this.prisma.user.findFirst({
-      where: { id: userId, organizationId: orgId },
-      select: { preferredZoneId: true },
-    });
-    if (!user?.preferredZoneId) return [];
-
+  async findTodayTasks(orgId: string) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -62,7 +56,6 @@ export class TasksService {
           startDate: { lte: todayEnd },
           endDate:   { gte: todayStart },
         },
-        patient: { zoneId: user.preferredZoneId },
       },
       include: this.TASK_INCLUDE,
       orderBy: { patient: { hn: 'asc' } },
@@ -85,16 +78,9 @@ export class TasksService {
     }));
   }
 
-  private async getTaskForGuest(taskId: string, userId: string, orgId: string) {
+  private async getTaskForGuest(taskId: string, orgId: string) {
     const task = await this.findOne(taskId);
-    const user = await this.prisma.user.findFirst({
-      where: { id: userId, organizationId: orgId },
-      select: { preferredZoneId: true },
-    });
     if (task.patient?.organizationId !== orgId) throw new NotFoundException('Task not found');
-    if (!user?.preferredZoneId || task.patient?.zoneId !== user.preferredZoneId) {
-      throw new NotFoundException('Task not found');
-    }
     return task;
   }
 
@@ -223,7 +209,7 @@ export class TasksService {
   }
 
   async guestCheckin(taskId: string, userId: string, orgId: string): Promise<{ activityId: string }> {
-    const task = await this.getTaskForGuest(taskId, userId, orgId);
+    const task = await this.getTaskForGuest(taskId, orgId);
     const [, activity] = await this.prisma.$transaction([
       this.prisma.eventTask.update({
         where: { id: taskId },
@@ -244,7 +230,7 @@ export class TasksService {
   }
 
   async guestAddNote(taskId: string, userId: string, orgId: string, note: string): Promise<{ activityId: string }> {
-    const task = await this.getTaskForGuest(taskId, userId, orgId);
+    const task = await this.getTaskForGuest(taskId, orgId);
     const activity = await this.prisma.activity.create({
       data: {
         actorId:   userId,
@@ -275,7 +261,7 @@ export class TasksService {
     taskId: string, userId: string, orgId: string,
     answers: Array<{ fieldId: string; value: string }>,
   ): Promise<{ submissionId: string }> {
-    const task = await this.getTaskForGuest(taskId, userId, orgId);
+    const task = await this.getTaskForGuest(taskId, orgId);
     if (task.status === 'DONE') {
       throw new ConflictException('Form already submitted for this task');
     }
