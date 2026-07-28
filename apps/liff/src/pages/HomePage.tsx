@@ -91,6 +91,7 @@ export default function HomePage() {
               <p style={{ fontSize: 11, color: '#94A3B8', margin: '3px 0 0' }}>เฉพาะพื้นที่: {systemProfile.preferredZone.name}</p>
             )}
           </div>
+          <p>Test Compose</p>
           {loading
             ? <div style={{ padding: '20px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>กำลังโหลด...</div>
             : schedules.length === 0
