@@ -3,15 +3,21 @@ import { useEffect, useState } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useIsLiffEmbed } from '@/hooks/useIsLiffEmbed';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
+  const isLiffEmbed = useIsLiffEmbed();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // I1: reset drawer when resizing back to desktop
   useEffect(() => {
     if (!isMobile) setSidebarOpen(false);
   }, [isMobile]);
+
+  if (isLiffEmbed) {
+    return <main className="p-4 overflow-y-auto h-screen bg-[#f0f2f5]">{children}</main>;
+  }
 
   return (
     <div className={`flex h-screen bg-[#f0f2f5] ${isMobile ? 'flex-col' : ''}`}>

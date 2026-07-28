@@ -36,7 +36,7 @@ function LiffHandoffContent() {
       if (result?.ok) {
         const session = await getSession();
         const prefix = PROFILE_ROLE_PREFIX[(session as any)?.role];
-        router.replace(prefix ? `/${prefix}/profile` : '/');
+        router.replace(prefix ? `/${prefix}/profile?liff=1` : '/');
       } else {
         setError('เข้าสู่ระบบไม่สำเร็จ รหัสอาจหมดอายุ กรุณาเปิดจากลิงก์ใน LINE อีกครั้ง');
       }

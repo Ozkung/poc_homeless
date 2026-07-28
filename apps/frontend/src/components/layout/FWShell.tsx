@@ -5,6 +5,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { LayoutDashboard, Users, CheckSquare, UserCircle, LogOut, Wallet } from 'lucide-react';
 import type { MenuProps } from 'antd';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useIsLiffEmbed } from '@/hooks/useIsLiffEmbed';
 
 const { Text } = Typography;
 const ICON_SIZE = 15;
@@ -14,6 +15,11 @@ export default function FWShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { data: session } = useSession();
   const isMobile = useIsMobile();
+  const isLiffEmbed = useIsLiffEmbed();
+
+  if (isLiffEmbed) {
+    return <main style={{ height: '100vh', overflowY: 'auto', padding: isMobile ? 16 : 28, background: '#f0f2f5' }}>{children}</main>;
+  }
 
   const navItems: MenuProps['items'] = [
     { key: '/fw/dashboard', label: 'Dashboard',     icon: <LayoutDashboard size={ICON_SIZE} /> },
