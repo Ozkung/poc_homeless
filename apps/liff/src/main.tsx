@@ -80,6 +80,7 @@ function AppRoutes() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', padding: 20 }}>
         <p style={{ color: '#9CA3AF', fontSize: 14, fontFamily: 'monospace' }}>กำลังโหลด...</p>
+        <p>Test Compose</p>
         <pre style={{ textAlign: 'left', fontSize: 10, color: '#999', marginTop: 16, whiteSpace: 'pre-wrap' }}>{debug.join('\n')}</pre>
       </div>
     </div>
