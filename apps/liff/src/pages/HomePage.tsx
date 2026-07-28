@@ -46,10 +46,10 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, [systemProfile?.preferredZoneId]);
 
-  async function handleGoToDashboard() {
+  async function handleHandoff(target: 'profile' | 'expense-claims') {
     try {
       const { code } = await api.liffHandoff();
-      window.location.href = `${import.meta.env.VITE_APP_URL}/guest/liff-handoff?code=${code}`;
+      window.location.href = `${import.meta.env.VITE_APP_URL}/guest/liff-handoff?code=${code}&target=${target}`;
     } catch {
       alert('ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่');
     }
@@ -118,9 +118,9 @@ export default function HomePage() {
         </div>
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
           <button
-            onClick={handleGoToDashboard}
+            onClick={() => handleHandoff('profile')}
             style={{ flex: 1, padding: '13px', background: '#fff', border: `1.5px solid ${ACCENT}`, color: ACCENT, borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
           >
             แก้ไขโปรไฟล์
@@ -132,6 +132,12 @@ export default function HomePage() {
             รายงานผู้ป่วย
           </button>
         </div>
+        <button
+          onClick={() => handleHandoff('expense-claims')}
+          style={{ width: '100%', padding: '13px', background: '#fff', border: '1.5px solid #16A34A', color: '#16A34A', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+        >
+          💰 เบิกค่าใช้จ่าย
+        </button>
 
       </div>
     </div>

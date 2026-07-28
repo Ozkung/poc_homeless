@@ -13,6 +13,12 @@ const PROFILE_ROLE_PREFIX: Record<string, string> = {
   GUEST:             'guest',
 };
 
+// Only roles the backend actually allows to file expense claims.
+const EXPENSE_CLAIMS_ROLE_PREFIX: Record<string, string> = {
+  CASE_MANAGER: 'cm',
+  CARE_GIVER:   'fw',
+};
+
 export default function LiffHandoffPage() {
   return (
     <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Spin size="large" /></div>}>
@@ -32,10 +38,24 @@ function LiffHandoffContent() {
       setError('ไม่พบรหัสเข้าสู่ระบบ กรุณาเปิดจากลิงก์ใน LINE อีกครั้ง');
       return;
     }
+    const target = searchParams.get('target') === 'expense-claims' ? 'expense-claims' : 'profile';
+
     signIn('credentials', { liffHandoffCode: code, redirect: false }).then(async (result) => {
       if (result?.ok) {
         const session = await getSession();
-        const prefix = PROFILE_ROLE_PREFIX[(session as any)?.role];
+        const role = (session as any)?.role;
+
+        if (target === 'expense-claims') {
+          const prefix = EXPENSE_CLAIMS_ROLE_PREFIX[role];
+          if (!prefix) {
+            setError('บัญชีนี้ยังไม่มีสิทธิ์เบิกค่าใช้จ่าย กรุณาเชื่อมต่อบัญชีเจ้าหน้าที่ก่อนในหน้าโปรไฟล์');
+            return;
+          }
+          router.replace(`/${prefix}/expense-claims?liff=1`);
+          return;
+        }
+
+        const prefix = PROFILE_ROLE_PREFIX[role];
         router.replace(prefix ? `/${prefix}/profile?liff=1` : '/');
       } else {
         setError('เข้าสู่ระบบไม่สำเร็จ รหัสอาจหมดอายุ กรุณาเปิดจากลิงก์ใน LINE อีกครั้ง');
