@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Table, Button, Modal, Form, Input, InputNumber, DatePicker, Radio, Select, message, Tag } from 'antd';
+import { Table, Button, Modal, Form, Input, InputNumber, DatePicker, Radio, Select, message, Tag, Empty } from 'antd';
 import { useSession } from 'next-auth/react';
 import { Plus } from 'lucide-react';
 import dayjs from 'dayjs';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -25,9 +26,14 @@ interface ExpenseClaim {
 const STATUS_COLOR: Record<ClaimStatus, string> = { PENDING: 'gold', APPROVED: 'green', REJECTED: 'red' };
 const STATUS_LABEL: Record<ClaimStatus, string> = { PENDING: 'รอพิจารณา', APPROVED: 'อนุมัติแล้ว', REJECTED: 'ไม่อนุมัติ' };
 
+function payeeLabel(r: ExpenseClaim) {
+  return r.payeeType === 'PATIENT' ? `ผู้ป่วย (HN ${r.patient?.hn ?? '-'})` : 'ตัวเอง';
+}
+
 export default function FWExpenseClaimsPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
+  const isMobile = useIsMobile();
   const [claims, setClaims] = useState<ExpenseClaim[]>([]);
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
@@ -93,10 +99,7 @@ export default function FWExpenseClaimsPage() {
     { title: 'วันที่ขอ', dataIndex: 'requestDate', render: (v: string) => dayjs(v).format('DD/MM/YYYY') },
     { title: 'จำนวนเงิน', dataIndex: 'amount', render: (v: number) => `฿${v.toLocaleString()}` },
     { title: 'รายละเอียด', dataIndex: 'description' },
-    {
-      title: 'เบิกเพื่อ',
-      render: (_: any, r: ExpenseClaim) => r.payeeType === 'PATIENT' ? `ผู้ป่วย (HN ${r.patient?.hn ?? '-'})` : 'ตัวเอง',
-    },
+    { title: 'เบิกเพื่อ', render: (_: any, r: ExpenseClaim) => payeeLabel(r) },
     { title: 'สถานะ', dataIndex: 'status', render: (v: ClaimStatus) => <Tag color={STATUS_COLOR[v]}>{STATUS_LABEL[v]}</Tag> },
     { title: 'หมายเหตุจากผู้อนุมัติ', dataIndex: 'reviewNote', render: (v?: string) => v ?? '-' },
   ];
@@ -110,7 +113,34 @@ export default function FWExpenseClaimsPage() {
         </Button>
       </div>
 
-      <Table dataSource={claims} rowKey="id" size="small" columns={columns} />
+      {isMobile ? (
+        claims.length === 0 ? (
+          <Empty description="ยังไม่มีคำขอเบิกเงิน" style={{ marginTop: 40 }} />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {claims.map((c) => (
+              <div key={c.id} style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 12, padding: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 17 }}>฿{c.amount.toLocaleString()}</div>
+                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>{dayjs(c.requestDate).format('DD/MM/YYYY')}</div>
+                  </div>
+                  <Tag color={STATUS_COLOR[c.status]}>{STATUS_LABEL[c.status]}</Tag>
+                </div>
+                <div style={{ fontSize: 13, marginBottom: 4 }}>{c.description}</div>
+                <div style={{ fontSize: 12, color: '#595959' }}>เบิกเพื่อ: {payeeLabel(c)}</div>
+                {c.reviewNote && (
+                  <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6, paddingTop: 6, borderTop: '1px solid #f5f5f5' }}>
+                    หมายเหตุจากผู้อนุมัติ: {c.reviewNote}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )
+      ) : (
+        <Table dataSource={claims} rowKey="id" size="small" columns={columns} />
+      )}
 
       <Modal
         title="สร้างคำขอเบิกเงิน"
