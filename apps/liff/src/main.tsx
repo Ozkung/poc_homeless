@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import liff from '@line/liff';
 import { initLiff } from './lib/liff';
 import { api, setToken } from './lib/api';
@@ -12,11 +12,18 @@ import ReportPage from './pages/ReportPage';
 import AddPage from './pages/AddPage';
 
 
+// Routes that render immediately without waiting for the LIFF/backend auth
+// handshake — they do their own auth check at the point of action instead
+// (e.g. AddPage checks getToken() on submit and sends unlinked users to /register).
+const PUBLIC_PATHS = ['/add'];
+
 function AppRoutes() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const [debug, setDebug] = useState<string[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
   const { setLineProfile, setSystemProfile, setZones } = useProfileStore();
 
   useEffect(() => {
@@ -40,7 +47,7 @@ function AppRoutes() {
           const { accessToken } = await api.verifyLiff(idToken);
           log('verifyLiff succeeded');
           setToken(accessToken);
-          navigate('/', { replace: true });
+          if (!isPublicPath) navigate('/', { replace: true });
           Promise.all([api.getMe(), api.getPublicZones()])
             .then(([me, zones]) => { setSystemProfile(me); setZones(zones); })
             .catch(() => {});
@@ -50,21 +57,27 @@ function AppRoutes() {
           if (e.status === 401 || e.message?.includes('not linked')) {
             const zones = await api.getPublicZones().catch(() => []);
             setZones(zones);
-            navigate('/register', { replace: true });
+            if (!isPublicPath) navigate('/register', { replace: true });
             setReady(true);
           } else if (e.status === 403) {
-            setError('ไม่มีสิทธิ์เข้าใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
+            if (!isPublicPath) setError('ไม่มีสิทธิ์เข้าใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
           } else {
             throw e;
           }
         }
       } catch (e: any) {
         log('outer catch: ' + (e?.message ?? String(e)));
-        setError(e.message ?? 'เกิดข้อผิดพลาด');
+        if (!isPublicPath) setError(e.message ?? 'เกิดข้อผิดพลาด');
       }
     }
     init();
   }, []);
+
+  if (isPublicPath) return (
+    <Routes>
+      <Route path="/add" element={<AddPage />} />
+    </Routes>
+  );
 
   if (error) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, getToken } from '../lib/api';
 
 const ACCENT = '#6366F1';
 const INP: React.CSSProperties = {
@@ -39,6 +39,7 @@ export default function AddPage() {
       setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function submit() {
+    if (!getToken()) { navigate('/register'); return; }
     setSubmitting(true); setError('');
     try {
       const data = await api.guestReportPatient({
