@@ -16,6 +16,17 @@ const STAFF_ROLES = [
   UserRole.MEDICAL_VOLUNTEER,
 ];
 
+// LIFF's guest-* endpoints: GUEST plus the roles the LIFF app itself
+// still serves after account-linking (see HomePage's PROFILE_ROLE_PREFIX
+// in the liff-handoff page) — a linked account keeps using this same
+// LIFF flow, so it must keep passing this guard too.
+const LIFF_ROLES = [
+  UserRole.GUEST,
+  UserRole.CARE_GIVER,
+  UserRole.CASE_MANAGER,
+  UserRole.MEDICAL_VOLUNTEER,
+];
+
 @Controller('tasks')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(...STAFF_ROLES)
@@ -62,16 +73,16 @@ export class TasksController {
     return this.tasks.findTaskActivities(id, user.orgId);
   }
 
-  // ── LIFF endpoints — GUEST zone-based auth ───────────────────────────
+  // ── LIFF endpoints ────────────────────────────────────────────────────
 
   @Post(':id/guest-checkin')
-  @Roles(UserRole.GUEST)
+  @Roles(...LIFF_ROLES)
   guestCheckin(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.tasks.guestCheckin(id, user.sub, user.orgId);
   }
 
   @Post(':id/guest-note')
-  @Roles(UserRole.GUEST)
+  @Roles(...LIFF_ROLES)
   guestNote(
     @Param('id') id: string,
     @Body('note') note: string,
@@ -82,7 +93,7 @@ export class TasksController {
 
   @Post(':id/guest-submit')
   @HttpCode(HttpStatus.CREATED)
-  @Roles(UserRole.GUEST)
+  @Roles(...LIFF_ROLES)
   guestSubmit(
     @Param('id') id: string,
     @Body('answers') answers: Array<{ fieldId: string; value: string }>,
