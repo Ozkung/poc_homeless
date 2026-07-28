@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-ro
 import liff from '@line/liff';
 import { initLiff } from './lib/liff';
 import { api, setToken } from './lib/api';
+import { markAuthChecked } from './lib/authState';
 import { useProfileStore } from './store/profileStore';
 import HomePage from './pages/HomePage';
 import RegisterPage from './pages/RegisterPage';
@@ -36,7 +37,7 @@ function AppRoutes() {
         log('after liff.init(), isLoggedIn=' + liff.isLoggedIn() + ', inClient=' + liff.isInClient());
         const idToken = liff.getIDToken();
         log('idToken=' + (idToken ? 'present' : 'NULL'));
-        if (!idToken) { log('STOPPED: no idToken, expecting redirect'); return; }
+        if (!idToken) { log('STOPPED: no idToken, expecting redirect'); markAuthChecked(false); return; }
 
         liff.getProfile()
           .then((p) => setLineProfile({ userId: p.userId, displayName: p.displayName, pictureUrl: p.pictureUrl ?? undefined }))
@@ -47,6 +48,7 @@ function AppRoutes() {
           const { accessToken } = await api.verifyLiff(idToken);
           log('verifyLiff succeeded');
           setToken(accessToken);
+          markAuthChecked(true);
           if (!isPublicPath) navigate('/', { replace: true });
           Promise.all([api.getMe(), api.getPublicZones()])
             .then(([me, zones]) => { setSystemProfile(me); setZones(zones); })
@@ -57,9 +59,11 @@ function AppRoutes() {
           if (e.status === 401 || e.message?.includes('not linked')) {
             const zones = await api.getPublicZones().catch(() => []);
             setZones(zones);
+            markAuthChecked(false);
             if (!isPublicPath) navigate('/register', { replace: true });
             setReady(true);
           } else if (e.status === 403) {
+            markAuthChecked(false);
             if (!isPublicPath) setError('ไม่มีสิทธิ์เข้าใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
           } else {
             throw e;
@@ -67,6 +71,7 @@ function AppRoutes() {
         }
       } catch (e: any) {
         log('outer catch: ' + (e?.message ?? String(e)));
+        markAuthChecked(false);
         if (!isPublicPath) setError(e.message ?? 'เกิดข้อผิดพลาด');
       }
     }

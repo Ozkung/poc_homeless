@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, getToken } from '../lib/api';
+import { waitForAuth } from '../lib/authState';
 
 const ACCENT = '#6366F1';
 const INP: React.CSSProperties = {
@@ -39,8 +40,11 @@ export default function AddPage() {
       setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function submit() {
-    if (!getToken()) { navigate('/register'); return; }
     setSubmitting(true); setError('');
+    if (!getToken()) {
+      await waitForAuth();
+      if (!getToken()) { setSubmitting(false); navigate('/register'); return; }
+    }
     try {
       const data = await api.guestReportPatient({
         firstName: form.firstName.trim(),
