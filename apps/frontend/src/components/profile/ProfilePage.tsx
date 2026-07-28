@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, getSession } from 'next-auth/react';
 import { signOut, signIn } from 'next-auth/react';
 import {
   App, Avatar, Button, Card, Form, Input, Modal,
@@ -15,7 +15,15 @@ interface MeData {
   id: string; email: string; displayName: string; role: string;
   phone: string | null; gender: 'MALE' | 'FEMALE' | 'OTHER' | null;
   avatarUrl: string | null; lineUserId: string | null; createdAt: string;
+  preferredZone: { id: string; name: string; color: string | null } | null;
 }
+
+const PROFILE_ROLE_PREFIX: Record<string, string> = {
+  CASE_MANAGER:      'cm',
+  CARE_GIVER:        'fw',
+  MEDICAL_VOLUNTEER: 'medvol',
+  GUEST:             'guest',
+};
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'ผู้ดูแลระบบ',
@@ -144,7 +152,9 @@ export default function ProfilePage() {
         message.success('เชื่อมต่อบัญชีสำเร็จ กำลังเข้าสู่ระบบ...');
         const result = await signIn('credentials', { liffHandoffCode: code, redirect: false });
         if (result?.ok) {
-          window.location.href = '/';
+          const newSession = await getSession();
+          const prefix = PROFILE_ROLE_PREFIX[(newSession as any)?.role];
+          window.location.href = prefix ? `/${prefix}/profile` : '/';
         } else {
           message.error('เชื่อมต่อบัญชีสำเร็จ แต่เข้าสู่ระบบไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่');
           window.location.href = '/login';
@@ -203,10 +213,15 @@ export default function ProfilePage() {
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{me?.displayName}</div>
-            <div style={{ marginTop: 4 }}>
+            <div style={{ marginTop: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ background: '#e6f4ff', color: '#1677ff', padding: '2px 8px', borderRadius: 4, fontSize: 12 }}>
                 {me?.role ? (ROLE_LABEL[me.role] ?? me.role) : '…'}
               </span>
+              {me?.preferredZone && (
+                <span style={{ background: '#f6ffed', color: '#389e0d', padding: '2px 8px', borderRadius: 4, fontSize: 12 }}>
+                  📍 เขตที่รับผิดชอบ: {me.preferredZone.name}
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
               เข้าร่วม {me?.createdAt ? new Date(me.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : '…'}
