@@ -23,6 +23,7 @@ export interface TodayTask {
   eventId: string;
   eventTitle: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'NOT_FOUND';
+  checkedIn: boolean;
   patient: {
     id: string; hn: string; name: string;
     age?: number; status: string; conditions: string[];

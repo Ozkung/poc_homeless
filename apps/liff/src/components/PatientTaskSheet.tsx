@@ -14,12 +14,13 @@ interface Props {
   task: TodayTask;
   onClose: () => void;
   onStatusChange: (taskId: string, status: string) => void;
+  onCheckin: (eventId: string) => void;
 }
 
-export default function PatientTaskSheet({ task, onClose, onStatusChange }: Props) {
+export default function PatientTaskSheet({ task, onClose, onStatusChange, onCheckin }: Props) {
   const [tab, setTab] = useState<'form' | 'note'>('form');
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [checkinState, setCheckinState] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [checkinLoading, setCheckinLoading] = useState(false);
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'done'>('idle');
   const [note, setNote] = useState('');
   const [noteState, setNoteState] = useState<'idle' | 'loading'>('idle');
@@ -36,15 +37,16 @@ export default function PatientTaskSheet({ task, onClose, onStatusChange }: Prop
   const formValid = requiredIds.every((id) => (answers[id] ?? '').toString().trim() !== '');
 
   async function handleCheckin() {
-    if (checkinState !== 'idle') return;
-    setCheckinState('loading'); setError('');
+    if (task.checkedIn || checkinLoading) return;
+    setCheckinLoading(true); setError('');
     try {
       await api.guestCheckin(task.taskId);
-      setCheckinState('done');
+      onCheckin(task.eventId);
       onStatusChange(task.taskId, 'IN_PROGRESS');
     } catch (e: any) {
       setError(e.message ?? 'Check-in ล้มเหลว');
-      setCheckinState('idle');
+    } finally {
+      setCheckinLoading(false);
     }
   }
 
@@ -193,14 +195,14 @@ export default function PatientTaskSheet({ task, onClose, onStatusChange }: Prop
               }
 
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button onClick={handleCheckin} disabled={checkinState === 'loading'}
+                <button onClick={handleCheckin} disabled={checkinLoading || task.checkedIn}
                   style={{
                     flex: 1, padding: '11px 0', border: `1px solid ${ACCENT}`, borderRadius: 10,
-                    background: checkinState === 'done' ? '#F0FDF4' : '#fff',
-                    color: checkinState === 'done' ? '#16A34A' : ACCENT,
-                    fontWeight: 700, fontSize: 14, cursor: checkinState === 'loading' ? 'default' : 'pointer',
+                    background: task.checkedIn ? '#F0FDF4' : '#fff',
+                    color: task.checkedIn ? '#16A34A' : ACCENT,
+                    fontWeight: 700, fontSize: 14, cursor: (checkinLoading || task.checkedIn) ? 'default' : 'pointer',
                   }}>
-                  {checkinState === 'loading' ? '...' : checkinState === 'done' ? '✓ Check-in แล้ว' : 'Check-in'}
+                  {checkinLoading ? '...' : task.checkedIn ? '✓ Check-in แล้ว' : 'Check-in'}
                 </button>
                 <button onClick={handleSubmitForm} disabled={!formValid || submitState !== 'idle'}
                   style={{

@@ -42,6 +42,12 @@ export default function ReportPage() {
     setSelected((prev) => prev?.taskId === taskId ? { ...prev, status: status as TodayTask['status'] } : prev);
   }
 
+  // Check-in is per-event, not per-task — mark every task sharing this eventId.
+  function handleCheckin(eventId: string) {
+    setTasks((prev) => prev.map((t) => t.eventId === eventId ? { ...t, checkedIn: true } : t));
+    setSelected((prev) => prev?.eventId === eventId ? { ...prev, checkedIn: true } : prev);
+  }
+
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: 80 }}>
       {/* Header */}
@@ -130,6 +136,7 @@ export default function ReportPage() {
           task={selected}
           onClose={() => setSelected(null)}
           onStatusChange={handleStatusChange}
+          onCheckin={handleCheckin}
         />
       )}
     </div>

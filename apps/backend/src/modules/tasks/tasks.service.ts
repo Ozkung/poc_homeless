@@ -44,7 +44,7 @@ export class TasksService {
     }));
   }
 
-  async findTodayTasks(orgId: string) {
+  async findTodayTasks(orgId: string, userId: string) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -61,11 +61,19 @@ export class TasksService {
       orderBy: { patient: { hn: 'asc' } },
     });
 
+    const eventIds = [...new Set(tasks.map((t) => t.event.id))];
+    const checkins = await this.prisma.activity.findMany({
+      where: { type: 'CHECK_IN', actorId: userId, eventId: { in: eventIds } },
+      select: { eventId: true },
+    });
+    const checkedInEventIds = new Set(checkins.map((c) => c.eventId));
+
     return tasks.map((t: any) => ({
       taskId:      t.id,
       eventId:     t.event.id,
       eventTitle:  t.event.title,
       status:      t.status,
+      checkedIn:   checkedInEventIds.has(t.event.id),
       patient: {
         id:         t.patient.id,
         hn:         t.patient.hn,
@@ -210,6 +218,12 @@ export class TasksService {
 
   async guestCheckin(taskId: string, userId: string, orgId: string): Promise<{ activityId: string }> {
     const task = await this.getTaskForGuest(taskId, orgId);
+
+    const existing = await this.prisma.activity.findFirst({
+      where: { type: 'CHECK_IN', actorId: userId, eventId: task.eventId },
+    });
+    if (existing) throw new ConflictException('เช็คอินสำหรับ event นี้ไปแล้ว');
+
     const [, activity] = await this.prisma.$transaction([
       this.prisma.eventTask.update({
         where: { id: taskId },
