@@ -73,9 +73,6 @@ export default function HomePage() {
             <p style={{ fontWeight: 700, fontSize: 15, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {systemProfile?.displayName ?? lineProfile?.displayName ?? '—'}
             </p>
-            {systemProfile?.preferredZone && (
-              <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>📍 {systemProfile.preferredZone.name}</p>
-            )}
           </div>
           <span style={{ fontSize: 11, fontWeight: 700, color: roleColor, background: roleColor + '18', border: `1px solid ${roleColor}44`, borderRadius: 20, padding: '3px 10px', whiteSpace: 'nowrap' }}>
             {roleLabel}

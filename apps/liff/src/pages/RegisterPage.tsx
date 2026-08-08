@@ -31,8 +31,8 @@ const TERMS = `ข้อกำหนดการใช้งาน (Terms of Use
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { lineProfile, zones, setSystemProfile } = useProfileStore();
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', zoneId: '' });
+  const { lineProfile, setSystemProfile } = useProfileStore();
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
   const [step, setStep] = useState<'form' | 'terms'>('form');
   const [scrolled, setScrolled] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -54,7 +54,6 @@ export default function RegisterPage() {
         lastName: form.lastName.trim(),
         email: form.email.trim(),
         phone: form.phone.trim() || undefined,
-        zoneId: form.zoneId || undefined,
       });
       setToken(accessToken);
       navigate('/', { replace: true });
@@ -124,13 +123,6 @@ export default function RegisterPage() {
         <div>
           <label style={LBL}>เบอร์โทรศัพท์</label>
           <input style={INP} type="tel" value={form.phone} onChange={set('phone')} placeholder="08xxxxxxxx" />
-        </div>
-        <div>
-          <label style={LBL}>พื้นที่ที่สนใจ</label>
-          <select style={{ ...INP, appearance: 'none' }} value={form.zoneId} onChange={set('zoneId')}>
-            <option value="">— เลือกพื้นที่ —</option>
-            {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
-          </select>
         </div>
       </div>
 

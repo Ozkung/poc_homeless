@@ -25,7 +25,7 @@ function AppRoutes() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
-  const { setLineProfile, setSystemProfile, setZones } = useProfileStore();
+  const { setLineProfile, setSystemProfile } = useProfileStore();
 
   useEffect(() => {
     const log = (msg: string) => setDebug((d) => [...d, msg]);
@@ -50,15 +50,11 @@ function AppRoutes() {
           setToken(accessToken);
           markAuthChecked(true);
           if (!isPublicPath) navigate('/', { replace: true });
-          Promise.all([api.getMe(), api.getPublicZones()])
-            .then(([me, zones]) => { setSystemProfile(me); setZones(zones); })
-            .catch(() => {});
+          api.getMe().then(setSystemProfile).catch(() => {});
           setReady(true);
         } catch (e: any) {
           log('verifyLiff failed status=' + e?.status + ' msg=' + e?.message);
           if (e.status === 401 || e.message?.includes('not linked')) {
-            const zones = await api.getPublicZones().catch(() => []);
-            setZones(zones);
             markAuthChecked(false);
             if (!isPublicPath) navigate('/register', { replace: true });
             setReady(true);

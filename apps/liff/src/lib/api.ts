@@ -53,16 +53,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-export interface Zone { id: string; name: string; color: string }
-
 export interface SystemProfile {
   id: string;
   email: string;
   displayName?: string;
   phone?: string | null;
   role: string;
-  preferredZoneId?: string | null;
-  preferredZone?: Zone | null;
 }
 
 export const api = {
@@ -77,19 +73,16 @@ export const api = {
 
   guestRegister: (data: {
     idToken: string; firstName: string; lastName: string;
-    email: string; phone?: string; zoneId?: string;
+    email: string; phone?: string;
   }) =>
     request<{ accessToken: string }>('/auth/liff/guest-register', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  getPublicZones: (): Promise<Zone[]> =>
-    fetch(`${API_URL}/auth/public/zones`).then((r) => r.ok ? r.json() : []),
-
   getMe: () => request<SystemProfile>('/auth/me'),
 
-  updateMe: (data: { displayName?: string; phone?: string; preferredZoneId?: string }) =>
+  updateMe: (data: { displayName?: string; phone?: string }) =>
     request<SystemProfile>('/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(data),

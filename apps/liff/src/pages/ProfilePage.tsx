@@ -16,8 +16,8 @@ const LBL: React.CSSProperties = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { systemProfile, zones, updateSystemProfile } = useProfileStore();
-  const [form, setForm] = useState({ displayName: '', phone: '', preferredZoneId: '' });
+  const { systemProfile, updateSystemProfile } = useProfileStore();
+  const [form, setForm] = useState({ displayName: '', phone: '' });
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
   const [error, setError] = useState('');
@@ -27,7 +27,6 @@ export default function ProfilePage() {
     setForm({
       displayName: systemProfile.displayName ?? '',
       phone: systemProfile.phone ?? '',
-      preferredZoneId: systemProfile.preferredZoneId ?? '',
     });
   }, [systemProfile]);
 
@@ -41,7 +40,6 @@ export default function ProfilePage() {
       const updated = await api.updateMe({
         displayName: form.displayName.trim() || undefined,
         phone: form.phone.trim() || undefined,
-        preferredZoneId: form.preferredZoneId, // always send; empty string → backend sets null
       });
       updateSystemProfile(updated);
       setToast('บันทึกสำเร็จ');
@@ -68,13 +66,6 @@ export default function ProfilePage() {
         <div>
           <label style={LBL}>เบอร์โทรศัพท์</label>
           <input style={INP} type="tel" value={form.phone} onChange={set('phone')} placeholder="08xxxxxxxx" />
-        </div>
-        <div>
-          <label style={LBL}>พื้นที่ที่สนใจ</label>
-          <select style={{ ...INP, appearance: 'none' } as React.CSSProperties} value={form.preferredZoneId} onChange={set('preferredZoneId')}>
-            <option value="">— ไม่ระบุ —</option>
-            {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
-          </select>
         </div>
       </div>
 
