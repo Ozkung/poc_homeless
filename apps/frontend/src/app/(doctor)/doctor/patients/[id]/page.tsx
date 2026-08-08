@@ -11,6 +11,7 @@ import { STATUS_OPTIONS } from '@/lib/patientStatus';
 import PatientEditDrawer from '@/components/patients/PatientEditDrawer';
 import PatientDeleteButton from '@/components/patients/PatientDeleteButton';
 import DoctorCarePlanTab from './care-plan-tab';
+import DrugNameAutoComplete from '@/components/inventory/DrugNameAutoComplete';
 
 interface MatchedMed {
   prescName: string;
@@ -56,10 +57,15 @@ function StatusSelector({ patientId, currentStatus, token, onUpdated }: { patien
   );
 }
 
-function MedicationRow({ med, index, onChange, onRemove }: any) {
+function MedicationRow({ med, index, onChange, onRemove, inventoryItems }: any) {
   return (
     <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
-      <Input placeholder="ชื่อยา" value={med.name} onChange={(e) => onChange(index, 'name', e.target.value)} style={{ flex: 2 }} />
+      <DrugNameAutoComplete
+        drugs={inventoryItems}
+        value={med.name}
+        onChange={(value) => onChange(index, 'name', value)}
+        style={{ flex: 2 }}
+      />
       <Input placeholder="ขนาด (เช่น 500mg)" value={med.dosage} onChange={(e) => onChange(index, 'dosage', e.target.value)} style={{ flex: 1 }} />
       <Input placeholder="ความถี่ (เช่น วันละ 2 ครั้ง)" value={med.frequency} onChange={(e) => onChange(index, 'frequency', e.target.value)} style={{ flex: 2 }} />
       <Input placeholder="ระยะเวลา" value={med.duration} onChange={(e) => onChange(index, 'duration', e.target.value)} style={{ flex: 1 }} />
@@ -288,6 +294,13 @@ export default function DoctorPatientDetailPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         <Button icon={<ArrowLeft size={15} />} onClick={() => router.push('/doctor/patients')} type="text" style={{ flexShrink: 0, marginTop: 2 }} />
+        {patient.photoUrl && (
+          <img
+            src={`${API_URL}${patient.photoUrl}`}
+            alt="รูปผู้ป่วย"
+            style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', border: '1px solid #f0f0f0', flexShrink: 0 }}
+          />
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ fontSize: 11, color: '#0ea5e9', fontWeight: 600, textTransform: 'uppercase' }}>Doctor Portal</Text>
           <Title level={4} style={{ margin: 0, wordBreak: 'break-word' }}>{patient.name}</Title>
@@ -637,7 +650,7 @@ export default function DoctorPatientDetailPage() {
           <Text type="secondary" style={{ fontSize: 12 }}>ชื่อยา / ขนาด / ความถี่ / ระยะเวลา</Text>
         </div>
         {medications.map((med, i) => (
-          <MedicationRow key={i} med={med} index={i} onChange={updateMed} onRemove={(idx: number) => setMedications((prev) => prev.filter((_, j) => j !== idx))} />
+          <MedicationRow key={i} med={med} index={i} onChange={updateMed} onRemove={(idx: number) => setMedications((prev) => prev.filter((_, j) => j !== idx))} inventoryItems={inventoryItems} />
         ))}
         <Button size="small" onClick={() => setMedications((prev) => [...prev, { name: '', dosage: '', frequency: '', duration: '', notes: '' }])} style={{ marginBottom: 16 }}>
           + เพิ่มยา

@@ -9,6 +9,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 import { CreateItemDto } from './dto/create-item.dto';
+import { UpdateItemDto } from './dto/update-item.dto';
 import { StockInDto } from './dto/stock-in.dto';
 import { DeductDto } from './dto/deduct.dto';
 import { AdjRequestDto } from './dto/adj-request.dto';
@@ -51,6 +52,12 @@ export class InventoryController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.inventory.reviewAdj(id, user.sub, user.orgId, dto);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CASE_MANAGER)
+  updateItem(@Param('id') id: string, @Body() dto: UpdateItemDto, @CurrentUser() user: JwtPayload) {
+    return this.inventory.updateItem(id, user.orgId, dto, user.sub);
   }
 
   @Get('expiring')

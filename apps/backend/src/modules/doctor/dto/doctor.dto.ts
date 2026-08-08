@@ -31,6 +31,7 @@ export class CreateScheduleDto {
   @IsDateString() date: string;
   @IsString() startTime: string;
   @IsString() endTime: string;
+  @IsOptional() @IsString() zoneId?: string | null;
   @IsOptional() @IsString() location?: string;
   @IsOptional() @IsString() notes?: string;
 }

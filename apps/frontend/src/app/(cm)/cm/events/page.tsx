@@ -22,7 +22,7 @@ type Priority = 'CRITICAL' | 'URGENT' | 'NORMAL';
 
 interface TaskItem {
   id: string;
-  assignee: { displayName: string };
+  assignee: { id: string; displayName: string };
   patient: { hn: string };
 }
 
@@ -186,6 +186,7 @@ export default function EventsPage() {
   const [saving, setSaving] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [editForm] = Form.useForm();
+  const [reassigningTaskId, setReassigningTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session?.accessToken) return;
@@ -277,6 +278,34 @@ export default function EventsPage() {
       message.error(`เกิดข้อผิดพลาด: ${e?.message ?? 'unknown'}`);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleReassignTask(taskId: string, newAssigneeId: string) {
+    if (!editingEvent) return;
+    setReassigningTaskId(taskId);
+    try {
+      const res = await fetch(`${API_URL}/events/${editingEvent.id}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.accessToken}` },
+        body: JSON.stringify({ assigneeId: newAssigneeId }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setEditingEvent((prev) => prev ? {
+          ...prev,
+          tasks: prev.tasks.map((t) => t.id === taskId ? { ...t, assignee: updated.assignee } : t),
+        } : prev);
+        message.success('เปลี่ยน Care Giver แล้ว');
+        setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth(), 1));
+      } else {
+        const errBody = await res.json().catch(() => ({}));
+        message.error(`เปลี่ยนไม่สำเร็จ: ${errBody?.message ?? `HTTP ${res.status}`}`);
+      }
+    } catch (e: any) {
+      message.error(`เกิดข้อผิดพลาด: ${e?.message ?? 'unknown'}`);
+    } finally {
+      setReassigningTaskId(null);
     }
   }
 
@@ -569,6 +598,34 @@ export default function EventsPage() {
             <Button onClick={() => { setEditingEvent(null); editForm.resetFields(); }}>ยกเลิก</Button>
           </div>
         </Form>
+
+        {editingEvent && editingEvent.tasks.length > 0 && (
+          <>
+            <div style={{ fontSize: 10, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, margin: '20px 0 12px', paddingBottom: 8, borderBottom: '1px solid #f5f5f5' }}>
+              มอบหมายงาน ({editingEvent.tasks.length})
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {editingEvent.tasks.map((task) => (
+                <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Tag color="blue" style={{ fontSize: 10, fontFamily: "'Sarabun',sans-serif", flexShrink: 0 }}>HN {task.patient.hn}</Tag>
+                  <Select
+                    size="small"
+                    style={{ flex: 1 }}
+                    value={task.assignee.id}
+                    loading={reassigningTaskId === task.id}
+                    disabled={reassigningTaskId === task.id}
+                    options={
+                      users.some((u) => u.id === task.assignee.id)
+                        ? users.map((u) => ({ value: u.id, label: u.displayName }))
+                        : [{ value: task.assignee.id, label: task.assignee.displayName }, ...users.map((u) => ({ value: u.id, label: u.displayName }))]
+                    }
+                    onChange={(newAssigneeId) => handleReassignTask(task.id, newAssigneeId)}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </Drawer>
     </div>
   );

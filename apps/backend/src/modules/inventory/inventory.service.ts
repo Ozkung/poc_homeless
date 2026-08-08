@@ -4,6 +4,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { UserRole } from '@prisma/client';
 import { CreateItemDto } from './dto/create-item.dto';
+import { UpdateItemDto } from './dto/update-item.dto';
 import { StockInDto } from './dto/stock-in.dto';
 import { AdjRequestDto } from './dto/adj-request.dto';
 import { ReviewAdjDto } from './dto/review-adj.dto';
@@ -22,6 +23,13 @@ export class InventoryService {
     });
     if (actorId) void this.audit.log({ orgId, actorId, action: 'CREATE_ITEM', entity: 'InventoryItem', entityId: item.id, detail: `${item.name} (${item.unit})` });
     return item;
+  }
+
+  async updateItem(itemId: string, orgId: string, dto: UpdateItemDto, actorId?: string) {
+    const item = await this.findItemOrThrow(itemId, orgId);
+    const updated = await this.prisma.inventoryItem.update({ where: { id: itemId }, data: { name: dto.name } });
+    if (actorId) void this.audit.log({ orgId, actorId, action: 'UPDATE_ITEM', entity: 'InventoryItem', entityId: item.id, detail: `${item.name} → ${updated.name}` });
+    return updated;
   }
 
   async listItems(orgId: string, category?: string) {
@@ -311,6 +319,9 @@ export class InventoryService {
       include: { item: true, requester: { select: { lineUserId: true } } },
     });
     if (!adj) throw new NotFoundException('AdjRequest not found');
+    if (adj.requestedById === reviewerId) {
+      throw new BadRequestException('ไม่สามารถอนุมัติคำขอของตนเองได้');
+    }
 
     await this.prisma.adjRequest.update({
       where: { id: adjId },

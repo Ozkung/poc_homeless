@@ -21,7 +21,7 @@ export class EventsService {
     return this.prisma.event.findMany({
       where,
       include: {
-        tasks: { include: { assignee: { select: { displayName: true } }, patient: { select: { hn: true, nameEnc: true } } } },
+        tasks: { include: { assignee: { select: { id: true, displayName: true } }, patient: { select: { hn: true, nameEnc: true } } } },
       },
       orderBy: { startDate: 'asc' },
     });
@@ -30,7 +30,7 @@ export class EventsService {
   async findOne(id: string, orgId: string) {
     const event = await this.prisma.event.findFirst({
       where: { id, organizationId: orgId },
-      include: { tasks: { include: { assignee: { select: { displayName: true, email: true } } } } },
+      include: { tasks: { include: { assignee: { select: { id: true, displayName: true, email: true } }, patient: { select: { hn: true, nameEnc: true } } } } },
     });
     if (!event) throw new NotFoundException('Event not found');
     return event;
@@ -125,6 +125,32 @@ export class EventsService {
   async update(id: string, orgId: string, data: any) {
     await this.findOne(id, orgId);
     return this.prisma.event.update({ where: { id }, data });
+  }
+
+  async reassignTask(eventId: string, taskId: string, orgId: string, actorId: string, assigneeId: string) {
+    await this.findOne(eventId, orgId);
+
+    const task = await this.prisma.eventTask.findFirst({ where: { id: taskId, eventId } });
+    if (!task) throw new NotFoundException('Task not found in this event');
+
+    const assignee = await this.prisma.user.findFirst({ where: { id: assigneeId, organizationId: orgId } });
+    if (!assignee) throw new BadRequestException('assigneeId not found in this organization');
+
+    const updated = await this.prisma.eventTask.update({
+      where: { id: taskId },
+      data: { assigneeId },
+      include: { assignee: { select: { id: true, displayName: true, email: true } }, patient: { select: { hn: true, nameEnc: true } } },
+    });
+
+    try {
+      await this.tasks.generateLiffToken(taskId);
+    } catch {
+      // LIFF token regeneration is best-effort; do not fail the request
+    }
+
+    void this.audit.log({ orgId, actorId, action: 'REASSIGN_EVENT_TASK', entity: 'EventTask', entityId: taskId, detail: assignee.displayName });
+
+    return updated;
   }
 
   async remove(id: string, orgId: string, actorId: string) {

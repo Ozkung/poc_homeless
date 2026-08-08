@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { STATUS_COLOR, STATUS_LABEL } from '@/lib/patientStatus';
 
 const { Text } = Typography;
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export default function FWPatientsPage() {
   const { data: session } = useSession();
@@ -17,7 +18,7 @@ export default function FWPatientsPage() {
 
   useEffect(() => {
     if (!token) return;
-    fetch('/api/patients', { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_URL}/patients`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.ok ? r.json() : [])
       .then((d) => setPatients(Array.isArray(d) ? d : []))
       .catch(() => {})

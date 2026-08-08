@@ -39,6 +39,16 @@ export class EventsController {
     return this.events.update(id, user.orgId, body);
   }
 
+  @Patch(':eventId/tasks/:taskId')
+  reassignTask(
+    @Param('eventId') eventId: string,
+    @Param('taskId') taskId: string,
+    @Body('assigneeId') assigneeId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.events.reassignTask(eventId, taskId, user.orgId, user.sub, assigneeId);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {

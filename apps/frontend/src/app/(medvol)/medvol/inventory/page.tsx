@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Table, Tag, Button, Modal, Form, Input, InputNumber, Select, Tabs, message } from 'antd';
 import { useSession } from 'next-auth/react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 export default function MedVolInventoryPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
@@ -13,15 +15,18 @@ export default function MedVolInventoryPage() {
   const [historyModal, setHistoryModal] = useState<string | null>(null);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [createModal, setCreateModal] = useState(false);
+  const [editModal, setEditModal] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [stockForm] = Form.useForm();
   const [adjForm] = Form.useForm();
   const [createForm] = Form.useForm();
+  const [editForm] = Form.useForm();
 
   const load = async () => {
     if (!token) return;
     const [itemsRes, adjRes] = await Promise.all([
-      fetch('/api/inventory', { headers: { Authorization: `Bearer ${token}` } }),
-      fetch('/api/inventory/adj-requests', { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_URL}/inventory`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_URL}/inventory/adj-requests`, { headers: { Authorization: `Bearer ${token}` } }),
     ]);
     if (itemsRes.ok) setItems(await itemsRes.json());
     if (adjRes.ok) setAdjRequests(await adjRes.json());
@@ -31,7 +36,7 @@ export default function MedVolInventoryPage() {
 
   const handleStockIn = async () => {
     const values = await stockForm.validateFields();
-    const res = await fetch(`/api/inventory/${stockInModal}/stock-in`, {
+    const res = await fetch(`${API_URL}/inventory/${stockInModal}/stock-in`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(values),
@@ -42,7 +47,7 @@ export default function MedVolInventoryPage() {
 
   const handleAdj = async () => {
     const values = await adjForm.validateFields();
-    const res = await fetch(`/api/inventory/${adjModal}/adj-request`, {
+    const res = await fetch(`${API_URL}/inventory/${adjModal}/adj-request`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(values),
@@ -53,14 +58,14 @@ export default function MedVolInventoryPage() {
 
   const openHistory = async (itemId: string) => {
     setHistoryModal(itemId);
-    const res = await fetch(`/api/inventory/${itemId}/transactions`, {
+    const res = await fetch(`${API_URL}/inventory/${itemId}/transactions`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) setHistoryData(await res.json());
   };
 
   const handleReviewAdj = async (id: string, approved: boolean) => {
-    const res = await fetch(`/api/inventory/adj-requests/${id}`, {
+    const res = await fetch(`${API_URL}/inventory/adj-requests/${id}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: approved ? 'APPROVED' : 'REJECTED' }),
@@ -69,9 +74,25 @@ export default function MedVolInventoryPage() {
     else message.error('เกิดข้อผิดพลาด');
   };
 
+  const openEdit = (item: any) => {
+    setEditModal(item.id);
+    editForm.setFieldsValue({ name: item.name });
+  };
+
+  const handleEdit = async () => {
+    const values = await editForm.validateFields();
+    const res = await fetch(`${API_URL}/inventory/${editModal}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(values),
+    });
+    if (res.ok) { message.success('แก้ไขชื่อสำเร็จ'); setEditModal(null); editForm.resetFields(); load(); }
+    else message.error('เกิดข้อผิดพลาด');
+  };
+
   const handleCreate = async () => {
     const values = await createForm.validateFields();
-    const res = await fetch('/api/inventory', {
+    const res = await fetch(`${API_URL}/inventory`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(values),
@@ -86,16 +107,25 @@ export default function MedVolInventoryPage() {
 
   const adjStatusColor: Record<string, string> = { PENDING: 'orange', APPROVED: 'green', REJECTED: 'red' };
 
+  const filteredItems = items.filter((i) => !search || i.name.toLowerCase().includes(search.toLowerCase()));
+
   const stockTab = (
     <>
+      <Input.Search
+        placeholder="ค้นหาชื่อยา / วัสดุ..."
+        onSearch={setSearch}
+        onChange={(e) => !e.target.value && setSearch('')}
+        style={{ maxWidth: 320, marginBottom: 12 }}
+        allowClear
+      />
       <Table
-        dataSource={items} rowKey="id" size="small" style={{ marginBottom: 0 }}
+        dataSource={filteredItems} rowKey="id" size="small" style={{ marginBottom: 0 }}
         columns={[
-          { title: 'ชื่อสินค้า', dataIndex: 'name' },
-          { title: 'หน่วย', dataIndex: 'unit' },
-          { title: 'หมวดหมู่', dataIndex: 'category', render: (v) => <Tag>{v}</Tag> },
-          { title: 'Stock', dataIndex: 'currentStock', render: (v, r) => <Tag color={stockColor(r)}>{v}</Tag> },
-          { title: 'เกณฑ์', dataIndex: 'lowStockThreshold' },
+          { title: 'ชื่อสินค้า', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
+          { title: 'หน่วย', dataIndex: 'unit', sorter: (a, b) => a.unit.localeCompare(b.unit) },
+          { title: 'หมวดหมู่', dataIndex: 'category', render: (v) => <Tag>{v}</Tag>, sorter: (a, b) => a.category.localeCompare(b.category) },
+          { title: 'Stock', dataIndex: 'currentStock', render: (v, r) => <Tag color={stockColor(r)}>{v}</Tag>, sorter: (a, b) => a.currentStock - b.currentStock },
+          { title: 'เกณฑ์', dataIndex: 'lowStockThreshold', sorter: (a, b) => a.lowStockThreshold - b.lowStockThreshold },
           {
             title: 'Actions',
             render: (_, r) => (
@@ -103,6 +133,7 @@ export default function MedVolInventoryPage() {
                 <Button size="small" type="primary" onClick={() => setStockInModal(r.id)}>รับเข้า</Button>
                 <Button size="small" onClick={() => setAdjModal(r.id)}>ADJ</Button>
                 <Button size="small" onClick={() => openHistory(r.id)}>ประวัติ</Button>
+                <Button size="small" onClick={() => openEdit(r)}>แก้ไขชื่อ</Button>
               </span>
             ),
           },
@@ -149,7 +180,17 @@ export default function MedVolInventoryPage() {
       />
 
       <Modal title="รับ Stock เข้า" open={!!stockInModal} onOk={handleStockIn} onCancel={() => { setStockInModal(null); stockForm.resetFields(); }} okText="บันทึก">
-        <Form form={stockForm} layout="vertical">
+        <Form form={stockForm} layout="vertical" initialValues={{ type: 'IN_PURCHASE' }}>
+          <Form.Item name="type" label="ประเภทการรับเข้า" rules={[{ required: true }]}>
+            <Select options={[{ value: 'IN_PURCHASE', label: 'รับซื้อ' }, { value: 'IN_DONATION', label: 'บริจาค' }]} />
+          </Form.Item>
+          <Form.Item noStyle shouldUpdate={(prev, cur) => prev.type !== cur.type}>
+            {({ getFieldValue }) => getFieldValue('type') === 'IN_DONATION' && (
+              <Form.Item name="donorName" label="ผู้บริจาค">
+                <Input placeholder="ชื่อผู้บริจาค / องค์กร" />
+              </Form.Item>
+            )}
+          </Form.Item>
           <Form.Item name="quantity" label="จำนวนที่รับเข้า" rules={[{ required: true }]}>
             <InputNumber min={1} style={{ width: '100%' }} />
           </Form.Item>
@@ -172,6 +213,14 @@ export default function MedVolInventoryPage() {
           </Form.Item>
           <Form.Item name="reason" label="เหตุผล" rules={[{ required: true }]}>
             <Input.TextArea rows={3} placeholder="เช่น ยาหมดอายุ, ชำรุด, ตรวจนับผิดพลาด" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal title="แก้ไขชื่อยา / วัสดุ" open={!!editModal} onOk={handleEdit} onCancel={() => { setEditModal(null); editForm.resetFields(); }} okText="บันทึก">
+        <Form form={editForm} layout="vertical">
+          <Form.Item name="name" label="ชื่อยา / วัสดุ" rules={[{ required: true }]}>
+            <Input placeholder="เช่น Paracetamol 500mg" />
           </Form.Item>
         </Form>
       </Modal>

@@ -4,7 +4,7 @@ import { AesGcmService } from '../../common/crypto/aes-gcm.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UserRole } from '@prisma/client';
 
-const ORG_SCOPED_PHOTO_ROLES = ['CASE_MANAGER', 'ADMIN', 'CARE_GIVER', 'MEDICAL_VOLUNTEER', 'SUPER_ADMIN'];
+const ORG_SCOPED_PHOTO_ROLES = ['CASE_MANAGER', 'ADMIN', 'CARE_GIVER', 'MEDICAL_VOLUNTEER', 'SUPER_ADMIN', 'DOCTOR'];
 
 @Injectable()
 export class PatientsService {
@@ -17,7 +17,11 @@ export class PatientsService {
   async findAll(orgId: string, role?: string, userId?: string) {
     let where: any = { organizationId: orgId, deletedAt: null };
     if (role === 'CARE_GIVER' && userId) {
-      where = { organizationId: orgId, deletedAt: null, eventTasks: { some: { assigneeId: userId } } };
+      where = {
+        organizationId: orgId,
+        deletedAt: null,
+        OR: [{ eventTasks: { some: { assigneeId: userId } } }, { reportedById: userId }],
+      };
     }
     const patients = await this.prisma.patient.findMany({
       where,

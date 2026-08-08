@@ -9,6 +9,7 @@ import { FormFieldRenderer } from '@/components/FormFieldRenderer';
 import type { FormField } from '@homemed/shared-types';
 
 const { Text, Title } = Typography;
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 const STATUS_COLOR: Record<string, string> = { PENDING: 'orange', IN_PROGRESS: 'blue', DONE: 'green', NOT_FOUND: 'red' };
 const STATUS_LABEL: Record<string, string> = { PENDING: 'รอดำเนินการ', IN_PROGRESS: 'กำลังดำเนินการ', DONE: 'เสร็จแล้ว', NOT_FOUND: 'ไม่พบผู้ป่วย' };
@@ -32,7 +33,10 @@ interface CheckinActivity {
 export default function FWTasksPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
-  const userId = (session as any)?.user?.id;
+  let userId: string | undefined;
+  if (token) {
+    try { userId = JSON.parse(atob(token.split('.')[1])).sub; } catch { /* noop */ }
+  }
   const router = useRouter();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +51,7 @@ export default function FWTasksPage() {
 
   const loadTasks = () => {
     if (!token) return;
-    fetch('/api/tasks/zone', { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_URL}/tasks/zone`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.ok ? r.json() : [])
       .then((d) => setTasks(Array.isArray(d) ? d : []))
       .catch(() => {})
@@ -59,7 +63,7 @@ export default function FWTasksPage() {
   const loadCheckinHistory = (taskId: string) => {
     if (checkinHistory[taskId]) return;
     setCheckinHistory((prev) => ({ ...prev, [taskId]: 'loading' }));
-    fetch(`/api/tasks/${taskId}/activities`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_URL}/tasks/${taskId}/activities`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.ok ? r.json() : [])
       .then((d) => setCheckinHistory((prev) => ({ ...prev, [taskId]: Array.isArray(d) ? d : [] })))
       .catch(() => setCheckinHistory((prev) => ({ ...prev, [taskId]: [] })));
@@ -89,7 +93,7 @@ export default function FWTasksPage() {
     setSubmitting(true);
     try {
       const answerArray = Object.entries(answers).map(([fieldId, value]) => ({ fieldId, value }));
-      const res = await fetch('/api/submissions', {
+      const res = await fetch(`${API_URL}/submissions`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId: formState.taskId, token: formState.liffToken, answers: answerArray }),

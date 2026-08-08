@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import dayjs, { Dayjs } from 'dayjs';
 
 const { RangePicker } = DatePicker;
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 interface FWStats {
   myPatientsCount: number;
@@ -26,7 +27,7 @@ export default function FWDashboard() {
   useEffect(() => {
     if (!token) return;
     const [from, to] = dateRange;
-    fetch(`/api/dashboard/fw?from=${from.toISOString()}&to=${to.toISOString()}`, {
+    fetch(`${API_URL}/dashboard/fw?from=${from.toISOString()}&to=${to.toISOString()}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then((r) => r.json()).then(setStats);
   }, [token, dateRange]);
@@ -45,15 +46,15 @@ export default function FWDashboard() {
         />
       </div>
 
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}><Card><Statistic title="ผู้ป่วยของฉัน" value={stats?.myPatientsCount ?? '-'} /></Card></Col>
-        <Col span={6}><Card><Statistic title="งานวันนี้ (ค้างอยู่)" value={stats?.todayPending ?? '-'} valueStyle={{ color: stats?.todayPending ? '#faad14' : undefined }} /></Card></Col>
-        <Col span={6}><Card><Statistic title="รายงานยา (ช่วงนี้)" value={stats ? `${stats.medicationAdherence.reported}/${stats.medicationAdherence.total}` : '-'} /></Card></Col>
-        <Col span={6}><Card><Statistic title="Task Success" value={stats ? `${stats.taskSuccessRate}%` : '-'} valueStyle={{ color: '#52c41a' }} /></Card></Col>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={6}><Card><Statistic title="ผู้ป่วยของฉัน" value={stats?.myPatientsCount ?? '-'} /></Card></Col>
+        <Col xs={24} sm={12} md={6}><Card><Statistic title="งานวันนี้ (ค้างอยู่)" value={stats?.todayPending ?? '-'} valueStyle={{ color: stats?.todayPending ? '#faad14' : undefined }} /></Card></Col>
+        <Col xs={24} sm={12} md={6}><Card><Statistic title="รายงานยา (ช่วงนี้)" value={stats ? `${stats.medicationAdherence.reported}/${stats.medicationAdherence.total}` : '-'} /></Card></Col>
+        <Col xs={24} sm={12} md={6}><Card><Statistic title="Task Success" value={stats ? `${stats.taskSuccessRate}%` : '-'} valueStyle={{ color: '#52c41a' }} /></Card></Col>
       </Row>
 
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={10}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} md={10}>
           <Card title="สถานะยา — ผู้ป่วยของฉัน" style={{ height: '100%' }}>
             <List
               size="small"
@@ -66,7 +67,7 @@ export default function FWDashboard() {
             />
           </Card>
         </Col>
-        <Col span={7}>
+        <Col xs={24} sm={12} md={7}>
           <Card title="ช่วงอายุผู้ป่วย">
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 80, marginBottom: 8 }}>
               {(stats?.ageDistribution ?? []).map((b) => (
@@ -79,7 +80,7 @@ export default function FWDashboard() {
             </div>
           </Card>
         </Col>
-        <Col span={7}>
+        <Col xs={24} sm={12} md={7}>
           <Card title="Case ที่รับบ่อย">
             {(stats?.topConditions ?? []).map((c) => (
               <div key={c.condition} style={{ marginBottom: 8 }}>

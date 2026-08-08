@@ -20,6 +20,7 @@ export default function ApprovalsPage() {
   const { data: session } = useSession();
   const [requests, setRequests] = useState<AdjRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [forbidden, setForbidden] = useState(false);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [processing, setProcessing] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ export default function ApprovalsPage() {
   const load = useCallback(() => {
     if (!(session as any)?.accessToken) return;
     fetch(`${API_URL}/inventory/adj-requests`, { headers: headers() })
-      .then((r) => r.ok ? r.json() : [])
+      .then((r) => { setForbidden(r.status === 403); return r.ok ? r.json() : []; })
       .then((d) => { setRequests(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [(session as any)?.accessToken, headers]);
@@ -66,6 +67,12 @@ export default function ApprovalsPage() {
 
       {loading ? (
         <div style={{ textAlign: 'center', color: '#aaa', padding: 40 }}>กำลังโหลด…</div>
+      ) : forbidden ? (
+        <Card>
+          <div style={{ textAlign: 'center', color: '#ff4d4f', padding: 40 }}>
+            คุณไม่มีสิทธิ์อนุมัติคำขอปรับ Stock — เฉพาะ Super Admin และ Medical Volunteer เท่านั้น
+          </div>
+        </Card>
       ) : requests.length === 0 ? (
         <Card>
           <div style={{ textAlign: 'center', color: '#aaa', padding: 40 }}>ไม่มีคำขอรออนุมัติ</div>
