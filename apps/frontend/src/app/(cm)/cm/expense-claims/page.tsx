@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Table, Button, Modal, Form, Input, InputNumber, DatePicker, Radio, Select, message, Tag, Empty } from 'antd';
+import { Table, Button, Modal, Form, Input, InputNumber, DatePicker, Radio, Select, message, Tag, Empty, Tabs } from 'antd';
 import { useSession } from 'next-auth/react';
 import { Plus } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -18,6 +18,7 @@ interface ExpenseClaim {
   description: string;
   additionalNote?: string | null;
   payeeType: PayeeType;
+  requester?: { id: string; displayName: string; role: string };
   patient?: { id: string; hn: string } | null;
   payee?: { id: string; displayName: string } | null;
   status: ClaimStatus;
@@ -38,6 +39,8 @@ export default function CMExpenseClaimsPage() {
   const token = (session as any)?.accessToken;
   const isMobile = useIsMobile();
   const [claims, setClaims] = useState<ExpenseClaim[]>([]);
+  const [allClaims, setAllClaims] = useState<ExpenseClaim[]>([]);
+  const [allStatusFilter, setAllStatusFilter] = useState<'ALL' | ClaimStatus>('PENDING');
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
   const [careGivers, setCareGivers] = useState<{ id: string; displayName: string; supervisor?: { displayName: string } | null }[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
@@ -57,6 +60,20 @@ export default function CMExpenseClaimsPage() {
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadAll = useCallback(async () => {
+    if (!token) return;
+    try {
+      const qs = allStatusFilter === 'ALL' ? '' : `?status=${allStatusFilter}`;
+      const res = await fetch(`${API_URL}/expense-claims${qs}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) setAllClaims(await res.json());
+      else message.error('โหลดรายการเบิกเงินทั้งหมดไม่สำเร็จ');
+    } catch {
+      message.error('โหลดรายการเบิกเงินทั้งหมดไม่สำเร็จ');
+    }
+  }, [token, allStatusFilter]);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   useEffect(() => {
     if (!token) return;
@@ -114,43 +131,111 @@ export default function CMExpenseClaimsPage() {
     { title: 'หมายเหตุจากผู้อนุมัติ', dataIndex: 'reviewNote', render: (v?: string) => v ?? '-' },
   ];
 
+  const allColumns = [
+    { title: 'ผู้ขอ', render: (_: any, r: ExpenseClaim) => `${r.requester?.displayName ?? '-'} (${r.requester?.role ?? '-'})` },
+    ...columns,
+  ];
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>คำขอเบิกเงิน</h1>
-        <Button type="primary" icon={<Plus size={14} />} onClick={() => { form.resetFields(); setCreateOpen(true); }}>
-          สร้างคำขอเบิกเงิน
-        </Button>
-      </div>
+      <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 700 }}>คำขอเบิกเงิน</h1>
 
-      {isMobile ? (
-        claims.length === 0 ? (
-          <Empty description="ยังไม่มีคำขอเบิกเงิน" style={{ marginTop: 40 }} />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {claims.map((c) => (
-              <div key={c.id} style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 12, padding: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 17 }}>฿{c.amount.toLocaleString()}</div>
-                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>{dayjs(c.requestDate).format('DD/MM/YYYY')}</div>
-                  </div>
-                  <Tag color={STATUS_COLOR[c.status]}>{STATUS_LABEL[c.status]}</Tag>
+      <Tabs
+        items={[
+          {
+            key: 'mine',
+            label: 'คำขอของฉัน',
+            children: (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                  <Button type="primary" icon={<Plus size={14} />} onClick={() => { form.resetFields(); setCreateOpen(true); }}>
+                    สร้างคำขอเบิกเงิน
+                  </Button>
                 </div>
-                <div style={{ fontSize: 13, marginBottom: 4 }}>{c.description}</div>
-                <div style={{ fontSize: 12, color: '#595959' }}>เบิกเพื่อ: {payeeLabel(c)}</div>
-                {c.reviewNote && (
-                  <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6, paddingTop: 6, borderTop: '1px solid #f5f5f5' }}>
-                    หมายเหตุจากผู้อนุมัติ: {c.reviewNote}
-                  </div>
+
+                {isMobile ? (
+                  claims.length === 0 ? (
+                    <Empty description="ยังไม่มีคำขอเบิกเงิน" style={{ marginTop: 40 }} />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {claims.map((c) => (
+                        <div key={c.id} style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 12, padding: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: 17 }}>฿{c.amount.toLocaleString()}</div>
+                              <div style={{ fontSize: 12, color: '#8c8c8c' }}>{dayjs(c.requestDate).format('DD/MM/YYYY')}</div>
+                            </div>
+                            <Tag color={STATUS_COLOR[c.status]}>{STATUS_LABEL[c.status]}</Tag>
+                          </div>
+                          <div style={{ fontSize: 13, marginBottom: 4 }}>{c.description}</div>
+                          <div style={{ fontSize: 12, color: '#595959' }}>เบิกเพื่อ: {payeeLabel(c)}</div>
+                          {c.reviewNote && (
+                            <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6, paddingTop: 6, borderTop: '1px solid #f5f5f5' }}>
+                              หมายเหตุจากผู้อนุมัติ: {c.reviewNote}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <Table dataSource={claims} rowKey="id" size="small" columns={columns} />
                 )}
-              </div>
-            ))}
-          </div>
-        )
-      ) : (
-        <Table dataSource={claims} rowKey="id" size="small" columns={columns} />
-      )}
+              </>
+            ),
+          },
+          {
+            key: 'all',
+            label: 'รายการเบิกเงินทั้งหมด',
+            children: (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                  <Radio.Group
+                    value={allStatusFilter}
+                    onChange={(e) => setAllStatusFilter(e.target.value)}
+                    options={[
+                      { label: 'รอพิจารณา', value: 'PENDING' },
+                      { label: 'อนุมัติแล้ว', value: 'APPROVED' },
+                      { label: 'ไม่อนุมัติ', value: 'REJECTED' },
+                      { label: 'ทั้งหมด', value: 'ALL' },
+                    ]}
+                    optionType="button"
+                  />
+                </div>
+
+                {isMobile ? (
+                  allClaims.length === 0 ? (
+                    <Empty description="ไม่มีคำขอเบิกเงิน" style={{ marginTop: 40 }} />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {allClaims.map((c) => (
+                        <div key={c.id} style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 12, padding: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: 17 }}>฿{c.amount.toLocaleString()}</div>
+                              <div style={{ fontSize: 12, color: '#8c8c8c' }}>{dayjs(c.requestDate).format('DD/MM/YYYY')} · {c.requester?.displayName ?? '-'}</div>
+                            </div>
+                            <Tag color={STATUS_COLOR[c.status]}>{STATUS_LABEL[c.status]}</Tag>
+                          </div>
+                          <div style={{ fontSize: 13, marginBottom: 4 }}>{c.description}</div>
+                          <div style={{ fontSize: 12, color: '#595959' }}>เบิกเพื่อ: {payeeLabel(c)}</div>
+                          {c.reviewNote && (
+                            <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6, paddingTop: 6, borderTop: '1px solid #f5f5f5' }}>
+                              หมายเหตุจากผู้อนุมัติ: {c.reviewNote}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <Table dataSource={allClaims} rowKey="id" size="small" columns={allColumns} />
+                )}
+              </>
+            ),
+          },
+        ]}
+      />
 
       <Modal
         title="สร้างคำขอเบิกเงิน"

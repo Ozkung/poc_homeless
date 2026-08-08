@@ -26,7 +26,7 @@ export class ExpenseClaimsController {
   }
 
   @Get()
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.CASE_MANAGER)
   findAll(@CurrentUser() user: JwtPayload, @Query('status') status?: string) {
     return this.claims.findAll(user.orgId, status);
   }

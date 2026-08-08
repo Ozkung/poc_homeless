@@ -19,7 +19,9 @@ interface Props {
 
 export default function PatientTaskSheet({ task, onClose, onStatusChange, onCheckin }: Props) {
   const [tab, setTab] = useState<'form' | 'note'>('form');
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>(() =>
+    Object.fromEntries((task.lastSubmission?.answers ?? []).map((a) => [a.fieldId, a.value])),
+  );
   const [checkinLoading, setCheckinLoading] = useState(false);
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'done'>('idle');
   const [note, setNote] = useState('');
@@ -180,6 +182,11 @@ export default function PatientTaskSheet({ task, onClose, onStatusChange, onChec
 
           {tab === 'form' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {task.lastSubmission && (
+                <p style={{ fontSize: 11, color: '#94A3B8', margin: 0 }}>
+                  แสดงคำตอบที่เคยส่งล่าสุดเมื่อ {new Date(task.lastSubmission.submittedAt).toLocaleString('th-TH')} — แก้ไขแล้วกดส่งเพื่ออัพเดท
+                </p>
+              )}
               {fields.length === 0
                 ? <p style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center' }}>ไม่มีแบบสำรวจสำหรับ task นี้</p>
                 : [...fields]
@@ -211,7 +218,7 @@ export default function PatientTaskSheet({ task, onClose, onStatusChange, onChec
                     color: submitState === 'done' ? '#16A34A' : '#fff',
                     fontWeight: 700, fontSize: 14, cursor: (!formValid || submitState !== 'idle') ? 'default' : 'pointer',
                   }}>
-                  {submitState === 'loading' ? 'กำลังส่ง...' : submitState === 'done' ? '✓ ส่งแล้ว' : 'ส่งแบบสำรวจ'}
+                  {submitState === 'loading' ? 'กำลังส่ง...' : submitState === 'done' ? '✓ ส่งแล้ว' : task.lastSubmission ? 'อัพเดทแบบสำรวจ' : 'ส่งแบบสำรวจ'}
                 </button>
               </div>
             </div>

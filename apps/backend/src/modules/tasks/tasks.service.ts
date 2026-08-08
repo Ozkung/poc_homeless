@@ -44,7 +44,7 @@ export class TasksService {
     }));
   }
 
-  async findTodayTasks(orgId: string, userId: string) {
+  async findTodayTasks(orgId: string) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
@@ -63,10 +63,29 @@ export class TasksService {
 
     const eventIds = [...new Set(tasks.map((t) => t.event.id))];
     const checkins = await this.prisma.activity.findMany({
-      where: { type: 'CHECK_IN', actorId: userId, eventId: { in: eventIds } },
+      where: { type: 'CHECK_IN', eventId: { in: eventIds } },
       select: { eventId: true },
     });
     const checkedInEventIds = new Set(checkins.map((c) => c.eventId));
+
+    const taskIds = tasks.map((t) => t.id);
+    const lastSubmissions = await this.prisma.submission.findMany({
+      where: { taskId: { in: taskIds } },
+      orderBy: { submittedAt: 'desc' },
+      distinct: ['taskId'],
+      select: { taskId: true, answers: true, submittedAt: true },
+    });
+    const lastSubmissionByTaskId = new Map(
+      lastSubmissions.map((s) => [s.taskId, {
+        submittedAt: s.submittedAt,
+        answers: Array.isArray(s.answers)
+          ? (s.answers as Array<{ fieldId: string; value: unknown }>).map((a) => ({
+              ...a,
+              value: typeof a.value === 'string' ? this.crypto.decrypt(a.value) : a.value,
+            }))
+          : s.answers,
+      }]),
+    );
 
     return tasks.map((t: any) => ({
       taskId:      t.id,
@@ -82,7 +101,8 @@ export class TasksService {
         status:     t.patient.status,
         conditions: t.patient.conditions,
       },
-      formTemplate: t.formTemplate ?? null,
+      formTemplate:  t.formTemplate ?? null,
+      lastSubmission: lastSubmissionByTaskId.get(t.id) ?? null,
     }));
   }
 
@@ -220,9 +240,9 @@ export class TasksService {
     const task = await this.getTaskForGuest(taskId, orgId);
 
     const existing = await this.prisma.activity.findFirst({
-      where: { type: 'CHECK_IN', actorId: userId, eventId: task.eventId },
+      where: { type: 'CHECK_IN', eventId: task.eventId },
     });
-    if (existing) throw new ConflictException('เช็คอินสำหรับ event นี้ไปแล้ว');
+    if (existing) throw new ConflictException('มีคนเช็คอินสำหรับ event นี้ไปแล้ว');
 
     const [, activity] = await this.prisma.$transaction([
       this.prisma.eventTask.update({
@@ -276,10 +296,9 @@ export class TasksService {
     answers: Array<{ fieldId: string; value: string }>,
   ): Promise<{ submissionId: string }> {
     const task = await this.getTaskForGuest(taskId, orgId);
-    if (task.status === 'DONE') {
-      throw new ConflictException('Form already submitted for this task');
-    }
     if (!task.formTemplateId) throw new BadRequestException('Task has no form template');
+
+    const encryptedAnswers = answers.map((a) => ({ fieldId: a.fieldId, value: this.crypto.encrypt(String(a.value)) }));
 
     const [submission] = await this.prisma.$transaction([
       this.prisma.submission.create({
@@ -288,7 +307,7 @@ export class TasksService {
           patientId:      task.patientId,
           formTemplateId: task.formTemplateId,
           submittedById:  userId,
-          answers:        answers as any,
+          answers:        encryptedAnswers as any,
         },
       }),
       this.prisma.activity.create({

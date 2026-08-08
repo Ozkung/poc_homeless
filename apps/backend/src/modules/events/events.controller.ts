@@ -16,7 +16,7 @@ export class EventsController {
   @Get('today/my-tasks')
   @Roles(UserRole.GUEST, UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.CARE_GIVER, UserRole.MEDICAL_VOLUNTEER)
   todayMyTasks(@CurrentUser() user: JwtPayload) {
-    return this.tasks.findTodayTasks(user.orgId, user.sub);
+    return this.tasks.findTodayTasks(user.orgId);
   }
 
   @Get()

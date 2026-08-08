@@ -29,6 +29,7 @@ export interface TodayTask {
     age?: number; status: string; conditions: string[];
   };
   formTemplate: { id: string; title: string; fields: FormField[] } | null;
+  lastSubmission: { submittedAt: string; answers: Array<{ fieldId: string; value: string }> } | null;
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
