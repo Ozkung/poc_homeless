@@ -10,11 +10,13 @@ export class LineService {
   private readonly channelAccessToken: string;
   private readonly channelSecret: string;
   private readonly liffId: string;
+  private readonly notificationsEnabled: boolean;
 
   constructor(private config: ConfigService) {
     this.channelAccessToken = config.get<string>('line.channelAccessToken') ?? '';
     this.channelSecret = config.get<string>('line.channelSecret') ?? '';
     this.liffId = config.get<string>('line.liffId') ?? '';
+    this.notificationsEnabled = config.get<boolean>('line.notificationsEnabled') ?? false;
   }
 
   verifySignature(rawBody: Buffer, signature: string): boolean {
@@ -29,6 +31,10 @@ export class LineService {
   async pushTaskNotification(lineUserId: string, task: {
     id: string; title: string; patientName: string; dueAt?: Date; token: string;
   }) {
+    if (!this.notificationsEnabled) {
+      this.logger.log(`LINE notifications disabled — skipped pushTaskNotification to ${lineUserId}`);
+      return;
+    }
     const liffUrl = `https://liff.line.me/${this.liffId}?taskId=${task.id}&token=${task.token}`;
 
     const body = {
@@ -124,6 +130,10 @@ export class LineService {
   }
 
   async pushRoleApproval(lineUserId: string, data: { displayName: string; newRole: string }) {
+    if (!this.notificationsEnabled) {
+      this.logger.log(`LINE notifications disabled — skipped pushRoleApproval to ${lineUserId}`);
+      return;
+    }
     const ROLE_LABEL: Record<string, string> = {
       CARE_GIVER: 'ผู้ดูแลภาคสนาม', CASE_MANAGER: 'Case Manager',
       MEDICAL_VOLUNTEER: 'อาสาพยาบาล', DOCTOR: 'แพทย์',
@@ -204,6 +214,10 @@ export class LineService {
   }
 
   private async pushText(lineUserId: string, text: string) {
+    if (!this.notificationsEnabled) {
+      this.logger.log(`LINE notifications disabled — skipped pushText to ${lineUserId}`);
+      return;
+    }
     const res = await fetch(`${LINE_API}/v2/bot/message/push`, {
       method: 'POST',
       headers: {

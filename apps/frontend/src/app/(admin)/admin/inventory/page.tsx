@@ -7,6 +7,7 @@ export default function AdminInventoryPage() {
   const { data: session } = useSession();
   const token = (session as any)?.accessToken;
   const [items, setItems] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
   const [adjRequests, setAdjRequests] = useState<any[]>([]);
   const [stockInModal, setStockInModal] = useState<string | null>(null);
   const [adjModal, setAdjModal] = useState<string | null>(null);
@@ -86,27 +87,38 @@ export default function AdminInventoryPage() {
 
   const adjStatusColor: Record<string, string> = { PENDING: 'orange', APPROVED: 'green', REJECTED: 'red' };
 
+  const filteredItems = items.filter((i) => !search || i.name.toLowerCase().includes(search.toLowerCase()));
+
   const stockTab = (
-    <Table
-      dataSource={items} rowKey="id" size="small" style={{ marginBottom: 0 }}
-      columns={[
-        { title: 'ชื่อสินค้า', dataIndex: 'name' },
-        { title: 'หน่วย', dataIndex: 'unit' },
-        { title: 'หมวดหมู่', dataIndex: 'category', render: (v) => <Tag>{v}</Tag> },
-        { title: 'Stock', dataIndex: 'currentStock', render: (v, r) => <Tag color={stockColor(r)}>{v}</Tag> },
-        { title: 'เกณฑ์', dataIndex: 'lowStockThreshold' },
-        {
-          title: 'Actions',
-          render: (_, r) => (
-            <span style={{ display: 'flex', gap: 6 }}>
-              <Button size="small" type="primary" onClick={() => setStockInModal(r.id)}>รับเข้า</Button>
-              <Button size="small" onClick={() => setAdjModal(r.id)}>ADJ</Button>
-              <Button size="small" onClick={() => openHistory(r.id)}>ประวัติ</Button>
-            </span>
-          ),
-        },
-      ]}
-    />
+    <>
+      <Input.Search
+        placeholder="ค้นหาชื่อยา / วัสดุ..."
+        onSearch={setSearch}
+        onChange={(e) => !e.target.value && setSearch('')}
+        style={{ maxWidth: 320, marginBottom: 12 }}
+        allowClear
+      />
+      <Table
+        dataSource={filteredItems} rowKey="id" size="small" style={{ marginBottom: 0 }}
+        columns={[
+          { title: 'ชื่อสินค้า', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
+          { title: 'หน่วย', dataIndex: 'unit', sorter: (a, b) => a.unit.localeCompare(b.unit) },
+          { title: 'หมวดหมู่', dataIndex: 'category', render: (v) => <Tag>{v}</Tag>, sorter: (a, b) => a.category.localeCompare(b.category) },
+          { title: 'Stock', dataIndex: 'currentStock', render: (v, r) => <Tag color={stockColor(r)}>{v}</Tag>, sorter: (a, b) => a.currentStock - b.currentStock },
+          { title: 'เกณฑ์', dataIndex: 'lowStockThreshold', sorter: (a, b) => a.lowStockThreshold - b.lowStockThreshold },
+          {
+            title: 'Actions',
+            render: (_, r) => (
+              <span style={{ display: 'flex', gap: 6 }}>
+                <Button size="small" type="primary" onClick={() => setStockInModal(r.id)}>รับเข้า</Button>
+                <Button size="small" onClick={() => setAdjModal(r.id)}>ADJ</Button>
+                <Button size="small" onClick={() => openHistory(r.id)}>ประวัติ</Button>
+              </span>
+            ),
+          },
+        ]}
+      />
+    </>
   );
 
   const adjTab = (

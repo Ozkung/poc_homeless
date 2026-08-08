@@ -6,7 +6,7 @@ import {
   Button, Card, Col, Collapse, Descriptions, Divider, Form, Input, InputNumber, Modal,
   Row, Select, Spin, Table, Tabs, Tag, Timeline, Typography, message,
 } from 'antd';
-import { ArrowLeft, Stethoscope, Pill, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Stethoscope, Pill, Trash2, Pencil, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { STATUS_OPTIONS } from '@/lib/patientStatus';
 import PatientEditDrawer from '@/components/patients/PatientEditDrawer';
 import PatientDeleteButton from '@/components/patients/PatientDeleteButton';
@@ -83,6 +83,7 @@ export default function DoctorPatientDetailPage() {
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [diagModal, setDiagModal] = useState(false);
+  const [editingDiagId, setEditingDiagId] = useState<string | null>(null);
   const [prescModal, setPrescModal] = useState(false);
   const [dispenseState, setDispenseState] = useState<DispenseState | null>(null);
   const [saving, setSaving] = useState(false);
@@ -179,11 +180,32 @@ export default function DoctorPatientDetailPage() {
   async function submitDiagnosis(values: any) {
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/doctor/patients/${id}/diagnoses`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(values) });
-      if (res.ok) { message.success('บันทึกการวินิจฉัยแล้ว'); setDiagModal(false); diagForm.resetFields(); load(); loadActivities(); }
-      else message.error('บันทึกไม่สำเร็จ');
+      const url = editingDiagId
+        ? `${API_URL}/doctor/patients/${id}/diagnoses/${editingDiagId}`
+        : `${API_URL}/doctor/patients/${id}/diagnoses`;
+      const res = await fetch(url, { method: editingDiagId ? 'PATCH' : 'POST', headers: authHeaders(), body: JSON.stringify(values) });
+      if (res.ok) {
+        message.success(editingDiagId ? 'แก้ไขการวินิจฉัยแล้ว' : 'บันทึกการวินิจฉัยแล้ว');
+        setDiagModal(false); setEditingDiagId(null); diagForm.resetFields(); load(); loadActivities();
+      } else message.error('บันทึกไม่สำเร็จ');
     } catch { message.error('เกิดข้อผิดพลาด'); }
     finally { setSaving(false); }
+  }
+
+  function openEditDiagnosis(record: any) {
+    setEditingDiagId(record.id);
+    diagForm.setFieldsValue({
+      chiefComplaint: record.chiefComplaint,
+      presentIllness: record.presentIllness,
+      vitalSigns: record.vitalSigns,
+      physicalExam: record.physicalExam,
+      title: record.title,
+      description: record.description,
+      icd10: record.icd10,
+      severity: record.severity,
+      treatmentPlan: record.treatmentPlan,
+    });
+    setDiagModal(true);
   }
 
   async function deleteDiagnosis(diagId: string) {
@@ -218,12 +240,18 @@ export default function DoctorPatientDetailPage() {
     { title: 'แพทย์', dataIndex: ['doctor', 'displayName'], width: 130 },
     { title: 'วันที่', dataIndex: 'createdAt', width: 100, render: (v: string) => new Date(v).toLocaleDateString('th-TH') },
     {
-      title: '', width: 50,
+      title: '', width: 76,
       render: (_: any, r: any) => (
-        <button onClick={() => deleteDiagnosis(r.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#ff4d4f')} onMouseLeave={(e) => (e.currentTarget.style.color = '#ccc')}>
-          <Trash2 size={13} />
-        </button>
+        <span style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => openEditDiagnosis(r)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#1677ff')} onMouseLeave={(e) => (e.currentTarget.style.color = '#ccc')}>
+            <Pencil size={13} />
+          </button>
+          <button onClick={() => deleteDiagnosis(r.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#ff4d4f')} onMouseLeave={(e) => (e.currentTarget.style.color = '#ccc')}>
+            <Trash2 size={13} />
+          </button>
+        </span>
       ),
     },
   ];
@@ -361,7 +389,7 @@ export default function DoctorPatientDetailPage() {
             children: (
               <Card style={{ borderRadius: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-                  <Button type="primary" onClick={() => setDiagModal(true)}>+ วินิจฉัย</Button>
+                  <Button type="primary" onClick={() => { setEditingDiagId(null); diagForm.resetFields(); setDiagModal(true); }}>+ วินิจฉัย</Button>
                 </div>
                 <Table size="small" dataSource={patient.diagnoses ?? []} columns={diagColumns} rowKey="id"
                   pagination={{ pageSize: 10 }} locale={{ emptyText: 'ยังไม่มีการวินิจฉัย' }}
@@ -478,9 +506,9 @@ export default function DoctorPatientDetailPage() {
 
       {/* Diagnosis Modal */}
       <Modal
-        title="บันทึกประวัติและการวินิจฉัย"
+        title={editingDiagId ? 'แก้ไขประวัติและการวินิจฉัย' : 'บันทึกประวัติและการวินิจฉัย'}
         open={diagModal}
-        onCancel={() => { setDiagModal(false); diagForm.resetFields(); }}
+        onCancel={() => { setDiagModal(false); setEditingDiagId(null); diagForm.resetFields(); }}
         footer={null}
         width={680}
         styles={{ body: { maxHeight: '75vh', overflowY: 'auto' } }}
@@ -573,8 +601,8 @@ export default function DoctorPatientDetailPage() {
           </Form.Item>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 4 }}>
-            <Button onClick={() => { setDiagModal(false); diagForm.resetFields(); }}>ยกเลิก</Button>
-            <Button type="primary" htmlType="submit" loading={saving}>บันทึก</Button>
+            <Button onClick={() => { setDiagModal(false); setEditingDiagId(null); diagForm.resetFields(); }}>ยกเลิก</Button>
+            <Button type="primary" htmlType="submit" loading={saving}>{editingDiagId ? 'บันทึกการแก้ไข' : 'บันทึก'}</Button>
           </div>
         </Form>
       </Modal>

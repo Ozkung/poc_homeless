@@ -49,14 +49,13 @@ export default function InventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<'DRUG' | 'SUPPLY'>('DRUG');
+  const [search, setSearch] = useState('');
   const [stockInOpen, setStockInOpen] = useState(false);
-  const [adjOpen, setAdjOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [stockInType, setStockInType] = useState<'IN_PURCHASE' | 'IN_DONATION'>('IN_PURCHASE');
   const [stockInForm] = Form.useForm();
-  const [adjForm] = Form.useForm();
   const [addForm] = Form.useForm();
   const [expiringLots, setExpiringLots] = useState<ExpiringLot[]>([]);
   const [expiryModalOpen, setExpiryModalOpen] = useState(false);
@@ -91,11 +90,14 @@ export default function InventoryPage() {
 
   useEffect(() => { loadExpiring(); }, [loadExpiring]);
 
-  const filtered = items.filter((i) => i.category === category);
+  const filtered = items.filter((i) =>
+    i.category === category && (!search || i.name.toLowerCase().includes(search.toLowerCase()))
+  );
 
   const columns: ColumnsType<InventoryItem> = [
     {
       title: 'ชื่อรายการ', dataIndex: 'name', key: 'name',
+      sorter: (a, b) => a.name.localeCompare(b.name),
       render: (name, r) => {
         const nearExpiry = expiringLots.filter((l) => l.itemId === r.id).length;
         return (
@@ -116,20 +118,20 @@ export default function InventoryPage() {
     },
     {
       title: 'คงเหลือ', dataIndex: 'currentStock', key: 'currentStock', width: 100,
+      sorter: (a, b) => a.currentStock - b.currentStock,
       render: (n, r) => (
         <span style={{ fontWeight: 700, color: n <= r.lowStockThreshold ? '#ff4d4f' : '#52c41a' }}>
           {n}
         </span>
       ),
     },
-    { title: 'หน่วย', dataIndex: 'unit', key: 'unit', width: 80 },
+    { title: 'หน่วย', dataIndex: 'unit', key: 'unit', width: 80, sorter: (a, b) => a.unit.localeCompare(b.unit) },
     {
       title: '', key: 'actions', width: 260,
       render: (_, r) => (
         <div style={{ display: 'flex', gap: 6 }}>
           <Button size="small" onClick={() => openTransactions(r)}>ประวัติ</Button>
           <Button size="small" onClick={() => { setSelectedItem(r); setStockInOpen(true); }}>รับเข้า</Button>
-          <Button size="small" danger onClick={() => { setSelectedItem(r); setAdjOpen(true); }}>ADJ</Button>
         </div>
       ),
     },
@@ -151,23 +153,6 @@ export default function InventoryPage() {
       if (res.ok) {
         message.success('บันทึกการรับเข้าแล้ว');
         setStockInOpen(false); stockInForm.resetFields(); load();
-      } else { message.error('เกิดข้อผิดพลาด'); }
-    } catch { message.error('เกิดข้อผิดพลาด'); }
-    finally { setSaving(false); }
-  }
-
-  async function handleAdj(values: any) {
-    if (!selectedItem) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`${API_URL}/inventory/${selectedItem.id}/adj-request`, {
-        method: 'POST', headers: headers(),
-        body: JSON.stringify({ ...values, quantity: Number(values.quantity) }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        message.success(data.autoApproved ? 'ปรับสต็อกแล้ว (auto-approve)' : 'ส่งคำขออนุมัติแล้ว');
-        setAdjOpen(false); adjForm.resetFields(); load();
       } else { message.error('เกิดข้อผิดพลาด'); }
     } catch { message.error('เกิดข้อผิดพลาด'); }
     finally { setSaving(false); }
@@ -252,11 +237,18 @@ export default function InventoryPage() {
       )}
 
       <Card styles={{ body: { padding: '16px 24px' } }}>
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
           <Segmented
             options={[{ label: 'ยา (Drug)', value: 'DRUG' }, { label: 'เวชภัณฑ์ (Supply)', value: 'SUPPLY' }]}
             value={category}
             onChange={(v) => setCategory(v as 'DRUG' | 'SUPPLY')}
+          />
+          <Input.Search
+            placeholder="ค้นหาชื่อยา / วัสดุ..."
+            onSearch={setSearch}
+            onChange={(e) => !e.target.value && setSearch('')}
+            style={{ maxWidth: 280 }}
+            allowClear
           />
         </div>
         <Table
@@ -316,24 +308,6 @@ export default function InventoryPage() {
           <Button type="primary" htmlType="submit" loading={saving} block>บันทึก</Button>
         </Form>
       </Drawer>
-
-      {/* ADJ Modal */}
-      <Modal title={`ปรับสต็อก: ${selectedItem?.name}`} open={adjOpen}
-        onCancel={() => { setAdjOpen(false); adjForm.resetFields(); }} footer={null}>
-        <Form form={adjForm} layout="vertical" onFinish={handleAdj}>
-          <Form.Item name="quantity" label="จำนวน (บวก = เพิ่ม, ลบ = ลด)"
-            rules={[{ required: true }, { validator: (_, v) => v !== 0 ? Promise.resolve() : Promise.reject('ต้องไม่เป็น 0') }]}>
-            <Space.Compact style={{ width: '100%' }}>
-              <InputNumber style={{ flex: 1 }} />
-              <Button disabled style={{ pointerEvents: 'none', minWidth: 56 }}>{selectedItem?.unit}</Button>
-            </Space.Compact>
-          </Form.Item>
-          <Form.Item name="reason" label="เหตุผล" rules={[{ required: true }]}>
-            <Input.TextArea rows={2} placeholder="เช่น ยาหมดอายุ, สต็อกผิดพลาด" />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" loading={saving} block>ส่งคำขอ</Button>
-        </Form>
-      </Modal>
 
       {/* Add Item Modal */}
       <Modal title="เพิ่มรายการใหม่" open={addOpen}

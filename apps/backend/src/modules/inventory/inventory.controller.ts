@@ -103,7 +103,7 @@ export class InventoryController {
   }
 
   @Post(':id/adj-request')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER, UserRole.CASE_MANAGER)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MEDICAL_VOLUNTEER)
   @HttpCode(HttpStatus.CREATED)
   requestAdj(@Param('id') id: string, @Body() dto: AdjRequestDto, @CurrentUser() user: JwtPayload) {
     return this.inventory.requestAdj(id, user.orgId, user.sub, dto);

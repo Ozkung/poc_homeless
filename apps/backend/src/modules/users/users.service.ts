@@ -3,7 +3,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { LineService } from '../line/line.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { CreateFwDto } from './dto/create-fw.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -77,32 +76,6 @@ export class UsersService {
     });
   }
 
-  async createFW(supervisorId: string, orgId: string, dto: CreateFwDto) {
-    const hash = await bcrypt.hash(dto.password, 12);
-    return this.prisma.user.create({
-      data: {
-        organizationId: orgId,
-        email: dto.email,
-        passwordHash: hash,
-        role: 'CARE_GIVER',
-        displayName: dto.displayName,
-        phone: dto.phone,
-        birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
-        address: dto.address,
-        supervisorId,
-      },
-      select: { id: true, email: true, displayName: true, role: true, supervisorId: true },
-    });
-  }
-
-  async getMyFW(supervisorId: string, orgId: string) {
-    return this.prisma.user.findMany({
-      where: { supervisorId, organizationId: orgId },
-      select: { id: true, displayName: true, email: true, role: true, phone: true, isActive: true },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
   async getCareGivers(orgId: string) {
     return this.prisma.user.findMany({
       where: { role: 'CARE_GIVER', organizationId: orgId },
@@ -126,18 +99,10 @@ export class UsersService {
     });
   }
 
-  async update(id: string, orgId: string, actorId: string, dto: UpdateUserDto, actorRole?: string) {
+  async update(id: string, orgId: string, actorId: string, dto: UpdateUserDto) {
     const target = await this.findOne(id, orgId);
     if (dto.role !== undefined && id === actorId) {
       throw new BadRequestException('ไม่สามารถเปลี่ยนสิทธิ์ของตนเองได้');
-    }
-    if (actorRole === 'CASE_MANAGER') {
-      if (target.role !== 'CARE_GIVER' || target.supervisorId !== actorId) {
-        throw new BadRequestException('CASE_MANAGER สามารถแก้ไขได้เฉพาะ CARE_GIVER ในทีมของตนเอง');
-      }
-      if (dto.role !== undefined || dto.isActive !== undefined) {
-        throw new BadRequestException('CASE_MANAGER ไม่สามารถเปลี่ยนสิทธิ์หรือสถานะบัญชีได้');
-      }
     }
     const updated = await this.prisma.user.update({
       where: { id },
@@ -204,14 +169,9 @@ export class UsersService {
     });
   }
 
-  async deactivate(id: string, orgId: string, actorId: string, actorRole?: string) {
+  async deactivate(id: string, orgId: string, actorId: string) {
     if (id === actorId) throw new BadRequestException('ไม่สามารถปิดบัญชีของตนเองได้');
-    const target = await this.findOne(id, orgId);
-    if (actorRole === 'CASE_MANAGER') {
-      if (target.role !== 'CARE_GIVER' || target.supervisorId !== actorId) {
-        throw new BadRequestException('CASE_MANAGER สามารถปิดบัญชีได้เฉพาะ CARE_GIVER ในทีมของตนเอง');
-      }
-    }
+    await this.findOne(id, orgId);
     return this.prisma.user.update({
       where: { id },
       data: { isActive: false },

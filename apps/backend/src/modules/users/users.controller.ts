@@ -9,7 +9,6 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
-import { CreateFwDto } from './dto/create-fw.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
@@ -30,23 +29,10 @@ export class UsersController {
     return this.users.create({ ...dto, orgId: user.orgId });
   }
 
-  @Get('my-fw')
-  @Roles(UserRole.CASE_MANAGER)
-  getMyFW(@CurrentUser() user: JwtPayload) {
-    return this.users.getMyFW(user.sub, user.orgId);
-  }
-
   @Get('care-givers')
   @Roles(UserRole.CASE_MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   getCareGivers(@CurrentUser() user: JwtPayload) {
     return this.users.getCareGivers(user.orgId);
-  }
-
-  @Post('fw')
-  @Roles(UserRole.CASE_MANAGER)
-  @HttpCode(HttpStatus.CREATED)
-  createFW(@Body() dto: CreateFwDto, @CurrentUser() user: JwtPayload) {
-    return this.users.createFW(user.sub, user.orgId, dto);
   }
 
   @Patch(':id/zone')
@@ -81,19 +67,19 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.CASE_MANAGER)
+  @Roles(UserRole.SUPER_ADMIN)
   update(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.users.update(id, user.orgId, user.sub, dto, user.role);
+    return this.users.update(id, user.orgId, user.sub, dto);
   }
 
   @Delete(':id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.CASE_MANAGER)
+  @Roles(UserRole.SUPER_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   deactivate(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    return this.users.deactivate(id, user.orgId, user.sub, user.role);
+    return this.users.deactivate(id, user.orgId, user.sub);
   }
 }
