@@ -87,7 +87,7 @@ function CreateEventForm({
   onCancel,
 }: {
   patients: { id: string; name: string; hn: string; status: string }[];
-  users: { id: string; displayName: string; supervisor?: { displayName: string } | null }[];
+  users: { id: string; displayName: string }[];
   formTemplates: { id: string; title: string }[];
   saving: boolean;
   form: ReturnType<typeof Form.useForm>[0];
@@ -152,10 +152,7 @@ function CreateEventForm({
             </Tooltip>
           )}
           placeholder="เลือกผู้รับผิดชอบ..."
-          options={users.map((u) => ({
-            value: u.id,
-            label: u.supervisor ? `${u.displayName} (ทีม ${u.supervisor.displayName})` : u.displayName,
-          }))}
+          options={users.map((u) => ({ value: u.id, label: u.displayName }))}
         />
       </Form.Item>
 
@@ -183,7 +180,7 @@ export default function EventsPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [drawerMode, setDrawerMode] = useState<'view' | 'create'>('view');
   const [createForm] = Form.useForm();
-  const [users, setUsers] = useState<{ id: string; displayName: string; supervisor?: { displayName: string } | null }[]>([]);
+  const [users, setUsers] = useState<{ id: string; displayName: string }[]>([]);
   const [formTemplates, setFormTemplates] = useState<{ id: string; title: string }[]>([]);
   const [allPatients, setAllPatients] = useState<{ id: string; name: string; hn: string; status: string }[]>([]);
   const [saving, setSaving] = useState(false);

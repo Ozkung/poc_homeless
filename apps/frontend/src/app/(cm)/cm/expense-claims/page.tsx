@@ -42,7 +42,7 @@ export default function CMExpenseClaimsPage() {
   const [allClaims, setAllClaims] = useState<ExpenseClaim[]>([]);
   const [allStatusFilter, setAllStatusFilter] = useState<'ALL' | ClaimStatus>('PENDING');
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
-  const [careGivers, setCareGivers] = useState<{ id: string; displayName: string; supervisor?: { displayName: string } | null }[]>([]);
+  const [careGivers, setCareGivers] = useState<{ id: string; displayName: string }[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
@@ -284,10 +284,7 @@ export default function CMExpenseClaimsPage() {
                 showSearch
                 placeholder="พิมพ์ชื่อเพื่อค้นหา..."
                 optionFilterProp="label"
-                options={careGivers.map((cg) => ({
-                  value: cg.id,
-                  label: cg.supervisor ? `${cg.displayName} (ทีม ${cg.supervisor.displayName})` : cg.displayName,
-                }))}
+                options={careGivers.map((cg) => ({ value: cg.id, label: cg.displayName }))}
               />
             </Form.Item>
           )}

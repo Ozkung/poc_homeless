@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Tabs, DatePicker, Card, Row, Col, Statistic, Table, Tag, Select, Button, Modal, message } from 'antd';
+import { Tabs, DatePicker, Card, Row, Col, Statistic, Table, Tag } from 'antd';
 import { useSession } from 'next-auth/react';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -18,11 +18,7 @@ export default function AdminDashboard() {
   const { data: session } = useSession();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(30, 'day'), dayjs()]);
-  const [users, setUsers] = useState<any[]>([]);
   const [invItems, setInvItems] = useState<any[]>([]);
-  const [transferModal, setTransferModal] = useState(false);
-  const [selectedFW, setSelectedFW] = useState<string>('');
-  const [targetCM, setTargetCM] = useState<string>('');
 
   const token = (session as any)?.accessToken;
 
@@ -38,34 +34,9 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!token) return;
-    fetch('/api/users', { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json()).then((d) => setUsers(Array.isArray(d) ? d : []));
     fetch('/api/inventory', { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json()).then((d) => setInvItems(Array.isArray(d) ? d : []));
   }, [token]);
-
-  const fws = users.filter((u) => u.role === 'CARE_GIVER');
-
-  const cms = users.filter((u) => u.role === 'CASE_MANAGER');
-
-  const handleTransfer = async () => {
-    if (!selectedFW || !targetCM) return;
-    const res = await fetch(`/api/users/${selectedFW}/transfer`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ supervisorId: targetCM }),
-    });
-    if (res.ok) {
-      message.success('โยกย้าย CARE_GIVER สำเร็จ');
-      setTransferModal(false);
-      setSelectedFW('');
-      setTargetCM('');
-      fetch('/api/users', { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.json()).then((d) => setUsers(Array.isArray(d) ? d : []));
-    } else {
-      message.error('เกิดข้อผิดพลาด');
-    }
-  };
 
   const invStockColor = (item: any) =>
     item.currentStock <= item.lowStockThreshold ? 'red' :
@@ -100,27 +71,6 @@ export default function AdminDashboard() {
           </Card>
         </Col>
       </Row>
-      <Card title="⇄ โยกย้าย CARE_GIVER" extra={<Button type="primary" onClick={() => setTransferModal(true)}>เลือก & โยกย้าย</Button>}>
-        <Table
-          dataSource={fws} rowKey="id" size="small" pagination={{ pageSize: 5 }}
-          columns={[
-            { title: 'CARE_GIVER', dataIndex: 'displayName' },
-            { title: 'Zone', dataIndex: 'zone', render: (z, record: any) => { const zone = z ?? record.supervisor?.zone; return zone ? <Tag color={zone.color ?? 'default'}>{zone.name}</Tag> : <span style={{ color: '#ccc' }}>-</span>; } },
-          ]}
-        />
-      </Card>
-      <Modal title="โยกย้าย CARE_GIVER" open={transferModal} onOk={handleTransfer} onCancel={() => { setTransferModal(false); setSelectedFW(''); setTargetCM(''); }} okText="ยืนยัน">
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ marginBottom: 4 }}>เลือก CARE_GIVER</div>
-          <Select style={{ width: '100%' }} placeholder="เลือก FW" value={selectedFW || undefined} onChange={setSelectedFW}
-            options={fws.map((f) => ({ value: f.id, label: `${f.displayName}${f.zone ? ` (${f.zone.name})` : ''}` }))} />
-        </div>
-        <div>
-          <div style={{ marginBottom: 4 }}>ย้ายไปยัง Case Manager (Zone จะตามอัตโนมัติ)</div>
-          <Select style={{ width: '100%' }} placeholder="เลือก CM" value={targetCM || undefined} onChange={setTargetCM}
-            options={cms.map((c) => ({ value: c.id, label: `${c.displayName}${c.zone ? ` → ${c.zone.name}` : ''}` }))} />
-        </div>
-      </Modal>
     </>
   );
 
